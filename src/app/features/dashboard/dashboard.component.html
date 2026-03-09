@@ -1,0 +1,57 @@
+<div class="dashboard">
+  <!-- Breadcrumb -->
+  <app-breadcrumb [items]="breadcrumbs" />
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Dashboard</h2>
+      <p class="page-subtitle">Welcome back! Here's what's happening today.</p>
+    </div>
+    <button class="refresh-btn" (click)="loadDashboard()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M14 8A6 6 0 112 8a6 6 0 0112 0z" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M14 3v5h-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <app-loading-spinner [show]="isLoading()" message="Loading dashboard..." />
+
+  <ng-container *ngIf="!isLoading()">
+    <!-- Stats Cards Grid -->
+    <div class="stats-grid">
+      <app-stats-card *ngFor="let card of stats()" [card]="card" />
+    </div>
+
+    <!-- Charts + Activity Row -->
+    <div class="widgets-row">
+      <!-- Revenue Chart -->
+      <div class="chart-col" *ngIf="chartData()">
+        <app-chart-widget
+          [data]="chartData()!"
+          title="Revenue Overview"
+          subtitle="Monthly revenue vs expenses this year"
+        />
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="activity-col">
+        <app-recent-activity [activities]="activities()" />
+      </div>
+    </div>
+
+    <!-- Quick Stats Row -->
+    <div class="quick-stats">
+      <div class="quick-stat-card" *ngFor="let stat of quickStats">
+        <p class="qs-label">{{ stat.label }}</p>
+        <p class="qs-value">{{ stat.value }}</p>
+        <div class="qs-bar">
+          <div class="qs-fill" [style.width.%]="stat.percent" [style.background]="stat.color"></div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
