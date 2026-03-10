@@ -1,0 +1,26 @@
+<div class="add-listing-page">
+  <div class="container-fluid add-listing-page__container">
+    <app-page-header title="Add New Property"
+                     subtitle="Fill in the details below to list your property on the market."
+                     [actions]="pageActions()"
+                     (actionClicked)="onHeaderAction($event)" />
+
+    <div class="row g-4">
+      <div class="col-12 col-xl-8">
+        <div class="add-listing-page__left">
+          <app-basic-information-section />
+          <app-pricing-details-section />
+          <app-features-amenities-section />
+          <app-property-media-section />
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-4">
+        <div class="add-listing-page__right">
+          <app-property-location-step />
+          <app-contact-information-step />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

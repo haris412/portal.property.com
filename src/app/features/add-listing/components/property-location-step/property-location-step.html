@@ -1,0 +1,32 @@
+<app-step-card
+  [step]="1"
+  title="Property Location"
+  description="Keep location details grouped together so the user completes them in order."
+>
+  <div class="d-grid gap-4">
+    <app-info-banner
+      icon="info"
+      [text]="locationBanner()"
+    />
+
+    @for (field of fields(); track field.id) {
+      <div>
+        <label class="field-label">{{ field.label }}</label>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput [placeholder]="field.placeholder" />
+        </mat-form-field>
+      </div>
+    }
+
+    <div class="location-preview">
+      <h3 class="location-preview__title">Location Preview</h3>
+
+      <div class="location-preview__map">
+        <div class="location-preview__placeholder">
+          Preview updates from the entered location data
+        </div>
+      </div>
+    </div>
+  </div>
+</app-step-card>

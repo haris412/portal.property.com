@@ -1,0 +1,66 @@
+<header class="page-header">
+  <div class="page-header__content">
+    @if (meta()) {
+      <span class="page-header__meta">{{ meta() }}</span>
+    }
+
+    <h1 class="page-header__title">{{ title() }}</h1>
+
+    @if (subtitle()) {
+      <p class="page-header__subtitle">{{ subtitle() }}</p>
+    }
+  </div>
+
+  @if (actions().length > 0) {
+    <div class="page-header__actions">
+      @for (action of actions(); track trackByActionId($index, action)) {
+        @switch (action.variant ?? 'text') {
+          @case ('flat') {
+            <button
+              type="button"
+              mat-flat-button
+              class="page-header__action-btn page-header__action-btn--flat"
+              [disabled]="action.disabled"
+              (click)="onActionClick(action.id)"
+            >
+              @if (action.icon) {
+                <mat-icon [fontIcon]="action.icon" aria-hidden="true"></mat-icon>
+              }
+              <span>{{ action.label }}</span>
+            </button>
+          }
+
+          @case ('stroked') {
+            <button
+              type="button"
+              mat-stroked-button
+              class="page-header__action-btn page-header__action-btn--stroked"
+              [disabled]="action.disabled"
+              (click)="onActionClick(action.id)"
+            >
+              @if (action.icon) {
+                <mat-icon [fontIcon]="action.icon" aria-hidden="true"></mat-icon>
+              }
+              <span>{{ action.label }}</span>
+            </button>
+          }
+
+          @default {
+            <button
+              type="button"
+              mat-button
+              class="page-header__action-btn page-header__action-btn--text"
+              [disabled]="action.disabled"
+              (click)="onActionClick(action.id)"
+            >
+              @if (action.icon) {
+                <mat-icon [fontIcon]="action.icon" aria-hidden="true"></mat-icon>
+              }
+              <span>{{ action.label }}</span>
+            </button>
+          }
+        }
+      }
+    </div>
+  }
+</header>

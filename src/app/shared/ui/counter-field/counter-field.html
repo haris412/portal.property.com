@@ -1,0 +1,15 @@
+<div class="counter-field">
+  <label class="counter-field__label">{{ label() }}</label>
+
+  <div class="counter-field__control">
+    <button type="button" class="counter-field__btn" (click)="decremented.emit()" [attr.aria-label]="'Decrease ' + label()">
+      <mat-icon fontIcon="remove"></mat-icon>
+    </button>
+
+    <span class="counter-field__value">{{ value() }}</span>
+
+    <button type="button" class="counter-field__btn" (click)="incremented.emit()" [attr.aria-label]="'Increase ' + label()">
+      <mat-icon fontIcon="add"></mat-icon>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+.counter-field {
+  &__label {
+    display: inline-block;
+    margin-bottom: 0.625rem;
+    color: #1f1630;
+    font-weight: 600;
+  }
+
+  &__control {
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    min-height: 3.5rem;
+    border: 1px solid #e4e7ec;
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+
+  &__btn {
+    width: 2rem;
+    height: 2rem;
+    margin-inline: auto;
+    border: 1px solid #d0d5dd;
+    border-radius: 0.5rem;
+    background: #f9fafb;
+  }
+
+  &__value {
+    text-align: center;
+    font-weight: 700;
+    color: #1f1630;
+  }
+}

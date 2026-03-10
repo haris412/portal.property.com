@@ -1,0 +1,37 @@
+.field-label {
+  display: inline-block;
+  margin-bottom: 0.625rem;
+  color: var(--font-main);
+  font-weight: 600;
+}
+
+.location-preview {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-soft);
+
+  &__title {
+    margin: 0 0 0.875rem;
+    color: var(--font-main);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  &__map {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 12rem;
+    border-radius: var(--radius-md);
+    background: var(--secondary);
+    overflow: hidden;
+  }
+
+  &__placeholder {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    background: var(--surface-white);
+    color: var(--font-main);
+    box-shadow: var(--shadow-soft);
+    text-align: center;
+  }
+}

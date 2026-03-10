@@ -5,8 +5,8 @@ import { StatCard, ChartData, ActivityItem } from './models/stats.model';
 import { StatsCardComponent } from './components/stats-card/stats-card.component';
 import { ChartWidgetComponent } from './components/chart-widget/chart-widget.component';
 import { RecentActivityComponent } from './components/recent-activity/recent-activity.component';
-import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
-import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
+import { LoadingSpinnerComponent } from '../../shared/ui/loading-spinner/loading-spinner.component';
+import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/ui/breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'app-dashboard',

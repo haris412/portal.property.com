@@ -1,0 +1,13 @@
+<div class="action-chip-list">
+  @for (item of items(); track item.id) {
+    <button
+      type="button"
+      class="action-chip-list__chip"
+      [class.action-chip-list__chip--muted]="item.muted"
+      [disabled]="item.disabled"
+      (click)="actionClicked.emit(item.id)"
+    >
+      {{ item.label }}
+    </button>
+  }
+</div>

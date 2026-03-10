@@ -1,0 +1,23 @@
+.add-listing-page {
+  min-height: 100dvh;
+  background: #f6f7f9;
+
+  &__container {
+    padding: 1rem;
+
+    @media (min-width: 768px) {
+      padding: 1.5rem;
+    }
+
+    @media (min-width: 1200px) {
+      padding: 2rem;
+    }
+  }
+
+  &__left,
+  &__right {
+    display: grid;
+    gap: 1.5rem;
+    align-content: start;
+  }
+}

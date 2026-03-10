@@ -1,0 +1,26 @@
+<app-step-card
+  [step]="2"
+  title="Contact Information"
+  description="Add the public-facing contact details for this listing."
+>
+  <div class="d-grid gap-4">
+    <app-info-banner
+      icon="call"
+      [text]="contactBanner()"
+    />
+
+    @for (field of fields(); track field.id) {
+      <div>
+        <label class="field-label">{{ field.label }}</label>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <input
+            matInput
+            [type]="field.type ?? 'text'"
+            [placeholder]="field.placeholder"
+          />
+        </mat-form-field>
+      </div>
+    }
+  </div>
+</app-step-card>

@@ -1,0 +1,17 @@
+<div class="segmented-option-group" role="group">
+  @for (item of items(); track item.value) {
+    <button
+      type="button"
+      class="segmented-option-group__item"
+      [class.segmented-option-group__item--selected]="selectedValue() === item.value"
+      [attr.aria-pressed]="selectedValue() === item.value"
+      (click)="changed.emit(item.value)"
+    >
+      @if (item.icon) {
+        <span class="segmented-option-group__icon">{{ item.icon }}</span>
+      }
+
+      <span>{{ item.label }}</span>
+    </button>
+  }
+</div>

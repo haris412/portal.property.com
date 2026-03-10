@@ -1,0 +1,18 @@
+<app-section-card
+  title="Property Media"
+  description="Upload high-quality visuals to improve visibility and conversions."
+>
+  <div class="row g-4">
+    @for (block of mediaBlocks(); track block.id) {
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ block.label }}</label>
+
+        <app-upload-dropzone
+          [icon]="block.icon"
+          [title]="block.title"
+          [subtitle]="block.subtitle"
+        />
+      </div>
+    }
+  </div>
+</app-section-card>

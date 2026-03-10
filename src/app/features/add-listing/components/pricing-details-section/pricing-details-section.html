@@ -1,0 +1,40 @@
+<app-section-card
+  title="Pricing & Details"
+  description="Set the pricing, size, and property breakdown for buyers or renters."
+>
+  <div class="row g-4">
+    @for (field of pricingFields(); track field.id) {
+      <div class="col-12 col-md-6">
+        <label class="field-label">
+          {{ field.label }}
+          @if (field.hint) {
+            <span class="field-hint">({{ field.hint }})</span>
+          }
+        </label>
+
+        <mat-form-field appearance="outline" class="w-100">
+          @if (field.prefix) {
+            <span matTextPrefix>{{ field.prefix }}&nbsp;</span>
+          }
+
+          <input matInput [value]="field.value" />
+
+          @if (field.suffix) {
+            <span matTextSuffix>{{ field.suffix }}</span>
+          }
+        </mat-form-field>
+      </div>
+    }
+
+    @for (counter of counters(); track counter.id) {
+      <div class="col-12 col-md-6">
+        <app-counter-field
+          [label]="counter.label"
+          [value]="counter.value"
+          (decremented)="decrementCounter(counter.id)"
+          (incremented)="incrementCounter(counter.id)"
+        />
+      </div>
+    }
+  </div>
+</app-section-card>

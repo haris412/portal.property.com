@@ -1,0 +1,22 @@
+.info-banner {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #fff3f1;
+
+  &__icon {
+    color: #ff6b57;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+  }
+
+  &__text {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.5;
+  }
+}

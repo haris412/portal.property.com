@@ -1,0 +1,63 @@
+<app-section-card
+  title="Basic Information"
+  description="Set the primary details of the property you want to list. You can also use AI to draft the title and description for faster publishing."
+>
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <label class="field-label">Purpose</label>
+
+      <app-segmented-option-group
+        [items]="purposeOptions()"
+        [selectedValue]="selectedPurpose()"
+        (changed)="onPurposeChanged($event)"
+      />
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <label class="field-label">Property Type</label>
+
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-select value="house">
+          @for (type of propertyTypes(); track type.id) {
+            <mat-option [value]="type.id">{{ type.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="col-12">
+      <div class="section-inline-header">
+        <label class="field-label mb-0">Listing Title</label>
+        <app-action-chip-list [items]="titleActions()" />
+      </div>
+
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          value="Elegant 4 Bedroom Family home with Garden, Garage and Bright Open Living Spaces"
+        />
+      </mat-form-field>
+
+      <app-info-banner
+        icon="auto_awesome"
+        text="AI can create a polished headline based on purpose, property type, bedrooms, location and amenities, then place it directly into the title field."
+      />
+    </div>
+
+    <div class="col-12">
+      <div class="section-inline-header">
+        <label class="field-label mb-0">Property Description</label>
+        <app-action-chip-list [items]="descriptionActions()" />
+      </div>
+
+      <mat-form-field appearance="outline" class="w-100">
+        <textarea matInput rows="6"></textarea>
+      </mat-form-field>
+
+      <app-info-banner
+        icon="smart_toy"
+        text="The AI assistant can draft a complete description and auto-fill this field so the user does not need to write everything manually."
+      />
+    </div>
+  </div>
+</app-section-card>

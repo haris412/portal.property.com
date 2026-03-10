@@ -1,0 +1,9 @@
+<app-section-card
+  title="Features & Amenities"
+  description="Select all amenities and features available with this property."
+>
+  <app-selectable-chip-grid
+    [items]="amenities()"
+    (toggled)="toggleAmenity($event)"
+  />
+</app-section-card>

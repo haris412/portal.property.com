@@ -1,0 +1,15 @@
+.field-label {
+  display: inline-block;
+  margin-bottom: 0.625rem;
+  color: #1f1630;
+  font-weight: 600;
+}
+
+.section-inline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.625rem;
+  flex-wrap: wrap;
+}
