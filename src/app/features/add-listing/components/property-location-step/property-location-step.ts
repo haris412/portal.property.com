@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { StepCardComponent } from '../../../../shared/ui/step-card/step-card';
@@ -13,6 +14,7 @@ interface LocationField {
 @Component({
   selector: 'app-property-location-step',
   imports: [
+    ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     StepCardComponent,
@@ -23,6 +25,7 @@ interface LocationField {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PropertyLocationStepComponent {
+  @Input({ required: true }) form!: FormGroup;
   readonly locationBanner = signal(
     'Start broad with city and neighborhood, then add the full address and map reference for more accurate discovery.'
   );

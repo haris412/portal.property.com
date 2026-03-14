@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
@@ -22,6 +23,7 @@ interface CounterItem {
 @Component({
   selector: 'app-pricing-details-section',
   imports: [
+    ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     SectionCardComponent,
@@ -32,44 +34,34 @@ interface CounterItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PricingDetailsSectionComponent {
-  readonly pricingFields = signal<PricingField[]>([
-    {
-      id: 'price',
-      label: 'Price',
-      value: '1,250,000',
-      prefix: '$',
-      hint: 'Total'
-    },
-    {
-      id: 'area',
-      label: 'Area Size',
-      value: '2,450',
-      suffix: 'sqft'
-    }
-  ]);
+  @Input({ required: true }) form!: FormGroup;
 
   readonly counters = signal<CounterItem[]>([
-    { id: 'bedrooms', label: 'Bedrooms', value: 4 },
-    { id: 'bathrooms', label: 'Bathrooms', value: 3 },
-    { id: 'parking', label: 'Parking Spaces', value: 2 },
-    { id: 'floors', label: 'Floors', value: 2 }
+    { id: 'numBedrooms', label: 'Bedrooms', value: 2 },
+    { id: 'numBathrooms', label: 'Bathrooms', value: 2 },
+    { id: 'numParkingSpaces', label: 'Parking Spaces', value: 0 },
+    { id: 'numFloors', label: 'Floors', value: 0 }
   ]);
 
   decrementCounter(id: string): void {
-    this.counters.update((items) =>
-      items.map((item) =>
-        item.id === id
-          ? { ...item, value: Math.max(0, item.value - 1) }
-          : item
-      )
-    );
+    const control = this.form.get(id);
+    if (!control) {
+      return;
+    }
+
+    const current = Number(control.value) || 0;
+    const next = Math.max(0, current - 1);
+    control.setValue(next);
   }
 
   incrementCounter(id: string): void {
-    this.counters.update((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, value: item.value + 1 } : item
-      )
-    );
+    const control = this.form.get(id);
+    if (!control) {
+      return;
+    }
+
+    const current = Number(control.value) || 0;
+    const next = current + 1;
+    control.setValue(next);
   }
 }

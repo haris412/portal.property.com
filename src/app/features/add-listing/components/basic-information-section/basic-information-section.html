@@ -2,14 +2,14 @@
   title="Basic Information"
   description="Set the primary details of the property you want to list. You can also use AI to draft the title and description for faster publishing."
 >
-  <div class="row g-4">
+  <div class="row g-4" [formGroup]="form">
     <div class="col-12 col-lg-6">
       <label class="field-label">Purpose</label>
 
       <app-segmented-option-group
         [items]="purposeOptions()"
-        [selectedValue]="selectedPurpose()"
-        (changed)="onPurposeChanged($event)"
+        [selectedValue]="form.get('purpose')?.value"
+        (changed)="form.get('purpose')?.setValue($event)"
       />
     </div>
 
@@ -17,7 +17,7 @@
       <label class="field-label">Property Type</label>
 
       <mat-form-field appearance="outline" class="w-100">
-        <mat-select value="house">
+        <mat-select formControlName="propertyType">
           @for (type of propertyTypes(); track type.id) {
             <mat-option [value]="type.id">{{ type.label }}</mat-option>
           }
@@ -34,7 +34,8 @@
       <mat-form-field appearance="outline" class="w-100">
         <input
           matInput
-          value="Elegant 4 Bedroom Family home with Garden, Garage and Bright Open Living Spaces"
+          formControlName="listingTitle"
+          placeholder="2 Bed Apartment in DHA"
         />
       </mat-form-field>
 
@@ -51,7 +52,12 @@
       </div>
 
       <mat-form-field appearance="outline" class="w-100">
-        <textarea matInput rows="6"></textarea>
+        <textarea
+          matInput
+          rows="6"
+          formControlName="propertyDescription"
+          placeholder="Nice apartment..."
+        ></textarea>
       </mat-form-field>
 
       <app-info-banner

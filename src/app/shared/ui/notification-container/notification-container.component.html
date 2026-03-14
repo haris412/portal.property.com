@@ -1,0 +1,13 @@
+<div class="notification-container" *ngIf="notifications().length > 0">
+  <div
+    class="notification"
+    *ngFor="let n of notifications(); trackBy: trackById"
+    [class.notification--success]="n.type === 'success'"
+    [class.notification--error]="n.type === 'error'"
+    [class.notification--warning]="n.type === 'warning'"
+    [class.notification--info]="n.type === 'info'"
+  >
+    <span class="notification__message">{{ n.message }}</span>
+  </div>
+</div>
+

@@ -2,35 +2,55 @@
   title="Pricing & Details"
   description="Set the pricing, size, and property breakdown for buyers or renters."
 >
-  <div class="row g-4">
-    @for (field of pricingFields(); track field.id) {
-      <div class="col-12 col-md-6">
-        <label class="field-label">
-          {{ field.label }}
-          @if (field.hint) {
-            <span class="field-hint">({{ field.hint }})</span>
-          }
-        </label>
+  <div class="row g-4" [formGroup]="form">
+    <div class="col-12 col-md-6">
+      <label class="field-label">
+        Price
+        <span class="field-hint">(Total)</span>
+      </label>
 
-        <mat-form-field appearance="outline" class="w-100">
-          @if (field.prefix) {
-            <span matTextPrefix>{{ field.prefix }}&nbsp;</span>
-          }
+      <mat-form-field appearance="outline" class="w-100">
+        <span matTextPrefix>Rs&nbsp;</span>
+        <input
+          matInput
+          type="number"
+          formControlName="price"
+          placeholder="75000"
+        />
+      </mat-form-field>
+    </div>
 
-          <input matInput [value]="field.value" />
+    <div class="col-12 col-md-6">
+      <label class="field-label">Area Size</label>
 
-          @if (field.suffix) {
-            <span matTextSuffix>{{ field.suffix }}</span>
-          }
-        </mat-form-field>
-      </div>
-    }
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          type="number"
+          formControlName="areaSize"
+          placeholder="1200"
+        />
+        <span matTextSuffix>{{ form.get('areaUnit')?.value }}</span>
+      </mat-form-field>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="field-label">Area Unit</label>
+
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          formControlName="areaUnit"
+          placeholder="sqft"
+        />
+      </mat-form-field>
+    </div>
 
     @for (counter of counters(); track counter.id) {
       <div class="col-12 col-md-6">
         <app-counter-field
           [label]="counter.label"
-          [value]="counter.value"
+          [value]="form.get(counter.id)?.value ?? counter.value"
           (decremented)="decrementCounter(counter.id)"
           (incremented)="incrementCounter(counter.id)"
         />

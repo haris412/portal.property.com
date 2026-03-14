@@ -11,6 +11,8 @@
           [icon]="block.icon"
           [title]="block.title"
           [subtitle]="block.subtitle"
+          [multiple]="block.id === 'photos'"
+          (filesSelected)="onFilesSelected(block.id, $event)"
         />
       </div>
     }
