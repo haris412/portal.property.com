@@ -1,0 +1,224 @@
+<section class="section-card auth-card h-100" aria-labelledby="signup-title">
+  <div class="card-inner">
+    <h2 id="signup-title" class="auth-card-title">Create an account</h2>
+    <p class="auth-card-copy text-muted-auth">
+      Join EstatePortal to save properties, contact agents and manage your activity in one place.
+    </p>
+
+    @if (error()) {
+      <div class="alert alert-danger mb-3" role="alert">
+        {{ error() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label class="form-label-auth" for="signup-first-name">First name</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="signup-first-name"
+              matInput
+              formControlName="firstName"
+              placeholder="e.g. Jane"
+              autocomplete="given-name"
+            />
+          </mat-form-field>
+          <app-form-field-error
+            [control]="form.controls.firstName"
+            label="First name"
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label-auth" for="signup-last-name">Last name</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="signup-last-name"
+              matInput
+              formControlName="lastName"
+              placeholder="e.g. Doe"
+              autocomplete="family-name"
+            />
+          </mat-form-field>
+          <app-form-field-error
+            [control]="form.controls.lastName"
+            label="Last name"
+          />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label-auth" for="signup-email">Email address</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="signup-email"
+              matInput
+              formControlName="email"
+              placeholder="jane@example.com"
+              autocomplete="email"
+            />
+          </mat-form-field>
+          <app-form-field-error
+            [control]="form.controls.email"
+            label="Email address"
+          />
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label-auth" for="signup-phone">Mobile number</label>
+          <div class="phone-row d-flex gap-2 align-items-flex-start">
+            <mat-form-field appearance="outline" class="phone-country">
+              <mat-label>Code</mat-label>
+              <input
+                id="signup-phone-country"
+                matInput
+                formControlName="phoneCountryCode"
+                [matAutocomplete]="phoneCountryAuto"
+                placeholder="Search by code (e.g. AU, US, 92)"
+                aria-label="Country code"
+              />
+              <mat-autocomplete
+                #phoneCountryAuto="matAutocomplete"
+                [displayWith]="displayPhoneCountry"
+                panelClass="auth-dropdown-panel"
+              >
+                @for (c of filteredPhoneCountries(); track c.isoCode) {
+                  <mat-option [value]="c.isoCode" class="auth-dropdown-option">
+                    <span class="auth-option-flag">{{ c.flag }}</span>
+                    <span class="auth-option-text">+{{ c.phonecode }} {{ c.isoCode }}</span>
+                  </mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="phone-number flex-grow-1">
+              <input
+                id="signup-phone"
+                matInput
+                formControlName="phone"
+                placeholder="phone-number"
+                autocomplete="tel-national"
+                inputmode="numeric"
+              />
+            </mat-form-field>
+          </div>
+          <app-form-field-error
+            [control]="form.controls.phone"
+            label="Mobile number"
+          />
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label-auth" for="signup-location">Location</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Location</mat-label>
+            <input
+              id="signup-location"
+              matInput
+              formControlName="locationCountryCode"
+              [matAutocomplete]="locationCountryAuto"
+              placeholder="Search by country name"
+              aria-label="Location"
+            />
+            <mat-autocomplete
+              #locationCountryAuto="matAutocomplete"
+              [displayWith]="displayLocationCountry"
+              panelClass="auth-dropdown-panel"
+            >
+              @for (c of filteredLocationCountries(); track c.isoCode) {
+                <mat-option [value]="c" class="auth-dropdown-option">
+                  <span class="auth-option-text">{{ c.name }}</span>
+                </mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+          <app-form-field-error
+            [control]="form.controls.locationCountryCode"
+            label="Location"
+          />
+        </div>
+
+        <div class="col-12">
+          <fieldset class="border-0 p-0 m-0">
+            <legend class="form-label-auth mb-2">User type</legend>
+
+            @if (rolesLoading()) {
+              <p class="text-muted-auth mb-0">Loading options…</p>
+            } @else {
+              <div class="d-flex flex-wrap gap-2">
+                @for (option of userTypes(); track option.value) {
+                  <button
+                    type="button"
+                    class="user-type-pill"
+                    [class.user-type-pill--active]="form.controls.userType.value === option.value"
+                    (click)="form.controls.userType.setValue(option.value)"
+                    [attr.aria-pressed]="form.controls.userType.value === option.value"
+                  >
+                    {{ option.label }}
+                  </button>
+                }
+              </div>
+            }
+          </fieldset>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label-auth" for="signup-password">Password</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="signup-password"
+              matInput
+              [type]="hidePassword() ? 'password' : 'text'"
+              formControlName="password"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              mat-icon-button
+              matSuffix
+              [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+              (click)="hidePassword.set(!hidePassword())"
+            >
+              <mat-icon [fontIcon]="hidePassword() ? 'visibility_off' : 'visibility'"></mat-icon>
+            </button>
+          </mat-form-field>
+          <app-form-field-error
+            [control]="form.controls.password"
+            label="Password"
+          />
+        </div>
+
+        <div class="col-12">
+          <mat-checkbox formControlName="agree">
+            I agree to the
+            <a href="#" class="auth-link">Terms</a>
+            and
+            <a href="#" class="auth-link">Privacy Policy</a>
+          </mat-checkbox>
+          <app-form-field-error [control]="form.controls.agree" />
+        </div>
+
+        <div class="col-12">
+          <button
+            type="submit"
+            mat-raised-button
+            class="auth-primary-btn w-100"
+            [disabled]="!canSubmit()"
+          >
+            {{ loading() ? 'Creating account…' : 'Create account' }}
+          </button>
+        </div>
+
+        <div class="col-12">
+          <div class="visually-divider">Or continue with</div>
+        </div>
+
+        <div class="col-12 col-sm-6">
+          <app-social-button label="Google" icon="mail" />
+        </div>
+
+        <div class="col-12 col-sm-6">
+          <app-social-button label="Apple" icon="phone_iphone" />
+        </div>
+      </div>
+    </form>
+  </div>
+</section>

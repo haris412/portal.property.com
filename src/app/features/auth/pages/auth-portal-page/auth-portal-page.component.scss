@@ -1,0 +1,104 @@
+.app-shell-bg {
+  min-height: 100dvh;
+  padding: 2rem;
+  background: linear-gradient(to bottom, #f1d7cc 0%, #ffeadf 55%, #fff1ea 100%);
+}
+
+.auth-shell {
+  height: 100%;
+}
+
+.auth-layout-row,
+.right-column {
+  @media (min-width: 992px) {
+    height: calc(100dvh - 4rem);
+  }
+}
+
+.hero-column {
+  @media (min-width: 992px) {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.auth-form-area {
+  position: relative;
+  min-height: 0;
+  border-radius: var(--radius-xl);
+
+  @media (min-width: 992px) {
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+}
+
+.auth-card-anim {
+  width: 100%;
+  will-change: opacity;
+}
+
+@media (min-width: 992px) {
+  .auth-form-area {
+    display: grid;
+  }
+
+  .auth-card-anim {
+    grid-area: 1 / 1;
+    min-height: 0;
+  }
+}
+
+.auth-card-enter {
+  animation: auth-card-fade-in 420ms ease;
+}
+
+.auth-card-leave {
+  animation: auth-card-fade-out 220ms ease forwards;
+  pointer-events: none;
+}
+
+@keyframes auth-card-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes auth-card-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-card-enter,
+  .auth-card-leave {
+    animation: none;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .auth-shell,
+  .auth-layout-row,
+  .hero-column,
+  .right-column,
+  .auth-form-area {
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+  }
+}

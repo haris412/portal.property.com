@@ -1,0 +1,22 @@
+.brand-logo-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--primary);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-logo-icon .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.brand-logo-text {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffffff;
+}

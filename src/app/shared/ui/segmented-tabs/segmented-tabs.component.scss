@@ -1,0 +1,60 @@
+.segmented-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid #ead7ce;
+  border-radius: 16px;
+  background: rgba(255, 248, 243, 0.72);
+  overflow: hidden;
+
+  &__pill {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(31, 22, 48, 0.08);
+    transition:
+      transform 220ms ease,
+      opacity 220ms ease;
+
+    &--login {
+      transform: translateX(100%);
+    }
+  }
+
+  &__button {
+    position: relative;
+    z-index: 1;
+    min-height: 48px;
+    border: 0;
+    background: transparent;
+    color: #7a6676;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: color 180ms ease, opacity 180ms ease;
+
+    &--active {
+      color: #1f1630;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #ff6b57;
+      outline-offset: -2px;
+      border-radius: 12px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmented-tabs {
+    &__pill,
+    &__button {
+      transition: none;
+    }
+  }
+}
