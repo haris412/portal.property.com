@@ -9,6 +9,7 @@ import { PropertyLocationStepComponent } from '../../components/property-locatio
 import { ContactInformationStepComponent } from '../../components/contact-information-step/contact-information-step';
 import { AddListingService } from '../../../../core/services/add-listing.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { ADD_LISTING_HEADER_ACTIONS } from '../../constants/add-listing.constants';
 
 @Component({
   selector: 'app-add-listing-page',
@@ -36,12 +37,12 @@ export class AddListingPageComponent {
 
   readonly pageActions = signal<readonly PageHeaderAction[]>([
     {
-      id: 'save-draft',
+      id: ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT,
       label: 'Save Draft',
       variant: 'stroked'
     },
     {
-      id: 'publish-listing',
+      id: ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING,
       label: 'Publish Listing',
       variant: 'flat'
     }
@@ -93,43 +94,35 @@ export class AddListingPageComponent {
 
     this.locationForm = this.fb.group({
       city: ['', Validators.required],
-      neighborhood: ['', Validators.required],
+      neighborhood: [''],
       fullAddress: ['', Validators.required],
       mapLink: [''],
     });
   }
 
   onHeaderAction(actionId: string): void {
-    if (actionId === 'save-draft' || actionId === 'publish-listing') {
+    if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT || actionId === ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING) {
       if (this.basicInfoForm.invalid || this.pricingForm.invalid || this.contactForm.invalid || this.locationForm.invalid) {
         this.basicInfoForm.markAllAsTouched();
         this.pricingForm.markAllAsTouched();
         this.contactForm.markAllAsTouched();
         this.locationForm.markAllAsTouched();
-        console.log('Forms are invalid', {
-          basicInfo: this.basicInfoForm.value,
-          pricing: this.pricingForm.value,
-          contact: this.contactForm.value,
-          location: this.locationForm.value,
-        });
         return;
       }
 
       const payload = this.buildPayload() as any;
 
-      if (actionId === 'save-draft') {
+      if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) {
         this.addListingService.saveDraft(payload).subscribe({
           next: () => this.notifications.success('Draft saved successfully'),
           error: () => this.notifications.error('Failed to save draft'),
         });
       } else {
         this.addListingService.createListing(payload).subscribe({
-          next: () => this.notifications.success('Listing published successfully'),
+          next: () => this.notifications.success('Property added successfully'),
           error: () => this.notifications.error('Failed to publish listing'),
         });
       }
-    } else {
-      console.log('Header action:', actionId);
     }
   }
 

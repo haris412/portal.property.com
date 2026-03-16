@@ -11,11 +11,6 @@ export const routes: Routes = [
     title: 'Sign in',
   },
   {
-    path: 'auth/verify-email',
-    component: VerifyEmailComponent,
-    title: 'Verify email',
-  },
-  {
     path: 'verify-email',
     component: VerifyEmailComponent,
     title: 'Verify email',

@@ -11,7 +11,7 @@
           [icon]="block.icon"
           [title]="block.title"
           [subtitle]="block.subtitle"
-          [multiple]="block.id === 'photos'"
+          [multiple]="block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS"
           (filesSelected)="onFilesSelected(block.id, $event)"
         />
       </div>
