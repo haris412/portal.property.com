@@ -102,6 +102,7 @@ export class SignupCardComponent implements OnInit {
   // —— UI state ——
   readonly hidePassword = signal(true);
   readonly error = signal<string | null>(null);
+  readonly successMessage = signal<string | null>(null);
   readonly loading = signal(false);
   readonly rolesLoading = signal(true);
   private readonly formValid = signal(false);
@@ -175,20 +176,18 @@ export class SignupCardComponent implements OnInit {
     }
 
     this.error.set(null);
+    this.successMessage.set(null);
     this.loading.set(true);
 
     const payload = this.buildRegisterPayload(this.form.getRawValue());
     this.auth.register(payload).subscribe({
-      next: () =>
-        this.router.navigate(['/login'], {
-          queryParams: { registered: 'true' },
-          replaceUrl: true
-        }),
+      next: (res) => {
+        this.successMessage.set(res.message ?? 'User registered successfully. Please verify your email.');
+        setTimeout(() => this.router.navigate(['/auth'], { replaceUrl: true }), 2500);
+      },
       error: (err: unknown) => {
         this.loading.set(false);
-        const message =
-          (err as { message?: string }).message ?? REGISTER_ERROR_FALLBACK;
-        this.error.set(message);
+        this.error.set((err as { message?: string })?.message ?? REGISTER_ERROR_FALLBACK);
       },
       complete: () => this.loading.set(false)
     });

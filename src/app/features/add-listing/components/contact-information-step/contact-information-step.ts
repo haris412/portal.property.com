@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { StepCardComponent } from '../../../../shared/ui/step-card/step-card';
@@ -14,6 +15,7 @@ interface ContactField {
 @Component({
   selector: 'app-contact-information-step',
   imports: [
+    ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     StepCardComponent,
@@ -24,6 +26,8 @@ interface ContactField {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContactInformationStepComponent {
+  @Input({ required: true }) form!: FormGroup;
+
   readonly contactBanner = signal(
     'These contact details will be shown to buyers and renters, so keeping them together improves flow and completion.'
   );

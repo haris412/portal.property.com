@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
+import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -13,6 +14,7 @@ type ListingPurpose = 'sale' | 'rent';
 @Component({
   selector: 'app-basic-information-section',
   imports: [
+    ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -48,8 +50,5 @@ export class BasicInformationSectionComponent {
     { id: 'description-loading', label: 'AI loader preview shown here', muted: true, disabled: true }
   ]);
 
-  readonly selectedPurpose = signal<ListingPurpose>('sale');
-  onPurposeChanged(value: string): void {
-    this.selectedPurpose.set(value as ListingPurpose);
-  }
+  @Input({ required: true }) form!: FormGroup;
 }

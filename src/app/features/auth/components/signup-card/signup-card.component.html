@@ -10,6 +10,11 @@
         {{ error() }}
       </div>
     }
+    @if (successMessage()) {
+      <div class="alert alert-success mb-3" role="alert">
+        {{ successMessage() }}
+      </div>
+    }
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
       <div class="row g-3">

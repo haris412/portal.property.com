@@ -1,0 +1,69 @@
+<div class="verify-page">
+    <div class="container verify-container">
+      <div class="verify-card section-card auth-card">
+        <div class="card-inner verify-card-inner">
+          @switch (state) {
+            @case ('loading') {
+              <h1 class="auth-card-title" id="verify-title">Verifying your email</h1>
+              <p class="auth-card-copy text-muted-auth">Please wait…</p>
+              <div class="verify-spinner" aria-hidden="true"></div>
+            }
+            @case ('success') {
+              <div class="verify-icon verify-icon--success" aria-hidden="true">
+                <mat-icon fontIcon="check_circle" aria-hidden="true"></mat-icon>
+              </div>
+              <h1 class="auth-card-title" id="verify-title">Verification successful</h1>
+              <p class="auth-card-copy text-muted-auth">
+                Your email has been verified. You can now sign in.
+              </p>
+              <p class="verify-hint text-muted-auth">Redirecting to login in a few seconds…</p>
+              <button
+                type="button"
+                mat-raised-button
+                class="auth-primary-btn"
+                (click)="goToLogin()"
+              >
+                Go to sign in
+              </button>
+            }
+            @case ('error') {
+              <div class="verify-icon verify-icon--error" aria-hidden="true">
+                <mat-icon fontIcon="error" aria-hidden="true"></mat-icon>
+              </div>
+              <h1 class="auth-card-title" id="verify-title">Verification failed</h1>
+              <p class="verify-error-msg">{{ errorMessage }}</p>
+              <button
+                type="button"
+                mat-raised-button
+                class="auth-primary-btn"
+                (click)="goToLogin()"
+              >
+                Back to sign in
+              </button>
+            }
+            @case ('missing_params') {
+              <div class="verify-icon verify-icon--error" aria-hidden="true">
+                <mat-icon fontIcon="error" aria-hidden="true"></mat-icon>
+              </div>
+              <h1 class="auth-card-title" id="verify-title">Invalid link</h1>
+              <p class="verify-error-msg">{{ errorMessage }}</p>
+              <button
+                type="button"
+                mat-raised-button
+                class="auth-primary-btn"
+                (click)="goToLogin()"
+              >
+                Back to sign in
+              </button>
+            }
+            @default {
+              <h1 class="auth-card-title" id="verify-title">Verifying your email</h1>
+              <p class="auth-card-copy text-muted-auth">Please wait…</p>
+              <div class="verify-spinner" aria-hidden="true"></div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  

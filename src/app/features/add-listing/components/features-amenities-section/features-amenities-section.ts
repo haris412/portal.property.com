@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { SelectableChipGridComponent } from '../../../../shared/ui/selectable-chip-grid/selectable-chip-grid';
 import { SelectableChipItem } from '../../../../core/models/ui.models';
@@ -11,6 +12,8 @@ import { SelectableChipItem } from '../../../../core/models/ui.models';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FeaturesAmenitiesSectionComponent {
+  @Input({ required: true }) form!: FormGroup;
+
   readonly amenities = signal<SelectableChipItem[]>([
     { id: 'wifi', label: 'Wi-Fi', selected: true },
     { id: 'pool', label: 'Swimming Pool', selected: true },
@@ -27,10 +30,30 @@ export class FeaturesAmenitiesSectionComponent {
   ]);
 
   toggleAmenity(id: string): void {
+    const current = this.amenities().find((item) => item.id === id);
+    const nextSelected = current ? !current.selected : true;
+
     this.amenities.update((items) =>
       items.map((item) =>
-        item.id === id ? { ...item, selected: !item.selected } : item
+        item.id === id ? { ...item, selected: nextSelected } : item
       )
     );
+
+    const controlNameMap: Record<string, string> = {
+      wifi: 'hasWifi',
+      pool: 'hasSwimmingPool',
+      gym: 'hasGym',
+      garage: 'hasGarage',
+      'central-ac': 'hasCentralAc',
+      balcony: 'hasBalcony',
+      security: 'hasSecurity',
+      garden: 'hasGarden',
+    };
+
+    const controlName = controlNameMap[id];
+    if (controlName) {
+      const control = this.form.get(controlName);
+      control?.setValue(nextSelected);
+    }
   }
 }

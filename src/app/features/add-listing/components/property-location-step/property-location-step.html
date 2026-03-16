@@ -3,7 +3,7 @@
   title="Property Location"
   description="Keep location details grouped together so the user completes them in order."
 >
-  <div class="d-grid gap-4">
+  <div class="d-grid gap-4" [formGroup]="form">
     <app-info-banner
       icon="info"
       [text]="locationBanner()"
@@ -14,7 +14,19 @@
         <label class="field-label">{{ field.label }}</label>
 
         <mat-form-field appearance="outline" class="w-100">
-          <input matInput [placeholder]="field.placeholder" />
+          <input
+            matInput
+            [placeholder]="field.placeholder"
+            [formControlName]="
+              field.id === 'city'
+                ? 'city'
+                : field.id === 'area'
+                  ? 'neighborhood'
+                  : field.id === 'address'
+                    ? 'fullAddress'
+                    : 'mapLink'
+            "
+          />
         </mat-form-field>
       </div>
     }

@@ -20,12 +20,25 @@ export interface User {
   role?: string;
 }
 
+
+function toStoredUser(raw: Record<string, unknown>): User {
+  const id = (raw['_id'] ?? raw['id']) as string;
+  const email = (raw['email'] ?? '') as string;
+  const name =
+    (raw['name'] as string) ||
+    [raw['firstName'], raw['lastName']].filter(Boolean).join(' ').trim() ||
+    undefined;
+  const r = raw['role'];
+  const role = typeof r === 'object' && r && 'name' in r ? (r as { name: string }).name : (r as string);
+  return { _id: id, email, name, role };
+}
+
 export interface LoginPayload {
   email: string;
   password: string;
 }
 
-/** Register request body. phoneNumber: E.164 e.g. +923001234567; location: JSON string of LocationJson. */
+
 export interface RegisterPayload {
   email: string;
   password: string;
@@ -62,14 +75,25 @@ export class AuthService {
 
   private accessToken: string | null = null;
   private userSubject = new BehaviorSubject<User | null>(null);
+  private redirectMessage: string | null = null;
 
   currentUser$ = this.userSubject.asObservable();
+
+  setRedirectMessage(message: string): void {
+    this.redirectMessage = message;
+  }
+
+  getAndClearRedirectMessage(): string | null {
+    const msg = this.redirectMessage;
+    this.redirectMessage = null;
+    return msg;
+  }
 
   private get storage(): Storage | null {
     return isPlatformBrowser(this.platformId) ? localStorage : null;
   }
 
-  /** Public API, no auth. Cached with shareReplay(1). Never errors – returns [] on failure. */
+  
   private roles$ = this.http.get<RolesApiResponse>(`${environment.apiUrl}/api/auth/roles`).pipe(
     map((response) => response.data?.roles ?? []),
     catchError(() => of([])),
@@ -83,27 +107,35 @@ export class AuthService {
   constructor() {
     const stored = this.storage?.getItem(REFRESH_KEY);
     if (stored) this.loadStoredUser();
-    // Do NOT subscribe to roles$ here: it would trigger HTTP → interceptor → inject(AuthService) → circular DI
+   
   }
 
   private loadStoredUser(): void {
     const raw = this.storage?.getItem(USER_KEY);
-    if (raw) try { this.userSubject.next(JSON.parse(raw)); } catch { /* ignore */ }
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as Record<string, unknown>;
+        const user = toStoredUser(parsed);
+        this.userSubject.next(user);
+        this.storage?.setItem(USER_KEY, JSON.stringify(user));
+      } catch { /* ignore */ }
+    }
   }
 
   private storeAuthData(data: AuthApiResponse): void {
     if (!this.storage || !data.accessToken || !data.refreshToken || !data.user) return;
     this.accessToken = data.accessToken;
+    const user = toStoredUser((data.user ?? {}) as unknown as Record<string, unknown>);
     this.storage.setItem(REFRESH_KEY, data.refreshToken);
-    this.storage.setItem(USER_KEY, JSON.stringify(data.user));
-    this.userSubject.next(data.user);
+    this.storage.setItem(USER_KEY, JSON.stringify(user));
+    this.userSubject.next(user);
   }
 
   getAccessToken(): string | null {
     return this.accessToken;
   }
 
-  /** Sends payload as JSON request body. All failures emit error with shape { message: string }. */
+  
   login(payload: LoginPayload): Observable<{ user: User }> {
     const fallback = 'Login failed. Please try again.';
     return this.http
@@ -132,22 +164,21 @@ export class AuthService {
       );
   }
 
-  /**
-   * Registers a new user. Does NOT log the user in; caller should redirect to login with a message.
-   * All failures emit error with shape { message: string }.
-   */
-  register(payload: RegisterPayload): Observable<{ user: User }> {
+ 
+  register(payload: RegisterPayload): Observable<{ user: User; message?: string }> {
     const fallback = 'Registration failed. Please try again.';
     return this.http
-      .post<{ success?: boolean; data?: AuthApiResponse } & AuthApiResponse>(
+      .post<{ success?: boolean; message?: string; data?: AuthApiResponse } & AuthApiResponse>(
         `${environment.apiUrl}/api/auth/register`,
         payload
       )
       .pipe(
-        map((response) => ({ user: (response.data ?? response).user })),
-        catchError((err: unknown) =>
-          throwError(() => ({ message: this.getAuthMessage(err, fallback) }))
-        )
+        switchMap((res) => {
+          if (res.success === false) return throwError(() => ({ message: res.message ?? fallback }));
+          const user = (res.data ?? res).user;
+          return of({ user, message: res.message });
+        }),
+        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) })))
       );
   }
 
@@ -161,7 +192,7 @@ export class AuthService {
     this.accessToken = null;
     this.userSubject.next(null);
     this.storage?.clear();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/auth']);
   }
 
   refreshAccessToken(): Observable<string> {
@@ -193,7 +224,7 @@ export class AuthService {
     this.accessToken = null;
     this.userSubject.next(null);
     this.storage?.clear();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/auth']);
   }
 
   /**

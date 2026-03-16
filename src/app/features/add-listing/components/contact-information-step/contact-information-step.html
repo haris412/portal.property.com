@@ -3,7 +3,7 @@
   title="Contact Information"
   description="Add the public-facing contact details for this listing."
 >
-  <div class="d-grid gap-4">
+  <div class="d-grid gap-4" [formGroup]="form">
     <app-info-banner
       icon="call"
       [text]="contactBanner()"
@@ -18,6 +18,15 @@
             matInput
             [type]="field.type ?? 'text'"
             [placeholder]="field.placeholder"
+            [formControlName]="
+              field.id === 'name'
+                ? 'contactName'
+                : field.id === 'email'
+                  ? 'contactEmail'
+                  : field.id === 'phone'
+                    ? 'contactPhoneNumber'
+                    : 'contactLocation'
+            "
           />
         </mat-form-field>
       </div>

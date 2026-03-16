@@ -8,17 +8,17 @@
     <div class="row g-4">
       <div class="col-12 col-xl-8">
         <div class="add-listing-page__left">
-          <app-basic-information-section />
-          <app-pricing-details-section />
-          <app-features-amenities-section />
-          <app-property-media-section />
+          <app-basic-information-section [form]="basicInfoForm" />
+          <app-pricing-details-section [form]="pricingForm" />
+          <app-features-amenities-section [form]="amenitiesForm" />
+          <app-property-media-section [form]="mediaForm" />
         </div>
       </div>
 
       <div class="col-12 col-xl-4">
         <div class="add-listing-page__right">
-          <app-property-location-step />
-          <app-contact-information-step />
+          <app-property-location-step [form]="locationForm" />
+          <app-contact-information-step [form]="contactForm" />
         </div>
       </div>
     </div>

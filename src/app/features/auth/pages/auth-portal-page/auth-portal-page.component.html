@@ -8,6 +8,11 @@
 
         <div class="col-12 col-lg-6">
           <section class="right-column">
+            @if (successMessage()) {
+              <div class="alert alert-success mb-3" role="alert">
+                {{ successMessage() }}
+              </div>
+            }
             <app-segmented-tabs [active]="activeSegment()"
                                 (changed)="activeSegment.set($event)" />
 

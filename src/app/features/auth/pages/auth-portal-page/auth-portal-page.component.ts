@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 import { AuthHeroPanelComponent } from '../../components/auth-hero-panel/auth-hero-panel.component';
 import { SignupCardComponent } from '../../components/signup-card/signup-card.component';
 import { LoginCardComponent } from '../../components/login-card/login-card.component';
@@ -19,22 +20,18 @@ import { SegmentedTabsComponent } from '../../../../shared/ui/segmented-tabs/seg
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuthPortalPageComponent implements OnInit {
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly auth = inject(AuthService);
 
   readonly activeSegment = signal<'signup' | 'login'>('login');
   readonly successMessage = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.route.queryParams.subscribe((params) => {
-      if (params['registered'] === 'true') {
-        this.successMessage.set('User registered successfully. Please verify your email.');
-        return;
-      }
-      if (params['verified'] === 'true') {
-        this.successMessage.set('Email verified. You can sign in now.');
-        return;
-      }
-      this.successMessage.set(null);
-    });
+    const msg = this.auth.getAndClearRedirectMessage();
+    if (msg) this.successMessage.set(msg);
+    if (this.route.snapshot.queryParamMap.keys.length > 0) {
+      this.router.navigate(['/auth'], { replaceUrl: true });
+    }
   }
 }
