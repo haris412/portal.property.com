@@ -1,0 +1,99 @@
+<section class="section-card auth-card h-100" aria-labelledby="login-title">
+  <div class="card-inner">
+    <h2 id="login-title" class="auth-card-title">Log in</h2>
+    <p class="auth-card-copy text-muted-auth">
+      Access saved searches, viewed homes, updated listings and property videos.
+    </p>
+
+    @if (error()) {
+      <div class="alert alert-danger mb-3" role="alert">
+        {{ error() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label-auth" for="login-identifier">Email</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="login-identifier"
+              matInput
+              formControlName="identifier"
+              placeholder="jane@example.com"
+              autocomplete="username"
+            />
+          </mat-form-field>
+          <app-form-field-error
+            [control]="form.controls.identifier"
+            label="Email"
+          />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label-auth" for="login-password">Password</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="login-password"
+              matInput
+              [type]="hidePassword() ? 'password' : 'text'"
+              formControlName="password"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              mat-icon-button
+              matSuffix
+              [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+              (click)="hidePassword.set(!hidePassword())"
+            >
+              <mat-icon [fontIcon]="hidePassword() ? 'visibility_off' : 'visibility'"></mat-icon>
+            </button>
+          </mat-form-field>
+          <app-form-field-error
+            [control]="form.controls.password"
+            label="Password"
+          />
+        </div>
+
+        <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <mat-checkbox formControlName="rememberMe">Remember me</mat-checkbox>
+          <a href="#" class="auth-link">Forgot password?</a>
+        </div>
+
+        <div class="col-12">
+          <button
+            type="submit"
+            mat-raised-button
+            class="auth-primary-btn w-100"
+            [disabled]="!canSubmit()"
+          >
+            {{ loading() ? 'Signing in…' : 'Log in' }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div class="mt-3 d-grid gap-3">
+      @for (feature of features(); track feature.title) {
+        <app-feature-card
+          [icon]="feature.icon"
+          [title]="feature.title"
+          [description]="feature.description"
+        />
+      }
+    </div>
+
+    <div class="visually-divider my-3">Quick access</div>
+
+    <div class="row g-3">
+      <div class="col-12 col-sm-6">
+        <app-social-button label="Google" icon="mail" />
+      </div>
+
+      <div class="col-12 col-sm-6">
+        <app-social-button label="Apple" icon="phone_iphone" />
+      </div>
+    </div>
+  </div>
+</section>

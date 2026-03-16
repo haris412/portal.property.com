@@ -1,29 +1,43 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { NotificationService } from '../services/notification.service';
+import { environment } from '../../../environments/environment';
 
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const notificationService = inject(NotificationService);
-  const token = authService.token();
+const authPrefix = `${environment.apiUrl}/api/auth`;
 
-  const authReq = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+function isAuthUrl(url: string): boolean {
+  return url.startsWith(authPrefix);
+}
 
-  return next(authReq).pipe(
-    catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
-        authService.logout();
-        notificationService.error('Session expired. Please log in again.');
-      } else if (error.status === 403) {
-        notificationService.error('You do not have permission to perform this action.');
-      } else if (error.status >= 500) {
-        notificationService.error('A server error occurred. Please try again later.');
+export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
+  const auth = inject(AuthService);
+  const token = auth.getAccessToken();
+
+  let outgoing = req;
+  if (!isAuthUrl(req.url) && token) {
+    outgoing = req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` }
+    });
+  }
+
+  return next(outgoing).pipe(
+    catchError((err: HttpErrorResponse) => {
+      if (err.status !== 401) return throwError(() => err);
+      if (isAuthUrl(req.url) && req.url.includes('refresh-token')) {
+        auth.logout();
+        return throwError(() => err);
       }
-      return throwError(() => error);
+
+      return auth.refreshAccessToken().pipe(
+        switchMap((newToken) => {
+          if (!newToken) return throwError(() => err);
+          return next(req.clone({
+            setHeaders: { Authorization: `Bearer ${newToken}` }
+          }));
+        }),
+        catchError(() => throwError(() => err))
+      );
     })
   );
 };

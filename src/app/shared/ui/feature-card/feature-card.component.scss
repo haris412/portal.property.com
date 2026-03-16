@@ -1,0 +1,24 @@
+.feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+}
+
+.feature-copy {
+  min-width: 0;
+}
+
+.feature-title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--font-main);
+}
+
+.feature-description {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--font-secondary);
+}

@@ -1,10 +1,34 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
+import { AuthPortalPageComponent } from './features/auth/pages/auth-portal-page/auth-portal-page.component';
+import { VerifyEmailComponent } from './features/auth/components/verify-email/verify-email.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
+    path: 'auth',
+    component: AuthPortalPageComponent,
+    title: 'Sign in',
+  },
+  {
+    path: 'auth/verify-email',
+    component: VerifyEmailComponent,
+    title: 'Verify email',
+  },
+  {
+    path: 'verify-email',
+    component: VerifyEmailComponent,
+    title: 'Verify email',
+  },
+  {
+    path: 'login',
+    redirectTo: 'auth',
+    pathMatch: 'full',
+  },
+  {
     path: '',
     component: LayoutComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: '',
@@ -40,7 +64,7 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/add-listing/add-listing.routes').then((m) => m.ADD_LISTING_ROUTES),
         title: 'Listings',
-      }
+      },
     ],
   },
   {

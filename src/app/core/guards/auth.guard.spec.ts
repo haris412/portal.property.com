@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { signal } from '@angular/core';
 import { vi } from 'vitest';
 import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
@@ -22,22 +21,22 @@ describe('authGuard', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: AuthService, useValue: { isAuthenticated: signal(true) } },
+        { provide: AuthService, useValue: { isLoggedIn: () => true } },
         { provide: Router, useValue: mockRouter },
       ],
     });
   });
 
   it('should allow access when authenticated', () => {
-    TestBed.overrideProvider(AuthService, { useValue: { isAuthenticated: signal(true) } });
+    TestBed.overrideProvider(AuthService, { useValue: { isLoggedIn: () => true } });
     const result = runGuard();
     expect(result).toBe(true);
   });
 
   it('should redirect when not authenticated', () => {
-    TestBed.overrideProvider(AuthService, { useValue: { isAuthenticated: signal(false) } });
+    TestBed.overrideProvider(AuthService, { useValue: { isLoggedIn: () => false } });
     const result = runGuard();
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth']);
     expect(result).toBeTruthy();
     expect(result).not.toBe(true);
   });
