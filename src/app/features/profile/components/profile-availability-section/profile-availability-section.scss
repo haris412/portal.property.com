@@ -1,0 +1,82 @@
+.profile-section-card {
+  padding: 1.35rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+
+  &__header {
+    margin-bottom: 1rem;
+
+    h2 {
+      margin: 0 0 0.25rem;
+      color: var(--font-main);
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    p {
+      margin: 0;
+      color: var(--font-secondary);
+    }
+  }
+}
+
+.availability-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.availability-row {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--tertiary);
+  grid-template-columns: 1fr;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 1.1fr 1fr 1fr 1fr;
+    align-items: end;
+  }
+
+  &__day {
+    color: var(--font-main);
+  }
+
+  &__time {
+    display: grid;
+    gap: 0.35rem;
+
+    label {
+      color: var(--font-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    input {
+      min-height: 46px;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--font-main);
+      outline: none;
+    }
+  }
+}
+
+.profile-form {
+  &__actions {
+    margin-top: 1rem;
+  }
+
+  &__primary-btn {
+    --mdc-filled-button-container-color: var(--primary);
+    --mdc-filled-button-label-text-color: #fff;
+    min-height: 46px;
+    border-radius: 12px;
+    font-weight: 700;
+  }
+}

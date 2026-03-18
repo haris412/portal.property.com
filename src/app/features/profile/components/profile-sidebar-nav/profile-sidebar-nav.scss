@@ -1,0 +1,37 @@
+.profile-nav {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 48px;
+    padding: 0.85rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--font-main);
+    font-weight: 600;
+    text-align: left;
+    transition:
+      background-color 0.22s ease,
+      border-color 0.22s ease,
+      color 0.22s ease;
+
+    &:hover {
+      background: var(--tertiary);
+    }
+
+    &--active {
+      background: var(--surface-soft);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+  }
+}

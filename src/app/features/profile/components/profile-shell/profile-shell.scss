@@ -1,0 +1,65 @@
+.profile-shell {
+  &__header {
+    margin-bottom: 1.5rem;
+  }
+
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 1.25rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+  }
+
+  &__avatar-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__avatar {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface-soft);
+
+    &--placeholder {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 1.2rem;
+      border: 1px solid var(--border-soft);
+    }
+  }
+
+  &__title {
+    margin: 0 0 0.2rem;
+    color: var(--font-main);
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    font-weight: 800;
+  }
+
+  &__subtitle {
+    margin: 0;
+    color: var(--font-secondary);
+  }
+
+  &__sidebar-wrap {
+    @media (min-width: 1200px) {
+      position: sticky;
+      top: 104px;
+    }
+  }
+
+  &__content-stack {
+    display: grid;
+    gap: 1.25rem;
+  }
+}

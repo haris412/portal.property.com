@@ -1,0 +1,69 @@
+<section class="profile-shell container py-4 py-lg-5">
+  <div class="profile-shell__header">
+    <div class="profile-shell__identity">
+      <div class="profile-shell__avatar-wrap">
+        @if (profile().avatarUrl) {
+          <img
+            class="profile-shell__avatar"
+            [src]="profile().avatarUrl"
+            [alt]="profile().firstName + ' ' + profile().lastName"
+          />
+        } @else {
+          <div class="profile-shell__avatar profile-shell__avatar--placeholder">
+            {{ profile().firstName.charAt(0) }}{{ profile().lastName.charAt(0) }}
+          </div>
+        }
+      </div>
+
+      <div>
+        <h1 class="profile-shell__title">
+          {{ profile().firstName }} {{ profile().lastName }}
+        </h1>
+
+        <p class="profile-shell__subtitle">
+          {{ profile().title || 'Profile Settings' }}
+          @if (profile().company) {
+            <span>· {{ profile().company }}</span>
+          }
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mt-1">
+    <div class="col-12 col-xl-3">
+      <div class="profile-shell__sidebar-wrap">
+        <app-profile-sidebar-nav
+          [items]="sidebarItems()"
+          [activeSection]="activeSection()"
+          [role]="profile().role"
+          (sectionChanged)="setActiveSection($event)"
+        />
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-9">
+      <div class="profile-shell__content-stack">
+        @if (activeSection() === 'account') {
+          <app-profile-account-section
+            [profile]="profile()"
+            (saved)="accountSaved.emit($event)"
+          />
+        }
+
+        @if (activeSection() === 'security') {
+          <app-profile-security-section
+            (saved)="passwordChanged.emit($event)"
+          />
+        }
+
+        @if (activeSection() === 'availability' && profile().role === 'agent') {
+          <app-profile-availability-section
+            [availability]="profile().availability || []"
+            (saved)="availabilitySaved.emit($event)"
+          />
+        }
+      </div>
+    </div>
+  </div>
+</section>

@@ -28,7 +28,8 @@ export class SidebarComponent {
     { label: 'Properties', route: '/properties', icon: 'home_work' },
     { label: 'Add Listing', route: '/add-listing', icon: 'add_business' },
     { label: 'Messages', route: '/messages', icon: 'chat_bubble', badge: '4' },
-    { label: 'Settings', route: '/settings', icon: 'settings' }
+    { label: 'Settings', route: '/settings', icon: 'settings' },
+    { label: 'Profile', route: '/profile', icon: 'person' }
   ];
 
   onCollapseClick(): void {

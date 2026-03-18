@@ -1,0 +1,37 @@
+.profile-section-card {
+  padding: 1.35rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+
+  &__header {
+    margin-bottom: 1rem;
+
+    h2 {
+      margin: 0 0 0.25rem;
+      color: var(--font-main);
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    p {
+      margin: 0;
+      color: var(--font-secondary);
+    }
+  }
+}
+
+.profile-form {
+  &__actions {
+    margin-top: 1rem;
+  }
+
+  &__primary-btn {
+    --mdc-filled-button-container-color: var(--primary);
+    --mdc-filled-button-label-text-color: #fff;
+    min-height: 46px;
+    border-radius: 12px;
+    font-weight: 700;
+  }
+}

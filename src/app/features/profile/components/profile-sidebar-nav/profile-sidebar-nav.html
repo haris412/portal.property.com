@@ -1,0 +1,17 @@
+<nav class="profile-nav" aria-label="Profile sections">
+  @for (item of items(); track item.id) {
+    @if (isVisible(item)) {
+      <button
+        type="button"
+        class="profile-nav__item"
+        [class.profile-nav__item--active]="activeSection() === item.id"
+        (click)="sectionChanged.emit(item.id)"
+      >
+        <mat-icon fontSet="material-symbols-outlined" inline>
+          {{ item.icon }}
+        </mat-icon>
+        <span>{{ item.label }}</span>
+      </button>
+    }
+  }
+</nav>

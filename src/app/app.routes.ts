@@ -23,7 +23,7 @@ export const routes: Routes = [
   {
     path: '',
     component: LayoutComponent,
-    canActivate: [authGuard],
+    // canActivate: [authGuard],
     children: [
       {
         path: '',
@@ -59,6 +59,12 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/add-listing/add-listing.routes').then((m) => m.ADD_LISTING_ROUTES),
         title: 'Listings',
+      },
+      {
+        path: 'profile',
+        loadChildren: () =>
+          import('./features/profile/profile.routes').then((m) => m.PROFILE_ROUTES),
+        title: 'Profile',
       },
     ],
   },
