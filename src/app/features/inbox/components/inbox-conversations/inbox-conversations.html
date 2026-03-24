@@ -1,0 +1,154 @@
+<section class="inbox-conversations container-fluid px-0">
+  <div class="inbox-conversations__header row g-3 align-items-start">
+    <div class="col-12 col-lg">
+      <div class="inbox-conversations__heading">
+        <h2 class="mb-2">Inbox Conversations</h2>
+        <p class="mb-0">
+          View buyer, tenant, and lead conversations without leaving your dashboard.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-auto">
+      <div class="d-flex justify-content-lg-end">
+        <button type="button" class="btn inbox-conversations__new-button">
+          <span class="material-symbols-outlined">edit_square</span>
+          <span>New Message</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="inbox-conversations__tabs">
+    <app-segmented-tabs
+      [tabs]="tabs()"
+      [active]="activeTab()"
+      ariaLabel="Inbox conversation filters"
+      (changed)="onTabChanged($event)"
+    />
+  </div>
+
+  <div class="row g-3 g-xl-4">
+    <div class="col-12 col-xl-4">
+      <aside class="conversation-list h-100">
+        <div class="conversation-list__stack">
+          @for (conversation of filteredConversations(); track trackByConversation($index, conversation)) {
+            <button
+              type="button"
+              class="conversation-card"
+              [class.conversation-card--active]="selectedConversationId() === conversation.id"
+              (click)="selectConversation(conversation.id)"
+            >
+              <div class="conversation-card__avatar-wrap">
+                <img
+                  class="conversation-card__avatar"
+                  [src]="conversation.avatar"
+                  [alt]="conversation.name"
+                />
+              </div>
+
+              <div class="conversation-card__content">
+                <div class="conversation-card__top">
+                  <h3>{{ conversation.name }}</h3>
+                  <span>{{ conversation.listTime }}</span>
+                </div>
+
+                <p class="conversation-card__meta mb-1">
+                  {{ conversation.title }}
+                </p>
+
+                <p class="conversation-card__preview mb-0">
+                  {{ getPreview(conversation) }}
+                </p>
+              </div>
+
+              @if (conversation.unread) {
+                <span class="conversation-card__dot"></span>
+              }
+            </button>
+          } @empty {
+            <div class="conversation-list__empty">
+              No conversations found in this tab.
+            </div>
+          }
+        </div>
+      </aside>
+    </div>
+
+    <div class="col-12 col-xl-8">
+      @if (selectedConversation(); as activeConversation) {
+        <section class="chat-panel">
+          <header class="chat-panel__header">
+            <div class="chat-panel__profile">
+              <img
+                class="chat-panel__avatar"
+                [src]="activeConversation.avatar"
+                [alt]="activeConversation.name"
+              />
+
+              <div class="chat-panel__info">
+                <h3>{{ activeConversation.name }}</h3>
+                <p>{{ activeConversation.propertyLine }}</p>
+              </div>
+            </div>
+
+            <div class="chat-panel__actions">
+              <button type="button" class="chat-icon-button" aria-label="Call">
+                <span class="material-symbols-outlined">call</span>
+              </button>
+
+              <button type="button" class="chat-icon-button" aria-label="Schedule">
+                <span class="material-symbols-outlined">calendar_month</span>
+              </button>
+            </div>
+          </header>
+
+          <div #messagesContainer class="chat-panel__messages">
+            @for (message of activeConversation.messages; track trackByMessage($index, message)) {
+              <div
+                class="chat-message"
+                [class.chat-message--mine]="message.sender === 'me'"
+              >
+                <div class="chat-message__bubble">
+                  <p class="mb-0">{{ message.text }}</p>
+                  <span>{{ message.time }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="chat-panel__reply">
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-sm">
+                <textarea
+                  class="form-control chat-panel__textarea"
+                  rows="1"
+                  [ngModel]="replyText()"
+                  (ngModelChange)="replyText.set($event)"
+                  (keydown)="onReplyKeydown($event)"
+                  placeholder="Type your reply to {{ activeConversation.name }}..."
+                ></textarea>
+              </div>
+
+              <div class="col-12 col-sm-auto">
+                <button
+                  type="button"
+                  class="btn chat-panel__send-button w-100"
+                  (click)="sendMessage()"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      } @else {
+        <section class="chat-panel chat-panel--empty">
+          <div class="chat-panel__empty-state">
+            Select a conversation to view messages.
+          </div>
+        </section>
+      }
+    </div>
+  </div>
+</section>

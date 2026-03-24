@@ -1,10 +1,9 @@
 .segmented-tabs {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
   align-items: center;
   padding: 4px;
-  border: 1px solid #ead7ce;
+  border: 1px solid var(--color-border-soft, #ead9d0);
   border-radius: 16px;
   background: rgba(255, 248, 243, 0.72);
   overflow: hidden;
@@ -13,18 +12,15 @@
     position: absolute;
     top: 4px;
     left: 4px;
-    width: calc(50% - 4px);
     height: calc(100% - 8px);
     border-radius: 12px;
-    background: #ffffff;
+    background: var(--color-surface, #ffffff);
     box-shadow: 0 8px 24px rgba(31, 22, 48, 0.08);
     transition:
       transform 220ms ease,
-      opacity 220ms ease;
-
-    &--login {
-      transform: translateX(100%);
-    }
+      opacity 220ms ease,
+      width 220ms ease;
+    will-change: transform;
   }
 
   &__button {
@@ -33,17 +29,18 @@
     min-height: 48px;
     border: 0;
     background: transparent;
-    color: #7a6676;
+    color: var(--color-text-secondary, #7a6676);
     font-size: 0.95rem;
     font-weight: 600;
     transition: color 180ms ease, opacity 180ms ease;
+    cursor: pointer;
 
     &--active {
-      color: #1f1630;
+      color: var(--color-text-primary, #1f1630);
     }
 
     &:focus-visible {
-      outline: 2px solid #ff6b57;
+      outline: 2px solid var(--color-primary, #ff6b57);
       outline-offset: -2px;
       border-radius: 12px;
     }

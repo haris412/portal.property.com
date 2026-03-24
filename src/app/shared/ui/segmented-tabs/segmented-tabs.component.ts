@@ -1,12 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  effect,
   input,
   output,
   signal
 } from '@angular/core';
 
-type AuthTab = 'signup' | 'login';
+export interface SegmentedTabItem {
+  key: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-segmented-tabs',
@@ -16,26 +21,35 @@ type AuthTab = 'signup' | 'login';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SegmentedTabsComponent {
-  readonly active = input.required<AuthTab>();
-  readonly changed = output<AuthTab>();
+  readonly tabs = input.required<SegmentedTabItem[]>();
+  readonly active = input.required<string>();
+  readonly ariaLabel = input<string>('Segmented tabs');
+  readonly switchDelayMs = input<number>(120);
 
-  readonly visualActive = signal<AuthTab>('signup');
+  readonly changed = output<string>();
+
+  readonly visualActive = signal<string>('');
   readonly isAnimating = signal(false);
 
-  private switchDelayMs = 120;
   private pendingTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  ngOnInit(): void {
-    this.visualActive.set(this.active());
+  constructor(private readonly destroyRef: DestroyRef) {
+    effect(() => {
+      const active = this.active();
+
+      if (!this.isAnimating()) {
+        this.visualActive.set(active);
+      }
+    });
+
+    this.destroyRef.onDestroy(() => {
+      if (this.pendingTimeoutId) {
+        clearTimeout(this.pendingTimeoutId);
+      }
+    });
   }
 
-  ngOnChanges(): void {
-    if (!this.isAnimating()) {
-      this.visualActive.set(this.active());
-    }
-  }
-
-  selectTab(next: AuthTab): void {
+  selectTab(next: string): void {
     if (next === this.active() || this.isAnimating()) {
       return;
     }
@@ -52,6 +66,35 @@ export class SegmentedTabsComponent {
       this.changed.emit(next);
       this.isAnimating.set(false);
       this.pendingTimeoutId = null;
-    }, this.switchDelayMs);
+    }, this.switchDelayMs());
+  }
+
+  getPillTransform(): string {
+    const items = this.tabs();
+    const currentKey = this.visualActive();
+
+    if (!items.length) {
+      return 'translateX(0)';
+    }
+
+    const activeIndex = Math.max(
+      items.findIndex(tab => tab.key === currentKey),
+      0
+    );
+
+    return `translateX(${activeIndex * 100}%)`;
+  }
+
+  getGridTemplateColumns(): string {
+    return `repeat(${this.tabs().length || 1}, 1fr)`;
+  }
+
+  getPillWidth(): string {
+    const length = this.tabs().length || 1;
+    return `calc((100% / ${length}) - 4px)`;
+  }
+
+  trackByKey(_: number, item: SegmentedTabItem): string {
+    return item.key;
   }
 }

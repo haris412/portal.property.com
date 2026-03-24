@@ -4,7 +4,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { AuthHeroPanelComponent } from '../../components/auth-hero-panel/auth-hero-panel.component';
 import { SignupCardComponent } from '../../components/signup-card/signup-card.component';
 import { LoginCardComponent } from '../../components/login-card/login-card.component';
-import { SegmentedTabsComponent } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
+import { SegmentedTabsComponent, SegmentedTabItem } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
 
 @Component({
   selector: 'app-auth-portal-page',
@@ -20,6 +20,10 @@ import { SegmentedTabsComponent } from '../../../../shared/ui/segmented-tabs/seg
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuthPortalPageComponent implements OnInit {
+  readonly authTabs: SegmentedTabItem[] = [
+    { key: 'login', label: 'Login' },
+    { key: 'signup', label: 'Sign Up' },
+  ];
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
@@ -33,5 +37,8 @@ export class AuthPortalPageComponent implements OnInit {
     if (this.route.snapshot.queryParamMap.keys.length > 0) {
       this.router.navigate(['/auth'], { replaceUrl: true });
     }
+  }
+  onTabChanged(tab: string): void {
+    this.activeSegment.set(tab as 'login' | 'signup');
   }
 }

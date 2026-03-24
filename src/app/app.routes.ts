@@ -66,6 +66,12 @@ export const routes: Routes = [
           import('./features/profile/profile.routes').then((m) => m.PROFILE_ROUTES),
         title: 'Profile',
       },
+      {
+        path: 'inbox',
+        loadChildren: () =>
+          import('./features/inbox/inbox.routes').then((m) => m.PROFILE_ROUTES),
+        title: 'Inbox',
+      }
     ],
   },
   {

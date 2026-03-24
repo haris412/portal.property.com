@@ -14,7 +14,7 @@
               </div>
             }
             <app-segmented-tabs [active]="activeSegment()"
-                                (changed)="activeSegment.set($event)" />
+                                (changed)="onTabChanged($event)" [tabs]="authTabs" />
 
             <div class="auth-form-area mt-3">
               @if (activeSegment() === 'signup') {

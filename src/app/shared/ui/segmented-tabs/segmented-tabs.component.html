@@ -1,31 +1,27 @@
-<div class="segmented-tabs" role="tablist" aria-label="Authentication tabs">
+<div
+  class="segmented-tabs"
+  role="tablist"
+  [attr.aria-label]="ariaLabel()"
+  [style.grid-template-columns]="getGridTemplateColumns()"
+>
   <div
     class="segmented-tabs__pill"
-    [class.segmented-tabs__pill--login]="visualActive() === 'login'"
     aria-hidden="true"
+    [style.width]="getPillWidth()"
+    [style.transform]="getPillTransform()"
   ></div>
 
-  <button
-    type="button"
-    role="tab"
-    class="segmented-tabs__button"
-    [class.segmented-tabs__button--active]="visualActive() === 'signup'"
-    [attr.aria-selected]="active() === 'signup'"
-    [attr.tabindex]="active() === 'signup' ? 0 : -1"
-    (click)="selectTab('signup')"
-  >
-    Sign up
-  </button>
-
-  <button
-    type="button"
-    role="tab"
-    class="segmented-tabs__button"
-    [class.segmented-tabs__button--active]="visualActive() === 'login'"
-    [attr.aria-selected]="active() === 'login'"
-    [attr.tabindex]="active() === 'login' ? 0 : -1"
-    (click)="selectTab('login')"
-  >
-    Log in
-  </button>
+  @for (tab of tabs(); track trackByKey($index, tab)) {
+    <button
+      type="button"
+      role="tab"
+      class="segmented-tabs__button"
+      [class.segmented-tabs__button--active]="visualActive() === tab.key"
+      [attr.aria-selected]="active() === tab.key"
+      [attr.tabindex]="active() === tab.key ? 0 : -1"
+      (click)="selectTab(tab.key)"
+    >
+      {{ tab.label }}
+    </button>
+  }
 </div>
