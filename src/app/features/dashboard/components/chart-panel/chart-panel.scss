@@ -1,0 +1,24 @@
+.chart-panel {
+  height: 100%;
+}
+
+.chart-panel__head {
+  margin-bottom: 16px;
+}
+
+.chart-panel__head h3 {
+  margin: 0 0 8px;
+  color: var(--font-main);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.chart-panel__head p {
+  margin: 0;
+  color: var(--font-secondary);
+}
+
+.chart-panel__chart {
+  width: 100%;
+  border-radius: var(--radius-lg);
+}

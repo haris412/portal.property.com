@@ -1,0 +1,57 @@
+.locations-demand-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+.locations-demand-card__head h3 {
+  margin: 0 0 8px;
+  color: var(--font-main);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.locations-demand-card__head p {
+  margin: 0;
+  color: var(--font-secondary);
+}
+
+.locations-demand-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.locations-demand-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.locations-demand-card__row strong {
+  color: var(--font-main);
+  font-size: 0.95rem;
+}
+
+.locations-demand-card__row span {
+  color: var(--font-secondary);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.locations-demand-card__bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+
+.locations-demand-card__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}

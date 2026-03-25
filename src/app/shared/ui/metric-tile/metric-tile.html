@@ -1,0 +1,13 @@
+<div class="metric-tile">
+  <div class="metric-tile__header">
+    <span class="metric-tile__title">{{ title() }}</span>
+    <span class="metric-tile__icon-wrap">
+      <mat-icon fontSet="material-symbols-outlined" inline>{{ icon() }}</mat-icon>
+    </span>
+  </div>
+
+  <div class="metric-tile__value">{{ value() }}</div>
+  @if (hint()) {
+    <div class="metric-tile__hint">{{ hint() }}</div>
+  }
+</div>

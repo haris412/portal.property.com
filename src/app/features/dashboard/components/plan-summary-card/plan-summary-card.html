@@ -1,0 +1,24 @@
+<app-section-card [title]="name()" [description]="description()">
+  <div class="plan-summary-card">
+    <div class="plan-summary-card__list">
+      @for (feature of features(); track feature.label) {
+        <div class="plan-summary-card__item">
+          <span>{{ feature.label }}</span>
+          <strong>{{ feature.value }}</strong>
+        </div>
+      }
+    </div>
+
+    <div class="plan-summary-card__usage">
+      <div class="plan-summary-card__usage-row">
+        <span>Plan usage</span>
+        <span>{{ used() }} of {{ listingLimit() }} listings used</span>
+      </div>
+      <div class="plan-summary-card__progress">
+        <span [style.width.%]="usagePercent()"></span>
+      </div>
+    </div>
+
+    <app-action-button label="Upgrade Plan" icon="trending_up" />
+  </div>
+</app-section-card>
