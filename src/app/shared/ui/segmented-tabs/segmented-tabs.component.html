@@ -2,26 +2,32 @@
   class="segmented-tabs"
   role="tablist"
   [attr.aria-label]="ariaLabel()"
-  [style.grid-template-columns]="getGridTemplateColumns()"
 >
-  <div
-    class="segmented-tabs__pill"
-    aria-hidden="true"
-    [style.width]="getPillWidth()"
-    [style.transform]="getPillTransform()"
-  ></div>
-
-  @for (tab of tabs(); track trackByKey($index, tab)) {
-    <button
-      type="button"
-      role="tab"
-      class="segmented-tabs__button"
-      [class.segmented-tabs__button--active]="visualActive() === tab.key"
-      [attr.aria-selected]="active() === tab.key"
-      [attr.tabindex]="active() === tab.key ? 0 : -1"
-      (click)="selectTab(tab.key)"
+  <div class="segmented-tabs__scroll">
+    <div
+      class="segmented-tabs__inner"
+      [style.grid-template-columns]="getGridTemplateColumns()"
     >
-      {{ tab.label }}
-    </button>
-  }
+      <div
+        class="segmented-tabs__pill"
+        aria-hidden="true"
+        [style.width]="getPillWidth()"
+        [style.transform]="getPillTransform()"
+      ></div>
+
+      @for (tab of tabs(); track trackByKey($index, tab)) {
+        <button
+          type="button"
+          role="tab"
+          class="segmented-tabs__button"
+          [class.segmented-tabs__button--active]="visualActive() === tab.key"
+          [attr.aria-selected]="active() === tab.key"
+          [attr.tabindex]="active() === tab.key ? 0 : -1"
+          (click)="selectTab(tab.key)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+  </div>
 </div>
