@@ -54,7 +54,8 @@ export class AddListingPageComponent {
   constructor(private readonly fb: FormBuilder) {
     this.basicInfoForm = this.fb.group({
       purpose: ['rent', Validators.required],
-      propertyType: ['Apartment', Validators.required],
+      propertyCategoryName: ['', Validators.required],
+      propertySubtypeName: [''],
       listingTitle: ['', [Validators.required, Validators.maxLength(120)]],
       propertyDescription: ['', [Validators.required, Validators.minLength(20)]],
     });
@@ -70,14 +71,7 @@ export class AddListingPageComponent {
     });
 
     this.amenitiesForm = this.fb.group({
-      hasWifi: [true],
-      hasSwimmingPool: [true],
-      hasGym: [false],
-      hasGarage: [true],
-      hasCentralAc: [true],
-      hasBalcony: [false],
-      hasSecurity: [false],
-      hasGarden: [true],
+      selectedFeatureIds: [[] as string[]],
     });
 
     this.mediaForm = this.fb.group({
@@ -97,6 +91,8 @@ export class AddListingPageComponent {
       neighborhood: [''],
       fullAddress: ['', Validators.required],
       mapLink: [''],
+      latitude: [null as number | null],
+      longitude: [null as number | null],
     });
   }
 
@@ -139,9 +135,26 @@ export class AddListingPageComponent {
         ? 'For Sale'
         : 'For Rent';
 
+    const propertyType = this.addListingService.getCoarsePropertyTypeFromLabels(
+      basic.propertyCategoryName,
+      basic.propertySubtypeName
+    );
+    const categoryName = (basic.propertyCategoryName ?? '').trim();
+    const subtypeName = (basic.propertySubtypeName ?? '').trim();
+    /** Shown + stored as the “detail” type; falls back to category if no subtype row. */
+    const subtype = (subtypeName || categoryName).trim();
+    const amenityBooleans = this.addListingService.buildAmenityBooleanPayload(
+      amenities.selectedFeatureIds ?? []
+    );
+
     return {
       purpose,
-      propertyType: basic.propertyType,
+      propertyType,
+      subtype,
+      /** Same as `subtype`; many APIs only persist camelCase fields aligned with `propertyType`. */
+      propertySubtype: subtype,
+      propertyCategoryName: categoryName,
+      propertySubtypeName: subtypeName,
       listingTitle: basic.listingTitle,
       propertyDescription: basic.propertyDescription,
       price: pricing.price,
@@ -151,14 +164,7 @@ export class AddListingPageComponent {
       numBathrooms: pricing.numBathrooms,
       numParkingSpaces: pricing.numParkingSpaces,
       numFloors: pricing.numFloors,
-      hasWifi: amenities.hasWifi,
-      hasSwimmingPool: amenities.hasSwimmingPool,
-      hasGym: amenities.hasGym,
-      hasGarage: amenities.hasGarage,
-      hasCentralAc: amenities.hasCentralAc,
-      hasBalcony: amenities.hasBalcony,
-      hasSecurity: amenities.hasSecurity,
-      hasGarden: amenities.hasGarden,
+      ...amenityBooleans,
       images: media.images,
       videoFiles: media.videoFiles,
       contactName: contact.contactName,
@@ -169,6 +175,8 @@ export class AddListingPageComponent {
       neighborhood: location.neighborhood,
       fullAddress: location.fullAddress,
       mapLink: location.mapLink,
+      latitude: location.latitude,
+      longitude: location.longitude,
     };
   }
 }

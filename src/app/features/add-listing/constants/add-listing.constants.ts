@@ -10,5 +10,3 @@ export const ADD_LISTING_HEADER_ACTIONS = {
   SAVE_DRAFT: 'save-draft',
   PUBLISH_LISTING: 'publish-listing',
 } as const;
-
-
