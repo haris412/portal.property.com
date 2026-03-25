@@ -1,3 +1,4 @@
+import { AppointmentListItem } from "../../core/models/appointment.models";
 export interface PortfolioMetric {
   title: string;
   value: number;
@@ -96,9 +97,9 @@ export const LOCATION_DEMAND: LocationDemand[] = [
   { name: 'Capitol Hill', percent: 30 }
 ];
 
-export const APPOINTMENTS: AppointmentItem[] = [
+export const APPOINTMENTS: AppointmentListItem[] = [
   {
-    id: 1,
+    id: '1',
     property: '1200 Skyline Boulevard, Apt 4B',
     area: 'Downtown Seattle',
     date: '12 Mar 2026',
@@ -110,7 +111,7 @@ export const APPOINTMENTS: AppointmentItem[] = [
     status: 'confirmed'
   },
   {
-    id: 2,
+    id: '2',
     property: '88 Harbor View Residence',
     area: 'Waterfront District',
     date: '13 Mar 2026',
@@ -122,7 +123,7 @@ export const APPOINTMENTS: AppointmentItem[] = [
     status: 'pending'
   },
   {
-    id: 3,
+    id: '3',
     property: 'Maple Grove Family House',
     area: 'Bellevue Heights',
     date: '14 Mar 2026',

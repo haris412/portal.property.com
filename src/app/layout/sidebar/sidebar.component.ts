@@ -30,7 +30,8 @@ export class SidebarComponent {
     { label: 'Messages', route: '/messages', icon: 'chat_bubble', badge: '4' },
     { label: 'Settings', route: '/settings', icon: 'settings' },
     { label: 'Profile', route: '/profile', icon: 'person' },
-    { label: 'Inbox', route: '/inbox', icon: 'inbox' }
+    { label: 'Inbox', route: '/inbox', icon: 'inbox' },
+    { label: 'Appointments', route: '/appointments', icon: 'event' }
   ];
 
   onCollapseClick(): void {

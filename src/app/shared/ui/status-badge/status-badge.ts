@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { AppointmentStatus } from '../../../core/models/appointment.models';
 
 @Component({
   selector: 'app-status-badge',
@@ -9,13 +10,17 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StatusBadgeComponent {
-  readonly status = input.required<'confirmed' | 'pending' | 'rescheduled'>();
+  readonly status = input.required<AppointmentStatus>();
 
   readonly label = computed(() => {
     const status = this.status();
 
     if (status === 'confirmed') return 'Confirmed';
     if (status === 'pending') return 'Pending';
-    return 'Rescheduled';
+    if (status === 'completed') return 'Completed';
+    if (status === 'cancelled') return 'Cancelled';
+    if (status === 'rescheduled') return 'Rescheduled';
+
+    return status;
   });
 }

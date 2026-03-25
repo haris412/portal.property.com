@@ -91,7 +91,7 @@ export class SegmentedTabsComponent {
 
   getPillWidth(): string {
     const length = this.tabs().length || 1;
-    return `calc((100% / ${length}) - 4px)`;
+    return `calc((100% / ${length}) - 2px)`;
   }
 
   trackByKey(_: number, item: SegmentedTabItem): string {

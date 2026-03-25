@@ -1,58 +1,8 @@
-<app-section-card title="All Appointments" description="Track upcoming site visits, buyer meetings, and tenant viewing requests in one place.">
-  <div class="appointments-table-card">
-
-    <div class="appointments-table-card__desktop d-none d-lg-block">
-      <div class="appointments-table-card__table-header">
-        <span>Property</span>
-        <span>Date</span>
-        <span>Client</span>
-        <span>Time</span>
-        <span>Status</span>
-        <span></span>
-      </div>
-
-      @for (appointment of appointments(); track appointment.id) {
-        <button type="button" class="appointments-table-card__row" (click)="goToAppointments()">
-          <div>
-            <strong>{{ appointment.property }}</strong>
-            <span>{{ appointment.area }}</span>
-          </div>
-          <div>
-            <strong>{{ appointment.date }}</strong>
-            <span>{{ appointment.type }}</span>
-          </div>
-          <div>
-            <strong>{{ appointment.client }}</strong>
-            <span>{{ appointment.role }} · {{ appointment.phone }}</span>
-          </div>
-          <div>
-            <strong>{{ appointment.time }}</strong>
-          </div>
-          <div>
-            <app-status-badge [status]="appointment.status" />
-          </div>
-          <div class="appointments-table-card__arrow">
-            <mat-icon fontSet="material-symbols-outlined" inline>chevron_right</mat-icon>
-          </div>
-        </button>
-      }
-    </div>
-
-    <div class="appointments-table-card__mobile d-lg-none">
-      @for (appointment of appointments(); track appointment.id) {
-        <button type="button" class="appointments-table-card__mobile-item" (click)="goToAppointments()">
-          <div class="appointments-table-card__mobile-top">
-            <strong>{{ appointment.property }}</strong>
-            <app-status-badge [status]="appointment.status" />
-          </div>
-
-          <div class="appointments-table-card__mobile-meta">{{ appointment.area }}</div>
-          <div class="appointments-table-card__mobile-meta">{{ appointment.date }} · {{ appointment.time }}</div>
-          <div class="appointments-table-card__mobile-meta">
-            {{ appointment.client }} · {{ appointment.role }}
-          </div>
-        </button>
-      }
-    </div>
-  </div>
+<app-section-card title="All Appointments"
+                  description="Track upcoming site visits, buyer meetings, and tenant viewing requests in one place.">
+  <app-appointments-list [appointments]="appointments()"
+                         viewerRole="agent"
+                         [showArrow]="true"
+                         [clickableRows]="true"
+                         (rowClicked)="goToAppointments()" />
 </app-section-card>

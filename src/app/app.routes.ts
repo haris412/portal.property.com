@@ -71,7 +71,13 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/inbox/inbox.routes').then((m) => m.PROFILE_ROUTES),
         title: 'Inbox',
-      }
+      },
+      {
+        path: 'appointments',
+        loadChildren: () =>
+          import('./features/appointments/appointments.routes').then((m) => m.APPOINTMENTS_ROUTES),
+        title: 'Appointments',
+      },
     ],
   },
   {
