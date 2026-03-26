@@ -1,0 +1,138 @@
+<div class="appointments-list">
+  <div class="appointments-list__desktop d-none d-lg-block">
+    <div class="appointments-list__table-header"
+         [class.appointments-list__table-header--with-actions]="showActions()"
+         [class.appointments-list__table-header--with-arrow]="showArrow()">
+      <span>Property</span>
+      <span>Date</span>
+      <span>{{ personColumnLabel() }}</span>
+      <span>Time</span>
+      <span>Status</span>
+
+      @if (showActions()) {
+      <span class="text-end">Actions</span>
+      } @else if (showArrow()) {
+      <span></span>
+      }
+    </div>
+
+    @for (appointment of appointments(); track trackById($index, appointment)) {
+    <button type="button"
+            class="appointments-list__row"
+            [class.appointments-list__row--clickable]="clickableRows()"
+            [class.appointments-list__row--with-actions]="showActions()"
+            [class.appointments-list__row--with-arrow]="showArrow()"
+            (click)="onRowClick(appointment)">
+      <div>
+        <strong>{{ appointment.property }}</strong>
+        <span>{{ appointment.area }}</span>
+      </div>
+
+      <div>
+        <strong>{{ appointment.date }}</strong>
+        <span>{{ appointment.type }}</span>
+      </div>
+
+      <div>
+        <strong>{{ getPersonName(appointment) }}</strong>
+        <span>{{ getPersonSubline(appointment) }}</span>
+      </div>
+
+      <div>
+        <strong>{{ appointment.time }}</strong>
+      </div>
+
+      <div>
+        <div class="appointments-list__badges">
+          <app-status-badge [status]="appointment.status" />
+
+          @if (appointment.isRescheduled) {
+          <app-status-badge status="rescheduled" />
+          }
+        </div>
+      </div>
+
+      @if (showActions()) {
+      <div class="appointments-list__actions">
+        @if (canConfirm(appointment)) {
+        <button type="button"
+                class="appointments-list__action appointments-list__action--primary"
+                (click)="onConfirm(appointment, $event)">
+          Confirm
+        </button>
+        }
+
+        @if (canReschedule(appointment)) {
+        <button type="button"
+                class="appointments-list__action"
+                (click)="onReschedule(appointment, $event)">
+          Reschedule
+        </button>
+        }
+
+        @if (canCancel(appointment)) {
+        <button type="button"
+                class="appointments-list__action appointments-list__action--danger"
+                (click)="onCancel(appointment, $event)">
+          Cancel
+        </button>
+        }
+      </div>
+      } @else if (showArrow()) {
+      <div class="appointments-list__arrow">
+        <mat-icon fontSet="material-symbols-outlined"
+                  inline>chevron_right</mat-icon>
+      </div>
+      }
+    </button>
+    }
+  </div>
+
+  <div class="appointments-list__mobile d-lg-none">
+    @for (appointment of appointments(); track trackById($index, appointment)) {
+    <button type="button"
+            class="appointments-list__mobile-item"
+            [class.appointments-list__mobile-item--clickable]="clickableRows()"
+            (click)="onRowClick(appointment)">
+      <div class="appointments-list__mobile-top">
+        <strong>{{ appointment.property }}</strong>
+        <app-status-badge [status]="appointment.status" />
+      </div>
+
+      <div class="appointments-list__mobile-meta">{{ appointment.area }}</div>
+      <div class="appointments-list__mobile-meta">{{ appointment.date }} · {{ appointment.time }}</div>
+      <div class="appointments-list__mobile-meta">
+        {{ getPersonName(appointment) }} · {{ appointment.role }}
+      </div>
+
+      @if (showActions()) {
+      <div class="appointments-list__mobile-actions">
+        @if (canConfirm(appointment)) {
+        <button type="button"
+                class="appointments-list__action appointments-list__action--primary"
+                (click)="onConfirm(appointment, $event)">
+          Confirm
+        </button>
+        }
+
+        @if (canReschedule(appointment)) {
+        <button type="button"
+                class="appointments-list__action"
+                (click)="onReschedule(appointment, $event)">
+          Reschedule
+        </button>
+        }
+
+        @if (canCancel(appointment)) {
+        <button type="button"
+                class="appointments-list__action appointments-list__action--danger"
+                (click)="onCancel(appointment, $event)">
+          Cancel
+        </button>
+        }
+      </div>
+      }
+    </button>
+    }
+  </div>
+</div>

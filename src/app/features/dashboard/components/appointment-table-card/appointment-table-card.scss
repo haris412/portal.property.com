@@ -1,0 +1,102 @@
+.appointments-table-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.appointments-table-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.appointments-table-card__head h3 {
+  margin: 0 0 8px;
+  color: var(--font-main);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.appointments-table-card__head p {
+  margin: 0;
+  color: var(--font-secondary);
+  line-height: 1.6;
+}
+
+.appointments-table-card__table-header,
+.appointments-table-card__row {
+  display: grid;
+  grid-template-columns: 2.3fr 1.4fr 1.6fr 0.9fr 1fr 32px;
+  gap: 16px;
+  align-items: center;
+}
+
+.appointments-table-card__table-header {
+  padding: 0 16px 12px;
+  color: var(--font-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.appointments-table-card__row {
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  background: linear-gradient(180deg, #fff8f4 0%, #fff 100%);
+  border-radius: 14px;
+  padding: 18px 16px;
+  text-align: left;
+  margin-bottom: 12px;
+}
+
+.appointments-table-card__row strong,
+.appointments-table-card__mobile-item strong {
+  display: block;
+  color: var(--font-main);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.appointments-table-card__row span,
+.appointments-table-card__mobile-meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--font-secondary);
+  font-size: 0.875rem;
+}
+
+.appointments-table-card__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--font-secondary);
+}
+
+.appointments-table-card__mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appointments-table-card__mobile-item {
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff8f4 0%, #fff 100%);
+  padding: 16px;
+  text-align: left;
+}
+
+.appointments-table-card__mobile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 767.98px) {
+  .appointments-table-card__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

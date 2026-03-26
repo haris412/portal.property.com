@@ -1,0 +1,8 @@
+<app-section-card title="All Appointments"
+                  description="Track upcoming site visits, buyer meetings, and tenant viewing requests in one place.">
+  <app-appointments-list [appointments]="appointments()"
+                         viewerRole="agent"
+                         [showArrow]="true"
+                         [clickableRows]="true"
+                         (rowClicked)="goToAppointments()" />
+</app-section-card>

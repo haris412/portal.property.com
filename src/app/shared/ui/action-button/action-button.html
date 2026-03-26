@@ -1,0 +1,4 @@
+<button type="button" class="action-button" [class]="classes()" (click)="clicked.emit()">
+  <mat-icon fontSet="material-symbols-outlined" inline>{{ icon() }}</mat-icon>
+  <span>{{ label() }}</span>
+</button>

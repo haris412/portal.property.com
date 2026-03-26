@@ -1,0 +1,44 @@
+<app-section-card [title]="'My Proper'">
+  <div class="portfolio-breakdown-card">
+    <div class="row g-3">
+      <div class="col-12 col-xl-4">
+        <div class="portfolio-breakdown-card__summary-tile">
+          <div class="portfolio-breakdown-card__summary-title">Total active portfolio</div>
+          <div class="portfolio-breakdown-card__summary-value">{{ activePortfolio() }}</div>
+          <p>{{ monthlyHint() }}</p>
+
+          <div class="portfolio-breakdown-card__share-grid">
+            <div class="portfolio-breakdown-card__share-box">
+              <span>Sale share</span>
+              <strong>{{ saleShare() }}%</strong>
+            </div>
+            <div class="portfolio-breakdown-card__share-box">
+              <span>Rent share</span>
+              <strong>{{ rentShare() }}%</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-8">
+        <div class="row g-3">
+          @for (metric of metrics(); track metric.title) {
+            <div class="col-12 col-md-6">
+              <app-metric-tile
+                [title]="metric.title"
+                [value]="metric.value"
+                [hint]="metric.hint"
+                [icon]="metric.icon"
+              />
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-breakdown-card__footer">
+      <span>{{ footerText() }}</span>
+      <button type="button">Manage portfolio</button>
+    </div>
+  </div>
+</app-section-card>

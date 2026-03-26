@@ -1,0 +1,22 @@
+<div class="dashboard-topbar row g-3 align-items-center">
+  <div class="col-12 col-lg">
+    <div class="dashboard-topbar__search">
+      <mat-icon fontSet="material-symbols-outlined" inline>search</mat-icon>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Search properties, leads, or locations..."
+      />
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-auto">
+    <div class="dashboard-topbar__actions">
+      <button type="button" class="dashboard-topbar__icon-btn" aria-label="Notifications">
+        <mat-icon fontSet="material-symbols-outlined" inline>notifications</mat-icon>
+      </button>
+
+      <app-action-button label="Quick Add" icon="add" (clicked)="goToAddListing()" />
+    </div>
+  </div>
+</div>

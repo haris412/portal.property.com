@@ -1,0 +1,24 @@
+<section class="appointments-page">
+  <app-section-card
+    title="All Appointments"
+    description="Track upcoming site visits, buyer meetings, and tenant viewing requests in one place."
+  >
+    <app-segmented-tabs
+      [tabs]="tabs()"
+      [active]="activeTab()"
+      ariaLabel="Appointment filters"
+      (changed)="onTabChanged($event)"
+    />
+
+    <div class="appointments-page__list">
+      <app-appointments-list
+        [appointments]="filteredAppointments()"
+        [viewerRole]="viewerRole()"
+        [showActions]="true"
+        (confirmClicked)="confirmAppointment($event.id)"
+        (rescheduleClicked)="rescheduleAppointment($event.id)"
+        (cancelClicked)="cancelAppointment($event.id)"
+      />
+    </div>
+  </app-section-card>
+</section>

@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.agent-dashboard-page__welcome {
+  margin-bottom: 24px;
+}
+
+.agent-dashboard-page__welcome h1 {
+  margin: 0 0 8px;
+  color: var(--font-main);
+  font-size: clamp(2rem, 3vw, 3.25rem);
+  line-height: 1.05;
+  font-weight: 900;
+}
+
+.agent-dashboard-page__welcome p {
+  margin: 0;
+  color: var(--font-secondary);
+  font-size: 1rem;
+}
+
+.agent-dashboard-page__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
