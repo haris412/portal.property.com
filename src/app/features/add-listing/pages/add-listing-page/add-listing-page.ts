@@ -10,6 +10,13 @@ import { ContactInformationStepComponent } from '../../components/contact-inform
 import { AddListingService } from '../../../../core/services/add-listing.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ADD_LISTING_HEADER_ACTIONS } from '../../constants/add-listing.constants';
+import { MediaUploadService, ListingImagePayload } from '../../../../core/services/media-upload.service';
+import { firstValueFrom } from 'rxjs';
+
+interface UploadedMediaPayload {
+  images: ListingImagePayload[];
+  videoTourUrl: string | null;
+}
 
 @Component({
   selector: 'app-add-listing-page',
@@ -34,6 +41,7 @@ export class AddListingPageComponent {
   readonly mediaForm: FormGroup;
   readonly contactForm: FormGroup;
   readonly locationForm: FormGroup;
+  readonly isSubmitting = signal(false);
 
   readonly pageActions = signal<readonly PageHeaderAction[]>([
     {
@@ -50,6 +58,7 @@ export class AddListingPageComponent {
 
   private readonly addListingService = inject(AddListingService);
   private readonly notifications = inject(NotificationService);
+  private readonly mediaUploadService = inject(MediaUploadService);
 
   constructor(private readonly fb: FormBuilder) {
     this.basicInfoForm = this.fb.group({
@@ -96,37 +105,88 @@ export class AddListingPageComponent {
     });
   }
 
-  onHeaderAction(actionId: string): void {
+  async onHeaderAction(actionId: string): Promise<void> {
     if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT || actionId === ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING) {
+      if (this.isSubmitting()) {
+        return;
+      }
       if (this.basicInfoForm.invalid || this.pricingForm.invalid || this.contactForm.invalid || this.locationForm.invalid) {
         this.basicInfoForm.markAllAsTouched();
         this.pricingForm.markAllAsTouched();
         this.contactForm.markAllAsTouched();
         this.locationForm.markAllAsTouched();
+        this.notifications.warning('Please fill all required fields before uploading and submitting.');
         return;
       }
 
-      const payload = this.buildPayload() as any;
+      this.isSubmitting.set(true);
+      try {
+        const uploadedMedia = await this.uploadSelectedMedia();
+        const payload = this.buildPayload(uploadedMedia) as any;
 
-      if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) {
-        this.addListingService.saveDraft(payload).subscribe({
-          next: () => this.notifications.success('Draft saved successfully'),
-          error: () => this.notifications.error('Failed to save draft'),
-        });
-      } else {
-        this.addListingService.createListing(payload).subscribe({
-          next: () => this.notifications.success('Property added successfully'),
-          error: () => this.notifications.error('Failed to publish listing'),
-        });
+        if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) {
+          await firstValueFrom(this.addListingService.saveDraft(payload));
+          this.notifications.success('Draft saved successfully');
+        } else {
+          await firstValueFrom(this.addListingService.createListing(payload));
+          this.notifications.success('Property added successfully');
+        }
+      } catch (error: unknown) {
+        const message = this.resolveErrorMessage(error);
+        if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) {
+          this.notifications.error(message || 'Failed to save draft');
+        } else {
+          this.notifications.error(message || 'Failed to publish listing');
+        }
+      } finally {
+        this.isSubmitting.set(false);
       }
     }
   }
 
-  private buildPayload() {
+  private async uploadSelectedMedia(): Promise<UploadedMediaPayload> {
+    const media = this.mediaForm.value;
+    const images = (media.images ?? []) as File[];
+    const videoFiles = (media.videoFiles ?? []) as File[];
+
+    if (!images.length && !videoFiles.length) {
+      return { images: [], videoTourUrl: null };
+    }
+
+    this.notifications.info('Uploading media...');
+    try {
+      const uploadedImages = images.length ? await this.mediaUploadService.uploadImages(images) : [];
+      const videoTourUrl = videoFiles[0]
+        ? await this.mediaUploadService.uploadVideo(videoFiles[0])
+        : null;
+      this.notifications.success('Media uploaded successfully');
+
+      return {
+        images: uploadedImages,
+        videoTourUrl,
+      };
+    } catch (error: unknown) {
+      const details = this.resolveErrorMessage(error) || 'Media upload failed';
+      this.notifications.error(details);
+      throw new Error(details);
+    }
+  }
+
+  private resolveErrorMessage(error: unknown): string {
+    if (!error || typeof error !== 'object') {
+      return '';
+    }
+    const e = error as {
+      message?: string;
+      error?: { message?: string; errors?: Array<{ msg?: string }> };
+    };
+    return e.error?.message ?? e.error?.errors?.[0]?.msg ?? e.message ?? '';
+  }
+
+  private buildPayload(uploadedMedia: UploadedMediaPayload) {
     const basic = this.basicInfoForm.value;
     const pricing = this.pricingForm.value;
     const amenities = this.amenitiesForm.value;
-    const media = this.mediaForm.value;
     const contact = this.contactForm.value;
     const location = this.locationForm.value;
 
@@ -165,8 +225,8 @@ export class AddListingPageComponent {
       numParkingSpaces: pricing.numParkingSpaces,
       numFloors: pricing.numFloors,
       ...amenityBooleans,
-      images: media.images,
-      videoFiles: media.videoFiles,
+      images: uploadedMedia.images,
+      videoTourUrl: uploadedMedia.videoTourUrl,
       contactName: contact.contactName,
       contactEmail: contact.contactEmail,
       contactPhoneNumber: contact.contactPhoneNumber,
