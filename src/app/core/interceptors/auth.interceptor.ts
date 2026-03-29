@@ -5,6 +5,7 @@ import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 
 const authPrefix = `${environment.apiUrl}/api/auth`;
+const apiPrefix = `${environment.apiUrl}/api`;
 
 function isAuthUrl(url: string): boolean {
   return url.startsWith(authPrefix);
@@ -13,9 +14,11 @@ function isAuthUrl(url: string): boolean {
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
   const auth = inject(AuthService);
   const token = auth.getAccessToken();
+  const isApiRequest = req.url.startsWith(apiPrefix);
 
   let outgoing = req;
-  if (!isAuthUrl(req.url) && token) {
+  // Do not attach bearer token to external URLs (e.g. S3 signed upload URLs).
+  if (isApiRequest && !isAuthUrl(req.url) && token) {
     outgoing = req.clone({
       setHeaders: { Authorization: `Bearer ${token}` }
     });

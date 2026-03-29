@@ -11,9 +11,34 @@
           [icon]="block.icon"
           [title]="block.title"
           [subtitle]="block.subtitle"
+          [accept]="block.accept ?? ''"
           [multiple]="block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS"
           (filesSelected)="onFilesSelected(block.id, $event)"
         />
+
+        @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS && selectedImagePreviews().length) {
+          <p class="selection-meta">Selected {{ selectedImagePreviews().length }} image(s)</p>
+          <div class="preview-grid">
+            @for (image of selectedImagePreviews(); track image.url; let i = $index) {
+              <div class="preview-card">
+                <span class="preview-card__index">{{ i + 1 }}</span>
+                <button
+                  type="button"
+                  class="preview-card__remove"
+                  (click)="removeSelectedImage(i)"
+                  aria-label="Remove selected image"
+                >
+                  <mat-icon fontIcon="close" aria-hidden="true"></mat-icon>
+                </button>
+                <img [src]="image.url" [alt]="image.name" class="preview-card__image" />
+                <p class="preview-card__name">{{ image.name }}</p>
+              </div>
+            }
+          </div>
+        }
+        @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.VIDEO && selectedVideoName()) {
+          <p class="selection-meta">Selected: {{ selectedVideoName() }}</p>
+        }
       </div>
     }
   </div>

@@ -4,6 +4,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { StepCardComponent } from '../../../../shared/ui/step-card/step-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
+import { LocationMapPickerComponent } from '../location-map-picker/location-map-picker';
 
 interface LocationField {
   id: string;
@@ -18,7 +19,8 @@ interface LocationField {
     MatFormFieldModule,
     MatInputModule,
     StepCardComponent,
-    InfoBannerComponent
+    InfoBannerComponent,
+    LocationMapPickerComponent
   ],
   templateUrl: './property-location-step.html',
   styleUrl: './property-location-step.scss',

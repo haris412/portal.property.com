@@ -1,18 +1,34 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormBuilder } from '@angular/forms';
+import { of } from 'rxjs';
+import { FeaturesAmenitiesSectionComponent } from './features-amenities-section';
+import { AddListingService } from '../../../../core/services/add-listing.service';
 
-import { FeaturesAmenitiesSection } from './features-amenities-section';
-
-describe('FeaturesAmenitiesSection', () => {
-  let component: FeaturesAmenitiesSection;
-  let fixture: ComponentFixture<FeaturesAmenitiesSection>;
+describe('FeaturesAmenitiesSectionComponent', () => {
+  let component: FeaturesAmenitiesSectionComponent;
+  let fixture: ComponentFixture<FeaturesAmenitiesSectionComponent>;
 
   beforeEach(async () => {
+    const addListingService = jasmine.createSpyObj('AddListingService', [
+      'getPropertyFeatures',
+      'invalidatePropertyFeaturesCache'
+    ]);
+    addListingService.getPropertyFeatures.and.returnValue(
+      of([
+        { _id: '1', name: 'Wi-Fi', slug: 'wifi', position: 0 }
+      ])
+    );
+
     await TestBed.configureTestingModule({
-      imports: [FeaturesAmenitiesSection],
+      imports: [FeaturesAmenitiesSectionComponent],
+      providers: [{ provide: AddListingService, useValue: addListingService }]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(FeaturesAmenitiesSection);
+    fixture = TestBed.createComponent(FeaturesAmenitiesSectionComponent);
     component = fixture.componentInstance;
+    const fb = new FormBuilder();
+    fixture.componentRef.setInput('form', fb.group({ selectedFeatureIds: [[] as string[]] }));
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

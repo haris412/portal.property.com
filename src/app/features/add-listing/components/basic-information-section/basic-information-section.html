@@ -11,18 +11,64 @@
         [selectedValue]="form.get('purpose')?.value"
         (changed)="form.get('purpose')?.setValue($event)"
       />
+
+      @if (!catalogError()) {
+        <label class="field-label d-block mt-4">Category</label>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select
+            formControlName="propertySubtypeName"
+            placeholder="Select subtype"
+            [disabled]="
+              catalogLoading() ||
+              !form.get('propertyCategoryName')?.value ||
+              availableSubtypes().length === 0
+            "
+          >
+            @for (st of availableSubtypes(); track st._id) {
+              <mat-option [value]="st.name">{{ st.name }}</mat-option>
+            }
+          </mat-select>
+          @if (
+            form.get('propertyCategoryName')?.value &&
+            availableSubtypes().length === 0 &&
+            !catalogLoading()
+          ) {
+            <mat-hint>No subtypes for this category — subtype is optional.</mat-hint>
+          }
+        </mat-form-field>
+      }
     </div>
 
     <div class="col-12 col-lg-6">
-      <label class="field-label">Property Type</label>
+      <label class="field-label">Property category</label>
 
-      <mat-form-field appearance="outline" class="w-100">
-        <mat-select formControlName="propertyType">
-          @for (type of propertyTypes(); track type.id) {
-            <mat-option [value]="type.id">{{ type.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      @if (catalogError()) {
+        <app-info-banner
+          icon="error_outline"
+          text="Property categories could not be loaded. Check your connection and try again."
+        />
+        <button
+          type="button"
+          mat-stroked-button
+          class="mt-2"
+          (click)="retryLoadCatalog()"
+        >
+          Retry
+        </button>
+      } @else {
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select
+            formControlName="propertyCategoryName"
+            placeholder="Select category"
+            [disabled]="catalogLoading()"
+          >
+            @for (cat of categories(); track cat._id) {
+              <mat-option [value]="cat.name">{{ cat.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
     </div>
 
     <div class="col-12">
@@ -41,7 +87,7 @@
 
       <app-info-banner
         icon="auto_awesome"
-        text="AI can create a polished headline based on purpose, property type, bedrooms, location and amenities, then place it directly into the title field."
+        text="AI can create a polished headline based on purpose, category, subtype, bedrooms, location and amenities, then place it directly into the title field."
       />
     </div>
 

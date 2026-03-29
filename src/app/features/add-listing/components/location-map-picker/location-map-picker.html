@@ -1,0 +1,29 @@
+<div class="map-wrap">
+  <div
+    #mapContainer
+    class="map"
+    [style.height.px]="heightPx"
+  ></div>
+
+  <div class="map-toolbar">
+    <button
+      mat-stroked-button
+      type="button"
+      class="map-toolbar__btn"
+      [disabled]="locating()"
+      (click)="useMyLocation()"
+      aria-label="Use my current location"
+    >
+      <mat-icon class="map-toolbar__icon" aria-hidden="true">my_location</mat-icon>
+      @if (locating()) {
+        Getting location…
+      } @else {
+        Use my location
+      }
+    </button>
+  </div>
+</div>
+
+@if (geoError()) {
+  <p class="map-error" role="status">{{ geoError() }}</p>
+}

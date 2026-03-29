@@ -17,21 +17,12 @@
   }
 
   &__map {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 12rem;
+    display: block;
+    min-height: 14rem;
     border-radius: var(--radius-md);
     background: var(--secondary);
     overflow: hidden;
   }
 
-  &__placeholder {
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius-md);
-    background: var(--surface-white);
-    color: var(--font-main);
-    box-shadow: var(--shadow-soft);
-    text-align: center;
-  }
+  // Leaflet map provides its own visual; keep container styling only.
 }

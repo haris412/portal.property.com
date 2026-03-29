@@ -1,0 +1,45 @@
+.host,
+:host {
+  display: block;
+  width: 100%;
+}
+
+.map-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.map {
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--secondary);
+}
+
+.map-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.map-toolbar__btn {
+  background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.map-toolbar__icon {
+  margin-right: 4px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+.map-error {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  color: var(--mat-sys-error, #b3261e);
+}
+

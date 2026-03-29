@@ -2,8 +2,17 @@
   title="Features & Amenities"
   description="Select all amenities and features available with this property."
 >
-  <app-selectable-chip-grid
-    [items]="amenities()"
-    (toggled)="toggleAmenity($event)"
-  />
+  @if (featuresError()) {
+    <app-info-banner
+      icon="error_outline"
+      text="Features could not be loaded. Check your connection and try again."
+    />
+    <button type="button" mat-stroked-button class="mt-2" (click)="retryLoadFeatures()">
+      Retry
+    </button>
+  } @else if (featuresLoading()) {
+    <p class="text-muted mb-0">Loading features…</p>
+  } @else {
+    <app-selectable-chip-grid [items]="chipItems()" (toggled)="toggleAmenity($event)" />
+  }
 </app-section-card>
