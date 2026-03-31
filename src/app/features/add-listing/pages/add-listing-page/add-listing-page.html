@@ -19,6 +19,12 @@
         <div class="add-listing-page__right">
           <app-property-location-step [form]="locationForm" />
           <app-contact-information-step [form]="contactForm" />
+          <app-property-description-step
+            [form]="descriptionForm"
+            [aiDescriptionEnabled]="aiDescriptionContextReady()"
+            [aiDescriptionLoading]="isGeneratingDescription()"
+            (generateDescription)="onGenerateDescription()"
+          />
         </div>
       </div>
     </div>

@@ -2,7 +2,13 @@
   <label class="counter-field__label">{{ label() }}</label>
 
   <div class="counter-field__control">
-    <button type="button" class="counter-field__btn" (click)="decremented.emit()" [attr.aria-label]="'Decrease ' + label()">
+    <button
+      type="button"
+      class="counter-field__btn"
+      (click)="decremented.emit()"
+      [disabled]="value() <= 0"
+      [attr.aria-label]="'Decrease ' + label()"
+    >
       <mat-icon fontIcon="remove"></mat-icon>
     </button>
 

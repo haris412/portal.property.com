@@ -55,6 +55,12 @@ export const routes: Routes = [
         title: 'Settings',
       },
       {
+        path: 'properties',
+        loadChildren: () =>
+          import('./features/properties/properties.routes').then((m) => m.PROPERTIES_ROUTES),
+        title: 'Properties',
+      },
+      {
         path: 'add-listing',
         loadChildren: () =>
           import('./features/add-listing/add-listing.routes').then((m) => m.ADD_LISTING_ROUTES),

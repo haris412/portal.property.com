@@ -79,6 +79,16 @@ export class AuthService {
 
   currentUser$ = this.userSubject.asObservable();
 
+  /** Synchronous snapshot for query params, etc. Prefer `currentUser$` when reacting to auth changes. */
+  getCurrentUser(): User | null {
+    return this.userSubject.getValue();
+  }
+
+  getUserId(): string | null {
+    const u = this.getCurrentUser();
+    return u?._id ?? null;
+  }
+
   setRedirectMessage(message: string): void {
     this.redirectMessage = message;
   }

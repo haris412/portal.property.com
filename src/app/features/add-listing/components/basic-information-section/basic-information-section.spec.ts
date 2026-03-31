@@ -42,7 +42,6 @@ describe('BasicInformationSectionComponent', () => {
         propertyCategoryName: [''],
         propertySubtypeName: [''],
         listingTitle: [''],
-        propertyDescription: ['']
       })
     );
     fixture.detectChanges();

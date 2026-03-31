@@ -1,6 +1,6 @@
 <app-section-card
   title="Basic Information"
-  description="Set the primary details of the property you want to list. You can also use AI to draft the title and description for faster publishing."
+  description="Set the primary details of the property you want to list. You can also use AI to draft the title for faster publishing."
 >
   <div class="row g-4" [formGroup]="form">
     <div class="col-12 col-lg-6">
@@ -9,8 +9,13 @@
       <app-segmented-option-group
         [items]="purposeOptions()"
         [selectedValue]="form.get('purpose')?.value"
-        (changed)="form.get('purpose')?.setValue($event)"
+        (changed)="onPurposeChange($event)"
       />
+      @if (form.get('purpose')?.hasError('server')) {
+        <div class="field-validation-msg" role="alert">{{ form.get('purpose')?.getError('server') }}</div>
+      } @else if (form.get('purpose')?.invalid && form.get('purpose')?.touched) {
+        <div class="field-validation-msg" role="alert">Purpose is required</div>
+      }
 
       @if (!catalogError()) {
         <label class="field-label d-block mt-4">Category</label>
@@ -18,12 +23,13 @@
         <mat-form-field appearance="outline" class="w-100">
           <mat-select
             formControlName="propertySubtypeName"
-            placeholder="Select subtype"
+            placeholder="Select category"
             [disabled]="
               catalogLoading() ||
               !form.get('propertyCategoryName')?.value ||
               availableSubtypes().length === 0
             "
+            (openedChange)="onCategoryFieldPanelToggle($event)"
           >
             @for (st of availableSubtypes(); track st._id) {
               <mat-option [value]="st.name">{{ st.name }}</mat-option>
@@ -34,14 +40,21 @@
             availableSubtypes().length === 0 &&
             !catalogLoading()
           ) {
-            <mat-hint>No subtypes for this category — subtype is optional.</mat-hint>
+            <mat-hint>No categories listed for this property type.</mat-hint>
           }
+          <mat-error>
+            @if (form.get('propertySubtypeName')?.hasError('server')) {
+              {{ form.get('propertySubtypeName')?.getError('server') }}
+            } @else {
+              Category is required
+            }
+          </mat-error>
         </mat-form-field>
       }
     </div>
 
     <div class="col-12 col-lg-6">
-      <label class="field-label">Property category</label>
+      <label class="field-label">Property type</label>
 
       @if (catalogError()) {
         <app-info-banner
@@ -60,13 +73,21 @@
         <mat-form-field appearance="outline" class="w-100">
           <mat-select
             formControlName="propertyCategoryName"
-            placeholder="Select category"
+            placeholder="Select property type"
             [disabled]="catalogLoading()"
+            (openedChange)="onPropertyTypePanelToggle($event)"
           >
             @for (cat of categories(); track cat._id) {
               <mat-option [value]="cat.name">{{ cat.name }}</mat-option>
             }
           </mat-select>
+          <mat-error>
+            @if (form.get('propertyCategoryName')?.hasError('server')) {
+              {{ form.get('propertyCategoryName')?.getError('server') }}
+            } @else {
+              Property type is required
+            }
+          </mat-error>
         </mat-form-field>
       }
     </div>
@@ -82,33 +103,22 @@
           matInput
           formControlName="listingTitle"
           placeholder="2 Bed Apartment in DHA"
+          (blur)="onListingTitleBlur()"
         />
+        <mat-error>
+          @if (form.get('listingTitle')?.hasError('server')) {
+            {{ form.get('listingTitle')?.getError('server') }}
+          } @else if (form.get('listingTitle')?.hasError('required')) {
+            Listing title is required
+          } @else if (form.get('listingTitle')?.hasError('maxlength')) {
+            Use at most 120 characters
+          }
+        </mat-error>
       </mat-form-field>
 
       <app-info-banner
         icon="auto_awesome"
-        text="AI can create a polished headline based on purpose, category, subtype, bedrooms, location and amenities, then place it directly into the title field."
-      />
-    </div>
-
-    <div class="col-12">
-      <div class="section-inline-header">
-        <label class="field-label mb-0">Property Description</label>
-        <app-action-chip-list [items]="descriptionActions()" />
-      </div>
-
-      <mat-form-field appearance="outline" class="w-100">
-        <textarea
-          matInput
-          rows="6"
-          formControlName="propertyDescription"
-          placeholder="Nice apartment..."
-        ></textarea>
-      </mat-form-field>
-
-      <app-info-banner
-        icon="smart_toy"
-        text="The AI assistant can draft a complete description and auto-fill this field so the user does not need to write everything manually."
+        text="AI can create a polished headline based on purpose, property type, category, bedrooms, location and amenities, then place it directly into the title field."
       />
     </div>
   </div>

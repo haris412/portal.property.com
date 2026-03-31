@@ -1,5 +1,15 @@
-import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  Input,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
@@ -33,8 +43,20 @@ interface CounterItem {
   styleUrl: './pricing-details-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PricingDetailsSectionComponent {
+export class PricingDetailsSectionComponent implements OnInit {
   @Input({ required: true }) form!: FormGroup;
+
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  private static readonly NON_NEGATIVE_FIELDS = [
+    'price',
+    'areaSize',
+    'numBedrooms',
+    'numBathrooms',
+    'numParkingSpaces',
+    'numFloors',
+  ] as const;
 
   readonly counters = signal<CounterItem[]>([
     { id: 'numBedrooms', label: 'Bedrooms', value: 2 },
@@ -42,6 +64,40 @@ export class PricingDetailsSectionComponent {
     { id: 'numParkingSpaces', label: 'Parking Spaces', value: 0 },
     { id: 'numFloors', label: 'Floors', value: 0 }
   ]);
+
+  ngOnInit(): void {
+    for (const name of PricingDetailsSectionComponent.NON_NEGATIVE_FIELDS) {
+      this.form
+        .get(name)
+        ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.clampToNonNegative(name));
+    }
+  }
+
+  /** Price / area: user cannot type `-` (paste / programmatic values still clamped). */
+  blockMinusOnNonNegativeNumberInput(event: KeyboardEvent): void {
+    if (event.key === '-' || event.key === '−' || event.code === 'NumpadSubtract') {
+      event.preventDefault();
+    }
+  }
+
+  private clampToNonNegative(controlName: string): void {
+    const c = this.form.get(controlName);
+    if (!c) {
+      return;
+    }
+    const raw = c.value;
+    const n = typeof raw === 'number' ? raw : Number(raw);
+    if (Object.is(n, -0) || (Number.isFinite(n) && n < 0)) {
+      this.setNonNegativeControlValue(c, 0);
+    }
+  }
+
+  private setNonNegativeControlValue(c: AbstractControl, v: number): void {
+    c.setValue(v, { emitEvent: false });
+    c.updateValueAndValidity({ emitEvent: false });
+    this.cdr.markForCheck();
+  }
 
   decrementCounter(id: string): void {
     const control = this.form.get(id);

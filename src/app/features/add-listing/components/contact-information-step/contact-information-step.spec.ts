@@ -1,18 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
-import { ContactInformationStep } from './contact-information-step';
+import { ContactInformationStepComponent } from './contact-information-step';
 
-describe('ContactInformationStep', () => {
-  let component: ContactInformationStep;
-  let fixture: ComponentFixture<ContactInformationStep>;
+describe('ContactInformationStepComponent', () => {
+  let component: ContactInformationStepComponent;
+  let fixture: ComponentFixture<ContactInformationStepComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ContactInformationStep],
+      imports: [ContactInformationStepComponent, ReactiveFormsModule],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ContactInformationStep);
+    fixture = TestBed.createComponent(ContactInformationStepComponent);
     component = fixture.componentInstance;
+    const fb = TestBed.inject(FormBuilder);
+    fixture.componentRef.setInput(
+      'form',
+      fb.group({
+        contactName: [''],
+        contactEmail: [''],
+        contactPhoneNumber: [''],
+        contactLocation: [''],
+      })
+    );
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 
