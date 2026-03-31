@@ -23,6 +23,7 @@ import { PageHeaderComponent, PageHeaderAction } from '../../../../shared/ui/pag
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { DataGridComponent } from '../../../../shared/ui/data-grid/data-grid.component';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
+import { PropertyRowActionsCellRendererComponent } from '../../components/property-row-actions-cell/property-row-actions-cell';
 
 @Component({
   selector: 'app-properties-page',
@@ -65,7 +66,25 @@ export class PropertiesPageComponent implements OnInit {
     { field: 'price', headerName: 'Price', width: 120 },
     { field: 'status', headerName: 'Status', width: 120 },
     { field: 'lister', headerName: 'Listed by', flex: 1, minWidth: 140 },
+    {
+      colId: 'actions',
+      headerName: '',
+      width: 64,
+      pinned: 'right',
+      sortable: false,
+      filter: false,
+      resizable: false,
+      cellRenderer: PropertyRowActionsCellRendererComponent,
+    },
   ];
+
+  readonly gridOptions = {
+    context: {
+      onEdit: (id: string) => {
+        void this.router.navigate(['/add-listing', id]);
+      },
+    },
+  } as const;
 
   ngOnInit(): void {
     const initial = this.route.snapshot.data['initialList'] as PropertiesListResult;

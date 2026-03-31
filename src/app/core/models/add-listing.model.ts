@@ -1,6 +1,17 @@
 export interface BasicInformationPayload {
   purpose: string | null;
+  /**
+   * Coarse type used by the listing API (e.g. House | Apartment | Plot).
+   * Derived from selected category/subtype labels.
+   */
   propertyType: string | null;
+  /**
+   * Detail type shown in UI (e.g. "Upper Portion"); API expects it as `subtype` / `propertySubtype`.
+   */
+  subtype?: string | null;
+  /** Display labels from the catalog dropdowns. */
+  propertyCategoryName?: string | null;
+  propertySubtypeName?: string | null;
   title: string | null;
   description: string | null;
 }

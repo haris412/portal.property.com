@@ -15,10 +15,11 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
-import { merge } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin, merge } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { PageHeaderComponent, PageHeaderAction } from '../../../../shared/ui/page-header/page-header';
+import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { BasicInformationSectionComponent } from '../../components/basic-information-section/basic-information-section';
 import { PricingDetailsSectionComponent } from '../../components/pricing-details-section/pricing-details-section';
 import { FeaturesAmenitiesSectionComponent } from '../../components/features-amenities-section/features-amenities-section';
@@ -30,6 +31,10 @@ import {
   AddListingService,
   GenerateListingDescriptionRequest,
 } from '../../../../core/services/add-listing.service';
+import type { AddListingModel } from '../../../../core/models/add-listing.model';
+import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
+import type { PropertyCatalogData } from '../../../../core/models/property-catalog.model';
+import type { PropertyFeature } from '../../../../core/models/property-features.model';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ADD_LISTING_HEADER_ACTIONS } from '../../constants/add-listing.constants';
 import { MediaUploadService, ListingImagePayload } from '../../../../core/services/media-upload.service';
@@ -43,6 +48,10 @@ import {
   ADD_LISTING_PRICING_API_MAP,
 } from '../../constants/add-listing-api-field-maps';
 import { firstValueFrom } from 'rxjs';
+import {
+  FEATURE_SLUG_TO_AMENITY_KEY,
+  normalizeFeatureSlug,
+} from '../../../../core/constants/listing-payload.constants';
 
 interface UploadedMediaPayload {
   images: ListingImagePayload[];
@@ -75,6 +84,7 @@ function locationCityFormValueToString(city: unknown): string {
   imports: [
     ReactiveFormsModule,
     PageHeaderComponent,
+    InfoBannerComponent,
     BasicInformationSectionComponent,
     PricingDetailsSectionComponent,
     FeaturesAmenitiesSectionComponent,
@@ -105,24 +115,35 @@ export class AddListingPageComponent {
     return this.evalAiDescriptionContextReady();
   });
 
-  readonly pageActions = signal<readonly PageHeaderAction[]>([
-    {
-      id: ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT,
-      label: 'Save Draft',
-      variant: 'stroked'
-    },
-    {
-      id: ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING,
-      label: 'Publish Listing',
-      variant: 'flat'
+  readonly pageActions = computed<readonly PageHeaderAction[]>(() => {
+    if (this.editingId()) {
+      return [{ id: 'update-property', label: 'Save changes', variant: 'flat' }] as const;
     }
-  ]);
+    return [
+      {
+        id: ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT,
+        label: 'Save Draft',
+        variant: 'stroked'
+      },
+      {
+        id: ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING,
+        label: 'Publish Listing',
+        variant: 'flat'
+      }
+    ] as const;
+  });
 
   private readonly addListingService = inject(AddListingService);
   private readonly notifications = inject(NotificationService);
   private readonly mediaUploadService = inject(MediaUploadService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  readonly editingId = signal<string | null>(null);
+  readonly editLoading = signal(false);
+  readonly editLoadError = signal<string | null>(null);
+  private readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
 
   constructor(private readonly fb: FormBuilder) {
     this.basicInfoForm = this.fb.group({
@@ -182,6 +203,12 @@ export class AddListingPageComponent {
       .subscribe(() => this.aiListingFormsTick.update((n: number) => n + 1));
 
     this.addListingService.getPropertyFeatures().subscribe({ error: () => void 0 });
+
+    const id = (this.route.snapshot.paramMap.get('id') ?? '').trim();
+    if (id) {
+      this.editingId.set(id);
+      this.loadPropertyForEdit(id);
+    }
   }
 
   onGenerateDescription(): void {
@@ -269,6 +296,13 @@ export class AddListingPageComponent {
   }
 
   async onHeaderAction(actionId: string): Promise<void> {
+    if (this.editingId()) {
+      if (actionId === 'update-property') {
+        await this.onUpdateProperty();
+      }
+      return;
+    }
+
     if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT || actionId === ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING) {
       if (this.isSubmitting()) {
         return;
@@ -292,7 +326,7 @@ export class AddListingPageComponent {
       this.isSubmitting.set(true);
       try {
         const uploadedMedia = await this.uploadSelectedMedia();
-        const payload = this.buildPayload(uploadedMedia) as any;
+        const payload = this.buildPayload(uploadedMedia);
 
         if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) {
           await firstValueFrom(this.addListingService.saveDraft(payload));
@@ -309,6 +343,212 @@ export class AddListingPageComponent {
         this.isSubmitting.set(false);
       }
     }
+  }
+
+  private loadPropertyForEdit(id: string): void {
+    this.editLoading.set(true);
+    this.editLoadError.set(null);
+    forkJoin({
+      doc: this.addListingService.getPropertyById(id),
+      catalog: this.addListingService.getPropertyCatalog(),
+      features: this.addListingService.getPropertyFeatures(),
+    })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.editLoading.set(false))
+      )
+      .subscribe({
+        next: ({ doc, catalog, features }) => {
+          if (!doc) {
+            this.editLoadError.set('Property could not be loaded.');
+            return;
+          }
+          this.loadedProperty.set(doc);
+          this.patchFormsFromProperty(doc, catalog, features);
+        },
+        error: () => {
+          this.editLoadError.set('Property could not be loaded.');
+        },
+      });
+  }
+
+  private async onUpdateProperty(): Promise<void> {
+    const id = this.editingId();
+    if (!id || this.isSubmitting()) {
+      return;
+    }
+
+    if (
+      this.basicInfoForm.invalid ||
+      this.pricingForm.invalid ||
+      this.contactForm.invalid ||
+      this.descriptionForm.invalid ||
+      this.locationForm.invalid
+    ) {
+      this.basicInfoForm.markAllAsTouched();
+      this.pricingForm.markAllAsTouched();
+      this.contactForm.markAllAsTouched();
+      this.descriptionForm.markAllAsTouched();
+      this.locationForm.markAllAsTouched();
+      this.notifications.warning('Please fill all required fields before saving changes.');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    try {
+      const uploadedMedia = await this.uploadSelectedMediaForEdit();
+      const payload = this.buildPayload(uploadedMedia);
+      await firstValueFrom(this.addListingService.updateProperty(id, payload));
+      this.notifications.success('Property updated successfully');
+      await this.router.navigate(['/properties']);
+    } catch (error: unknown) {
+      this.handleAddListingSubmitError(error, 'update-property');
+    } finally {
+      this.isSubmitting.set(false);
+    }
+  }
+
+  private async uploadSelectedMediaForEdit(): Promise<UploadedMediaPayload> {
+    const existing = this.loadedProperty();
+    const existingImages = (existing?.images ?? []) as ListingImagePayload[];
+    const existingVideo = ((existing?.videoTourUrl ?? null) || null) as string | null;
+
+    const media = this.mediaForm.value;
+    const images = (media.images ?? []) as File[];
+    const videoFiles = (media.videoFiles ?? []) as File[];
+
+    // If user didn't pick new files, keep the existing URLs (avoid wiping media on update).
+    if (!images.length && !videoFiles.length) {
+      return { images: existingImages, videoTourUrl: existingVideo };
+    }
+
+    // If they picked new media, upload and replace those fields.
+    return await this.uploadSelectedMedia();
+  }
+
+  private patchFormsFromProperty(
+    doc: PropertyDetailDocument,
+    catalog: PropertyCatalogData,
+    features: PropertyFeature[]
+  ): void {
+    const listingTitle = (doc.listingTitle ?? doc.title ?? '').toString();
+    const propertyDescription = (doc.propertyDescription ?? doc.description ?? '').toString();
+    const contactPhoneNumber = (doc.contactPhoneNumber ?? doc.contactPhone ?? doc.phone ?? '').toString();
+    const subtypeName = (doc.subtype ?? doc.propertySubtypeName ?? doc.propertySubtype ?? '').toString();
+    const categoryName = this.resolveCategoryNameFromCatalog(catalog, {
+      subtype: subtypeName,
+      propertyType: (doc.propertyType ?? '').toString(),
+      propertyCategoryName: (doc.propertyCategoryName ?? '').toString(),
+    });
+
+    // UI control uses 'sale'|'rent' while API often stores labels like "For Sale".
+    const purposeRaw = (doc.purpose ?? '').toString().toLowerCase();
+    const purpose = purposeRaw.includes('sale') ? 'sale' : 'rent';
+
+    // Patch in two steps so the BasicInformationSection subscription can populate available subtypes.
+    // 1) Set category with emitEvent=true (it clears subtype internally).
+    // 2) Re-apply subtype after that (emitEvent=false to avoid a second clear).
+    this.basicInfoForm.patchValue(
+      {
+        purpose,
+        listingTitle,
+      },
+      { emitEvent: false }
+    );
+    this.basicInfoForm.get('propertyCategoryName')?.setValue(categoryName, { emitEvent: true });
+    this.basicInfoForm.get('propertySubtypeName')?.setValue(subtypeName, { emitEvent: false });
+    this.basicInfoForm.get('propertySubtypeName')?.updateValueAndValidity({ emitEvent: false });
+
+    this.descriptionForm.patchValue({ propertyDescription }, { emitEvent: false });
+
+    this.pricingForm.patchValue(
+      {
+        price: doc.price ?? null,
+        areaSize: doc.areaSize ?? null,
+        areaUnit: doc.areaUnit ?? 'sqft',
+        numBedrooms: doc.numBedrooms ?? 0,
+        numBathrooms: doc.numBathrooms ?? 0,
+        numParkingSpaces: doc.numParkingSpaces ?? 0,
+        numFloors: doc.numFloors ?? 0,
+      },
+      // Emit once so the OnPush pricing section repaints counters/fields.
+      { emitEvent: true }
+    );
+
+    this.contactForm.patchValue(
+      {
+        contactName: doc.contactName ?? '',
+        contactEmail: doc.contactEmail ?? '',
+        contactPhoneNumber,
+        contactLocation: doc.contactLocation ?? '',
+      },
+      { emitEvent: false }
+    );
+
+    this.locationForm.patchValue(
+      {
+        city: doc.city ?? '',
+        neighborhood: doc.neighborhood ?? '',
+        fullAddress: doc.fullAddress ?? '',
+        mapLink: doc.mapLink ?? '',
+        latitude: doc.latitude ?? null,
+        longitude: doc.longitude ?? null,
+      },
+      { emitEvent: false }
+    );
+
+    const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
+    // Emit so FeaturesAmenitiesSection syncs chip selection.
+    this.amenitiesForm.patchValue({ selectedFeatureIds }, { emitEvent: true });
+
+    // Media: existing uploads are URLs; current media form expects Files, so we don't prefill file inputs.
+    this.basicInfoForm.markAsUntouched();
+    this.descriptionForm.markAsUntouched();
+    this.pricingForm.markAsUntouched();
+    this.contactForm.markAsUntouched();
+    this.locationForm.markAsUntouched();
+  }
+
+  private resolveCategoryNameFromCatalog(
+    catalog: PropertyCatalogData,
+    input: { subtype: string; propertyType: string; propertyCategoryName: string }
+  ): string {
+    const direct = (input.propertyCategoryName ?? '').trim();
+    if (direct) return direct;
+
+    const subtype = (input.subtype ?? '').trim().toLowerCase();
+    if (subtype) {
+      const foundBySubtype = (catalog.categories ?? []).find((c) =>
+        (c.subtypes ?? []).some((st) => st.name.trim().toLowerCase() === subtype)
+      );
+      if (foundBySubtype) return foundBySubtype.name;
+    }
+
+    const coarse = (input.propertyType ?? '').trim().toLowerCase();
+    if (coarse) {
+      const foundByType = (catalog.categories ?? []).find((c) =>
+        c.name.trim().toLowerCase().includes(coarse)
+      );
+      if (foundByType) return foundByType.name;
+    }
+
+    // Fallback: keep empty so required validator still prompts user if catalog mapping fails.
+    return '';
+  }
+
+  private resolveSelectedFeatureIdsFromAmenityFlags(
+    doc: PropertyDetailDocument,
+    features: PropertyFeature[]
+  ): string[] {
+    const out: string[] = [];
+    for (const f of features ?? []) {
+      const key = FEATURE_SLUG_TO_AMENITY_KEY[normalizeFeatureSlug(f.slug)];
+      if (!key) continue;
+      if ((doc as any)?.[key] === true) {
+        out.push(f._id);
+      }
+    }
+    return out;
   }
 
   private async uploadSelectedMedia(): Promise<UploadedMediaPayload> {
@@ -339,10 +579,7 @@ export class AddListingPageComponent {
     }
   }
 
-  /**
-   * Toast from API shape (401/403/400/500, express-validator, Mongoose strings) and
-   * map `errors[].path` onto listing forms when possible.
-   */
+ 
   private handleAddListingSubmitError(error: unknown, actionId: string): void {
     const parsed = parseHttpApiError(error);
     const fallback =
@@ -364,7 +601,7 @@ export class AddListingPageComponent {
     );
   }
 
-  private buildPayload(uploadedMedia: UploadedMediaPayload) {
+  private buildPayload(uploadedMedia: UploadedMediaPayload): AddListingModel {
     const basic = this.basicInfoForm.value;
     const description = this.descriptionForm.value;
     const pricing = this.pricingForm.value;
@@ -390,36 +627,70 @@ export class AddListingPageComponent {
     );
 
     return {
-      purpose,
-      propertyType,
-      subtype,
-      /** Same as `subtype`; many APIs only persist camelCase fields aligned with `propertyType`. */
-      propertySubtype: subtype,
-      propertyCategoryName: categoryName,
-      propertySubtypeName: subtypeName,
-      listingTitle: basic.listingTitle,
-      propertyDescription: description.propertyDescription,
-      price: pricing.price,
-      areaSize: pricing.areaSize,
-      areaUnit: pricing.areaUnit,
-      numBedrooms: pricing.numBedrooms,
-      numBathrooms: pricing.numBathrooms,
-      numParkingSpaces: pricing.numParkingSpaces,
-      numFloors: pricing.numFloors,
-      ...amenityBooleans,
-      images: uploadedMedia.images,
-      videoTourUrl: uploadedMedia.videoTourUrl,
-      contactName: contact.contactName,
-      contactEmail: contact.contactEmail,
-      contactPhoneNumber: contact.contactPhoneNumber,
-      contactLocation: contact.contactLocation,
-      city: locationCityFormValueToString(location.city),
-      neighborhood: location.neighborhood,
-      fullAddress: location.fullAddress,
-      mapLink: location.mapLink,
-      /** Map pin coordinates (null until user places pin or uses current location). */
-      latitude: location.latitude ?? null,
-      longitude: location.longitude ?? null,
-    };
+      basicInformation: {
+        purpose,
+        propertyType,
+        subtype,
+        propertyCategoryName: categoryName,
+        propertySubtypeName: subtypeName,
+        title: basic.listingTitle,
+        description: description.propertyDescription,
+      },
+      pricingDetails: {
+        price: pricing.price,
+        area: pricing.areaSize,
+        areaUnit: pricing.areaUnit,
+        bedrooms: pricing.numBedrooms,
+        bathrooms: pricing.numBathrooms,
+      },
+      featuresAmenities: {
+        amenities: amenities.selectedFeatureIds ?? [],
+      },
+      propertyMedia: {
+        media: [
+          ...(uploadedMedia.images ?? []).map((img) => ({
+            type: 'photo',
+            url: img?.url,
+          })),
+          ...(uploadedMedia.videoTourUrl
+            ? [{ type: 'video', url: uploadedMedia.videoTourUrl }]
+            : []),
+        ],
+      },
+      location: {
+        city: locationCityFormValueToString(location.city),
+        latitude: location.latitude ?? null,
+        longitude: location.longitude ?? null,
+      },
+      contactInformation: {
+        contactName: contact.contactName,
+        contactEmail: contact.contactEmail,
+        contactPhone: contact.contactPhoneNumber,
+      },
+      /** Preserve the boolean amenity keys the current API expects. */
+      ...(amenityBooleans as unknown as Record<string, unknown>),
+      /** Preserve the flat location/contact fields the current API expects. */
+      ...( {
+        contactLocation: contact.contactLocation,
+        neighborhood: location.neighborhood,
+        fullAddress: location.fullAddress,
+        mapLink: location.mapLink,
+      } as unknown as Record<string, unknown>),
+      /** Preserve media arrays used elsewhere in the app/API today. */
+      ...( {
+        images: uploadedMedia.images,
+        videoTourUrl: uploadedMedia.videoTourUrl,
+      } as unknown as Record<string, unknown>),
+      /** Preserve flat pricing fields used elsewhere in the app/API today. */
+      ...( {
+        price: pricing.price,
+        areaSize: pricing.areaSize,
+        areaUnit: pricing.areaUnit,
+        numBedrooms: pricing.numBedrooms,
+        numBathrooms: pricing.numBathrooms,
+        numParkingSpaces: pricing.numParkingSpaces,
+        numFloors: pricing.numFloors,
+      } as unknown as Record<string, unknown>),
+    } as AddListingModel;
   }
 }

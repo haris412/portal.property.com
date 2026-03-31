@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { merge } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
@@ -66,6 +67,17 @@ export class PricingDetailsSectionComponent implements OnInit {
   ]);
 
   ngOnInit(): void {
+    // Ensure the section updates under OnPush when parent patches the same FormGroup instance
+    // (e.g. edit mode loads data and calls `form.patchValue`).
+    const controls = PricingDetailsSectionComponent.NON_NEGATIVE_FIELDS.map((name) => this.form.get(name))
+      .filter(Boolean)
+      .map((c) => merge(c!.valueChanges, c!.statusChanges));
+    if (controls.length) {
+      merge(...controls)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.cdr.markForCheck());
+    }
+
     for (const name of PricingDetailsSectionComponent.NON_NEGATIVE_FIELDS) {
       this.form
         .get(name)
