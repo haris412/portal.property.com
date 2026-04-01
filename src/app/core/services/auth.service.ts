@@ -64,6 +64,24 @@ interface VerifyEmailResponse {
   success?: boolean;
 }
 
+interface ForgotPasswordResponse {
+  success?: boolean;
+  message?: string;
+}
+
+interface VerifyPasswordResetOtpResponse {
+  success?: boolean;
+  message?: string;
+  data?: { resetToken?: string };
+  /** Some APIs return the token at the root */
+  resetToken?: string;
+}
+
+interface ResetPasswordResponse {
+  success?: boolean;
+  message?: string;
+}
+
 
 @Injectable({
   providedIn: 'root'
@@ -241,6 +259,72 @@ export class AuthService {
    * Verifies email using the token (and optional email) from the verification link.
    * All failures emit error with shape { message: string }.
    */
+  forgotPassword(email: string): Observable<void> {
+    const fallback = 'Could not send reset email. Please try again.';
+    return this.http
+      .post<ForgotPasswordResponse>(`${environment.apiUrl}/api/auth/forgot-password`, {
+        email: email.trim()
+      })
+      .pipe(
+        switchMap((res) => {
+          if (res.success === false) {
+            return throwError(() => ({ message: res.message ?? fallback }));
+          }
+          return of(undefined);
+        }),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) }))
+        )
+      );
+  }
+
+  verifyPasswordResetOtp(
+    email: string,
+    otp: string
+  ): Observable<{ resetToken: string }> {
+    const fallback = 'Invalid or expired code. Please try again.';
+    return this.http
+      .post<VerifyPasswordResetOtpResponse>(
+        `${environment.apiUrl}/api/auth/verify-password-reset-otp`,
+        { email: email.trim(), otp: otp.trim() }
+      )
+      .pipe(
+        switchMap((res) => {
+          if (res.success === false) {
+            return throwError(() => ({ message: res.message ?? fallback }));
+          }
+          const token = res.data?.resetToken ?? res.resetToken;
+          if (!token) {
+            return throwError(() => ({ message: fallback }));
+          }
+          return of({ resetToken: token });
+        }),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) }))
+        )
+      );
+  }
+
+  resetPassword(resetToken: string, password: string): Observable<void> {
+    const fallback = 'Could not reset password. Please start again.';
+    return this.http
+      .post<ResetPasswordResponse>(`${environment.apiUrl}/api/auth/reset-password`, {
+        resetToken,
+        password
+      })
+      .pipe(
+        switchMap((res) => {
+          if (res.success === false) {
+            return throwError(() => ({ message: res.message ?? fallback }));
+          }
+          return of(undefined);
+        }),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) }))
+        )
+      );
+  }
+
   verifyEmail(
     token: string,
     email?: string | null

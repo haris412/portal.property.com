@@ -16,6 +16,11 @@ export const routes: Routes = [
     title: 'Verify email',
   },
   {
+    path: 'forgot-password',
+    loadChildren: () =>
+      import('./features/auth/forgot-password.routes').then((m) => m.FORGOT_PASSWORD_ROUTES),
+  },
+  {
     path: 'login',
     redirectTo: 'auth',
     pathMatch: 'full',
