@@ -1,0 +1,16 @@
+<div class="admin-dashboard">
+  <section class="admin-dashboard__intro section-card">
+    <h2 class="admin-dashboard__heading">Overview</h2>
+    <p class="admin-dashboard__lead mb-0">
+      Use the sidebar to open <strong>Add agency</strong> or other admin tools. Account actions are in the header menu.
+    </p>
+    @if (user$ | async; as user) {
+      <p class="admin-dashboard__meta text-muted mt-3 mb-0">
+        Signed in as <strong>{{ user.email }}</strong>
+        @if (user.name) {
+          <span> · {{ user.name }}</span>
+        }
+      </p>
+    }
+  </section>
+</div>

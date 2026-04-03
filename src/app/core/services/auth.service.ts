@@ -21,7 +21,7 @@ export interface User {
 }
 
 
-function toStoredUser(raw: Record<string, unknown>): User {
+export function toStoredUser(raw: Record<string, unknown>): User {
   const id = (raw['_id'] ?? raw['id']) as string;
   const email = (raw['email'] ?? '') as string;
   const name =
@@ -219,7 +219,8 @@ export class AuthService {
     }
     this.accessToken = null;
     this.userSubject.next(null);
-    this.storage?.clear();
+    this.storage?.removeItem(REFRESH_KEY);
+    this.storage?.removeItem(USER_KEY);
     this.router.navigate(['/auth']);
   }
 
@@ -251,8 +252,14 @@ export class AuthService {
   private clearAndRedirect(): void {
     this.accessToken = null;
     this.userSubject.next(null);
-    this.storage?.clear();
+    this.storage?.removeItem(REFRESH_KEY);
+    this.storage?.removeItem(USER_KEY);
     this.router.navigate(['/auth']);
+  }
+
+  /** Used by the auth interceptor to attribute refresh-token failures. */
+  peekRefreshToken(): string | null {
+    return this.storage?.getItem(REFRESH_KEY) ?? null;
   }
 
   /**

@@ -8,9 +8,10 @@ import { routes } from './app.routes';
 ModuleRegistry.registerModules([AllCommunityModule]);
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { AdminAuthService } from './core/services/admin-auth.service';
 
-export function restoreSessionFactory(auth: AuthService) {
-  return () => auth.tryRestoreSession();
+export function restoreSessionFactory(auth: AuthService, adminAuth: AdminAuthService) {
+  return () => Promise.all([auth.tryRestoreSession(), adminAuth.tryRestoreSession()]);
 }
 
 export const appConfig: ApplicationConfig = {
@@ -21,7 +22,7 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: restoreSessionFactory,
-      deps: [AuthService],
+      deps: [AuthService, AdminAuthService],
       multi: true,
     },
   ],

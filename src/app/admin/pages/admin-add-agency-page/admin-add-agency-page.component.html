@@ -1,0 +1,131 @@
+<div class="admin-add-agency-page">
+  <div class="container-fluid admin-add-agency-page__container">
+    <nav class="admin-add-agency-page__breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/admin/agencies" class="admin-add-agency-page__breadcrumb-link">
+        <mat-icon fontIcon="arrow_back" aria-hidden="true" />
+        Agencies
+      </a>
+    </nav>
+
+    <section class="admin-add-agency-page__header">
+      <div class="admin-add-agency-page__identity">
+        <div class="admin-add-agency-page__logo-wrap">
+          @if (logoPreviewUrl() && !logoPreviewFailed()) {
+            <img
+              class="admin-add-agency-page__logo"
+              [src]="logoPreviewUrl()!"
+              alt=""
+              (error)="onLogoPreviewError()"
+            />
+          } @else {
+            <div class="admin-add-agency-page__logo admin-add-agency-page__logo--placeholder">
+              {{ avatarInitials(form.controls.name.value) }}
+            </div>
+          }
+        </div>
+
+        <div>
+          <h1 class="admin-add-agency-page__title">
+            {{ form.controls.name.value.trim() || 'New agency' }}
+          </h1>
+          <p class="admin-add-agency-page__subtitle">Create a new agency and its primary contact details.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-add-agency-page__card">
+      <div class="admin-add-agency-page__card-header">
+        <h2>Agency details</h2>
+        <p>Same layout as add listing: upload a logo image; it is stored when you create the agency.</p>
+      </div>
+
+      <form class="admin-add-agency-page__form" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Agency name</mat-label>
+              <input matInput formControlName="name" autocomplete="organization" />
+              @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+                <mat-error>Name is required</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Contact name</mat-label>
+              <input matInput formControlName="contactName" autocomplete="name" />
+            </mat-form-field>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Contact email</mat-label>
+              <input matInput type="email" formControlName="contactEmail" autocomplete="email" />
+              @if (form.controls.contactEmail.hasError('email') && form.controls.contactEmail.touched) {
+                <mat-error>Enter a valid email</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Contact phone</mat-label>
+              <input matInput formControlName="contactPhone" autocomplete="tel" />
+            </mat-form-field>
+          </div>
+
+          <div class="col-12">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Location</mat-label>
+              <input matInput formControlName="location" />
+            </mat-form-field>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="field-label">Agency logo</label>
+
+            <app-upload-dropzone
+              icon="image"
+              title="Click to upload or drag & drop"
+              subtitle="SVG, PNG, JPG (max. 10MB)"
+              accept=".svg,.png,.jpg,.jpeg"
+              [multiple]="false"
+              [disabled]="submitting()"
+              (filesSelected)="onLogoFilesSelected($event)"
+            />
+
+            @if (logoPreviewUrl()) {
+              <p class="selection-meta">Selected: {{ logoPreviewName() }}</p>
+              <div class="preview-grid">
+                <div class="preview-card">
+                  <button
+                    type="button"
+                    class="preview-card__remove"
+                    (click)="removeLogo()"
+                    aria-label="Remove logo"
+                  >
+                    <mat-icon fontIcon="close" aria-hidden="true"></mat-icon>
+                  </button>
+                  <img [src]="logoPreviewUrl()!" [alt]="logoPreviewName() ?? ''" class="preview-card__image" />
+                  <p class="preview-card__name">{{ logoPreviewName() }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="admin-add-agency-page__actions">
+          <a mat-stroked-button type="button" routerLink="/admin/agencies">Cancel</a>
+          <button mat-flat-button type="submit" class="admin-add-agency-page__submit" [disabled]="submitting()">
+            @if (submitting()) {
+              <mat-progress-spinner diameter="20" mode="indeterminate" />
+            } @else {
+              Create agency
+            }
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

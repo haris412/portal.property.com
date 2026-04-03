@@ -1,0 +1,32 @@
+.admin-access-denied {
+  min-height: 60dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(to bottom, #1a1428 0%, #2d2640 55%, #3d3554 100%);
+}
+
+.admin-access-denied__card {
+  max-width: 520px;
+  padding: 2rem 1.75rem;
+}
+
+.admin-access-denied__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.admin-access-denied__body {
+  margin: 0 0 1.5rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary, #5c4d66);
+}
+
+.admin-access-denied__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+}

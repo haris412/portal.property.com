@@ -1,0 +1,140 @@
+.admin-auth-shell-bg {
+  min-height: 100dvh;
+  padding: 2rem;
+  background: linear-gradient(to bottom, #1a1428 0%, #2d2640 45%, #3d3554 100%);
+}
+
+.admin-auth-shell {
+  height: 100%;
+}
+
+.admin-auth-layout-row,
+.admin-right-column {
+  @media (min-width: 992px) {
+    height: calc(100dvh - 4rem);
+  }
+}
+
+.admin-hero-column {
+  @media (min-width: 992px) {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+.admin-right-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.admin-auth-header {
+  margin-bottom: 1rem;
+}
+
+.admin-auth-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.admin-auth-heading {
+  margin: 0 0 8px;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-weight: 800;
+  color: #fff;
+}
+
+.admin-auth-sub {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.admin-auth-form-area {
+  position: relative;
+  min-height: 0;
+  border-radius: var(--radius-xl);
+
+  @media (min-width: 992px) {
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+}
+
+.admin-auth-card-anim {
+  width: 100%;
+  will-change: opacity;
+}
+
+.admin-portal-link-wrap {
+  text-align: center;
+  font-size: 0.88rem;
+
+  .auth-link {
+    color: rgba(255, 255, 255, 0.85);
+  }
+}
+
+@media (min-width: 992px) {
+  .admin-auth-form-area {
+    display: grid;
+  }
+
+  .admin-auth-card-anim {
+    grid-area: 1 / 1;
+    min-height: 0;
+  }
+}
+
+.admin-auth-card-enter {
+  animation: admin-auth-card-fade-in 420ms ease;
+}
+
+.admin-auth-card-leave {
+  animation: admin-auth-card-fade-out 220ms ease forwards;
+  pointer-events: none;
+}
+
+@keyframes admin-auth-card-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes admin-auth-card-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-auth-card-enter,
+  .admin-auth-card-leave {
+    animation: none;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .admin-auth-shell,
+  .admin-auth-layout-row,
+  .admin-hero-column,
+  .admin-right-column,
+  .admin-auth-form-area {
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+  }
+}

@@ -1,0 +1,36 @@
+<div
+  class="app-layout"
+  [class.app-layout--sidebar-collapsed]="sidebarCollapsed()"
+>
+  @if (mobileSidebarOpen()) {
+    <button
+      type="button"
+      class="app-layout__backdrop"
+      (click)="closeMobileSidebar()"
+      aria-label="Close sidebar"
+    ></button>
+  }
+
+  <app-admin-sidebar
+    [collapsed]="sidebarCollapsed()"
+    [mobileOpen]="mobileSidebarOpen()"
+    (collapsedChange)="setSidebarCollapsed($event)"
+    (mobileClose)="closeMobileSidebar()"
+  />
+
+  <div class="app-layout__main-wrapper">
+    <app-admin-header (menuToggle)="toggleSidebar()" />
+
+    <main class="app-layout__main-content">
+      <div class="container-fluid h-100 px-0">
+        <div class="row g-0 h-100">
+          <div class="col-12">
+            <router-outlet />
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <app-notification-container />
+  </div>
+</div>

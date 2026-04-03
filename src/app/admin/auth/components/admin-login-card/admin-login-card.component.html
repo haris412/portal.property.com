@@ -1,0 +1,70 @@
+<section class="section-card admin-auth-card h-100" aria-labelledby="admin-login-title">
+  <div class="admin-card-inner">
+    <h2 id="admin-login-title" class="admin-auth-card-title">Admin log in</h2>
+    <p class="admin-auth-card-copy text-muted-auth">
+      Use your administrator email and password. Credentials are not shared with the public portal.
+    </p>
+
+    @if (error()) {
+      <div class="alert alert-danger mb-3" role="alert">
+        {{ error() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label-auth" for="admin-login-email">Work email</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="admin-login-email"
+              matInput
+              formControlName="identifier"
+              placeholder="admin@yourorg.com"
+              autocomplete="username"
+            />
+          </mat-form-field>
+          <app-form-field-error [control]="form.controls.identifier" label="Email" />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label-auth" for="admin-login-password">Password</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="admin-login-password"
+              matInput
+              [type]="hidePassword() ? 'password' : 'text'"
+              formControlName="password"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              mat-icon-button
+              matSuffix
+              [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+              (click)="hidePassword.set(!hidePassword())"
+            >
+              <mat-icon [fontIcon]="hidePassword() ? 'visibility_off' : 'visibility'"></mat-icon>
+            </button>
+          </mat-form-field>
+          <app-form-field-error [control]="form.controls.password" label="Password" />
+        </div>
+
+        <div class="col-12">
+          <mat-checkbox formControlName="rememberMe">Remember this device</mat-checkbox>
+        </div>
+
+        <div class="col-12">
+          <button
+            type="submit"
+            mat-raised-button
+            class="auth-primary-btn w-100"
+            [disabled]="!canSubmit()"
+          >
+            {{ loading() ? 'Signing in…' : 'Log in' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>

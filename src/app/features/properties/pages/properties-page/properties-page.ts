@@ -22,8 +22,8 @@ import {
 import { PageHeaderComponent, PageHeaderAction } from '../../../../shared/ui/page-header/page-header';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { DataGridComponent } from '../../../../shared/ui/data-grid/data-grid.component';
+import { gridActionsColumnDef } from '../../../../shared/ui/grid-row-menu-cell/grid-row-menu-cell.component';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
-import { PropertyRowActionsCellRendererComponent } from '../../components/property-row-actions-cell/property-row-actions-cell';
 
 @Component({
   selector: 'app-properties-page',
@@ -66,23 +66,20 @@ export class PropertiesPageComponent implements OnInit {
     { field: 'price', headerName: 'Price', width: 120 },
     { field: 'status', headerName: 'Status', width: 120 },
     { field: 'lister', headerName: 'Listed by', flex: 1, minWidth: 140 },
-    {
-      colId: 'actions',
-      headerName: '',
-      width: 64,
-      pinned: 'right',
-      sortable: false,
-      filter: false,
-      resizable: false,
-      cellRenderer: PropertyRowActionsCellRendererComponent,
-    },
+    gridActionsColumnDef<PropertyListingRow>({ width: 64, maxWidth: 72 }),
   ];
 
   readonly gridOptions = {
     context: {
-      onEdit: (id: string) => {
-        void this.router.navigate(['/add-listing', id]);
-      },
+      menuItems: [
+        {
+          label: 'Edit',
+          icon: 'edit',
+          action: (id: string) => {
+            void this.router.navigate(['/add-listing', id]);
+          },
+        },
+      ],
     },
   } as const;
 

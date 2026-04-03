@@ -21,6 +21,10 @@ export const routes: Routes = [
       import('./features/auth/forgot-password.routes').then((m) => m.FORGOT_PASSWORD_ROUTES),
   },
   {
+    path: 'admin',
+    loadChildren: () => import('./admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+  },
+  {
     path: 'login',
     redirectTo: 'auth',
     pathMatch: 'full',
