@@ -4,37 +4,57 @@
     <p>Manage which days and hours clients can book or contact you.</p>
   </div>
 
-  <form [formGroup]="form">
-    <div formArrayName="days" class="availability-list">
-      @for (group of days.controls; track $index) {
-        <div class="availability-row" [formGroupName]="$index">
-          <div class="availability-row__day">
-            <strong>{{ group.get('day')?.value }}</strong>
-          </div>
+  @if (error()) {
+    <p class="profile-availability-section__message profile-availability-section__message--error" role="alert">
+      {{ error() }}
+    </p>
+  }
 
-          <div class="availability-row__toggle">
-            <mat-slide-toggle formControlName="enabled">
-              Available
-            </mat-slide-toggle>
-          </div>
+  @if (loading()) {
+    <p class="profile-availability-section__message">Loading availability…</p>
+  } @else {
+    <form [formGroup]="form">
+      <div formArrayName="days" class="availability-list">
+        @for (group of days.controls; track $index) {
+          <div class="availability-row" [formGroupName]="$index">
+            <div class="availability-row__day">
+              <strong>{{ group.get('day')?.value }}</strong>
+            </div>
 
-          <div class="availability-row__time">
-            <label>Start</label>
-            <input type="time" formControlName="startTime" />
-          </div>
+            <div class="availability-row__toggle">
+              <mat-slide-toggle formControlName="enabled">
+                Available
+              </mat-slide-toggle>
+            </div>
 
-          <div class="availability-row__time">
-            <label>End</label>
-            <input type="time" formControlName="endTime" />
-          </div>
-        </div>
-      }
-    </div>
+            <div class="availability-row__time">
+              <label>Start</label>
+              <input type="time" formControlName="startTime" />
+            </div>
 
-    <div class="profile-form__actions">
-      <button mat-flat-button type="button" class="profile-form__primary-btn" (click)="save()">
-        Save Availability
-      </button>
-    </div>
-  </form>
+            <div class="availability-row__time">
+              <label>End</label>
+              <input type="time" formControlName="endTime" />
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="profile-form__actions">
+        <button
+          mat-flat-button
+          type="button"
+          class="profile-form__primary-btn"
+          [disabled]="saving()"
+          (click)="save()"
+        >
+          @if (saving()) {
+            Saving…
+          } @else {
+            Save Availability
+          }
+        </button>
+      </div>
+    </form>
+  }
 </section>

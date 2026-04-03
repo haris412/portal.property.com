@@ -26,6 +26,9 @@ import { ProfileAvailabilitySection } from '../profile-availability-section/prof
 export class ProfileShellComponent {
   readonly profile = input.required<UserProfileModel>();
 
+  /** When set, availability GET/PUT uses `/api/users/:id/availability`; otherwise `/api/users/me/availability`. */
+  readonly availabilityUserId = input<string | null>(null);
+
   @Output() readonly accountSaved = new EventEmitter<Partial<UserProfileModel>>();
   @Output() readonly passwordChanged = new EventEmitter<{
     currentPassword: string;
