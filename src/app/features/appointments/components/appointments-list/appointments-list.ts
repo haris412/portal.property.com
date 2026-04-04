@@ -36,7 +36,11 @@ export class AppointmentsListComponent {
   }
 
   getPersonSubline(item: AppointmentListItem): string {
-    return `${item.role} · ${item.phone}`;
+    const phone =
+      this.viewerRole() === 'agent'
+        ? (item.clientPhone ?? item.phone)
+        : (item.agentPhone ?? item.phone);
+    return `${item.role} · ${phone}`;
   }
 
   canConfirm(item: AppointmentListItem): boolean {
