@@ -9,27 +9,118 @@
       [text]="locationBanner()"
     />
 
-    @for (field of fields(); track field.id) {
-      <div>
-        <label class="field-label">{{ field.label }}</label>
+    <div>
+      <label class="field-label">City / Location</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          formControlName="city"
+          placeholder="Search or select city"
+          [matAutocomplete]="cityAuto"
+          (blur)="markLocationControlTouched('city')"
+        />
+        @if (citiesLoading()) {
+          <mat-hint>Loading cities…</mat-hint>
+        } @else if (citiesError(); as err) {
+          <mat-hint>{{ err }}</mat-hint>
+        }
+        <mat-autocomplete
+          #cityAuto="matAutocomplete"
+          autoActiveFirstOption
+          [displayWith]="displayCityPlace"
+          (optionSelected)="onCitySelected($event)"
+        >
+          @for (place of filteredPlaces(); track place.geonameId) {
+            <mat-option [value]="place">
+              {{ place.name }}
+              @if (place.adminName1) {
+                <span class="city-option__region"> — {{ place.adminName1 }}</span>
+              }
+            </mat-option>
+          }
+        </mat-autocomplete>
+        <mat-error>
+          @if (form.get('city')?.hasError('server')) {
+            {{ form.get('city')?.getError('server') }}
+          } @else {
+            City is required
+          }
+        </mat-error>
+      </mat-form-field>
+    </div>
 
-        <mat-form-field appearance="outline" class="w-100">
-          <input
-            matInput
-            [placeholder]="field.placeholder"
-            [formControlName]="
-              field.id === 'city'
-                ? 'city'
-                : field.id === 'area'
-                  ? 'neighborhood'
-                  : field.id === 'address'
-                    ? 'fullAddress'
-                    : 'mapLink'
-            "
-          />
-        </mat-form-field>
-      </div>
-    }
+    <div>
+      <label class="field-label">Area / Neighborhood</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          formControlName="neighborhood"
+          placeholder="Search or select area"
+          [matAutocomplete]="neighborhoodAuto"
+          (blur)="markLocationControlTouched('neighborhood')"
+        />
+        @if (neighborhoodsLoading()) {
+          <mat-hint>Loading areas around this city…</mat-hint>
+        } @else if (neighborhoodsError(); as nErr) {
+          <mat-hint>{{ nErr }}</mat-hint>
+        }
+        <mat-autocomplete
+          #neighborhoodAuto="matAutocomplete"
+          autoActiveFirstOption
+          [displayWith]="displayNeighborhood"
+          (optionSelected)="onNeighborhoodSelected($event)"
+        >
+          @for (item of filteredNeighborhoods(); track pickTrackKey(item)) {
+            <mat-option [value]="item">
+              {{ item.name }}
+              <span class="location-pick__kind"> — {{ pickKindLabel(item.kind) }}</span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        <mat-error>
+          @if (form.get('neighborhood')?.hasError('server')) {
+            {{ form.get('neighborhood')?.getError('server') }}
+          } @else {
+            Neighborhood is required
+          }
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <label class="field-label">Full Property Address</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          formControlName="fullAddress"
+          placeholder="Enter complete address"
+          (blur)="markLocationControlTouched('fullAddress')"
+        />
+        <mat-error>
+          @if (form.get('fullAddress')?.hasError('server')) {
+            {{ form.get('fullAddress')?.getError('server') }}
+          } @else {
+            Full property address is required
+          }
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <label class="field-label">Pin Location / Map Link</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          formControlName="mapLink"
+          placeholder="Paste Google Maps pin or coordinates"
+        />
+        <mat-error>
+          @if (form.get('mapLink')?.hasError('server')) {
+            {{ form.get('mapLink')?.getError('server') }}
+          }
+        </mat-error>
+      </mat-form-field>
+    </div>
 
     <div class="location-preview">
       <h3 class="location-preview__title">Location Preview</h3>

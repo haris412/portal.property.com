@@ -16,7 +16,17 @@
           type="number"
           formControlName="price"
           placeholder="75000"
+          min="0"
+          step="1"
+          (keydown)="blockMinusOnNonNegativeNumberInput($event)"
         />
+        <mat-error>
+          @if (form.get('price')?.hasError('server')) {
+            {{ form.get('price')?.getError('server') }}
+          } @else if (form.get('price')?.hasError('required')) {
+            Price is required
+          }
+        </mat-error>
       </mat-form-field>
     </div>
 
@@ -29,8 +39,18 @@
           type="number"
           formControlName="areaSize"
           placeholder="1200"
+          min="0"
+          step="1"
+          (keydown)="blockMinusOnNonNegativeNumberInput($event)"
         />
         <span matTextSuffix>{{ form.get('areaUnit')?.value }}</span>
+        <mat-error>
+          @if (form.get('areaSize')?.hasError('server')) {
+            {{ form.get('areaSize')?.getError('server') }}
+          } @else if (form.get('areaSize')?.hasError('required')) {
+            Area size is required
+          }
+        </mat-error>
       </mat-form-field>
     </div>
 
@@ -43,6 +63,13 @@
           formControlName="areaUnit"
           placeholder="sqft"
         />
+        <mat-error>
+          @if (form.get('areaUnit')?.hasError('server')) {
+            {{ form.get('areaUnit')?.getError('server') }}
+          } @else if (form.get('areaUnit')?.hasError('required')) {
+            Area unit is required
+          }
+        </mat-error>
       </mat-form-field>
     </div>
 
@@ -54,6 +81,11 @@
           (decremented)="decrementCounter(counter.id)"
           (incremented)="incrementCounter(counter.id)"
         />
+        @if (form.get(counter.id)?.hasError('server')) {
+          <div class="field-validation-msg" role="alert">
+            {{ form.get(counter.id)?.getError('server') }}
+          </div>
+        }
       </div>
     }
   </div>

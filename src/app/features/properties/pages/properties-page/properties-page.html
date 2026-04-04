@@ -1,0 +1,51 @@
+<div class="properties-page container-fluid py-4">
+  <app-page-header
+    title="Properties"
+    subtitle="View and manage your property listings (GET /api/properties)."
+    [actions]="headerActions"
+    (actionClicked)="onHeaderAction($event)"
+  />
+
+  <app-section-card
+    title="Listings"
+    description="Shows properties where listedBy matches your account; the API also receives your Bearer token."
+  >
+    @if (loadError(); as err) {
+      <app-info-banner class="d-block mb-3" icon="error_outline" [text]="err" />
+    }
+
+    @if (loading()) {
+      <p class="text-muted mb-3">Loading listings…</p>
+    }
+
+    <app-data-grid
+      [rowData]="propertyRows()"
+      [columnDefs]="propertyColumnDefs"
+      [gridOptions]="gridOptions"
+      [heightPx]="520"
+      [pagination]="false"
+    />
+
+    <div class="properties-page__pager d-flex flex-wrap align-items-center gap-3 mt-3">
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="loading() || page() <= 1"
+        (click)="goPrev()"
+      >
+        Previous
+      </button>
+      <span class="text-muted small">
+        Page {{ page() }} of {{ totalPages() || 1 }} · {{ total() }} total
+      </span>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="loading() || totalPages() === 0 || page() >= totalPages()"
+        (click)="goNext()"
+      >
+        Next
+      </button>
+    </div>
+  </app-section-card>
+</div>

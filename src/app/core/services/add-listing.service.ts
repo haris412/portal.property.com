@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { ApiResponse } from '../models/api-response.model';
@@ -7,6 +7,12 @@ import { AddListingModel } from '../models/add-listing.model';
 import { PropertyCatalogData } from '../models/property-catalog.model';
 import { PropertyFeature, PropertyFeaturesApiResponse } from '../models/property-features.model';
 import { environment } from '../../../environments/environment';
+import type {
+  PropertiesListApiResponse,
+  PropertiesListQuery,
+  PropertiesListResult,
+} from '../models/properties-list.model';
+import type { PropertyDetailApiResponse, PropertyDetailDocument } from '../models/property-detail.model';
 import {
   CoarsePropertyType,
   FEATURE_SLUG_TO_AMENITY_KEY,
@@ -19,11 +25,33 @@ export interface AddListingResponse {
   id: string | number;
 }
 
+export type ListingPurposeLabel = 'For Sale' | 'For Rent';
+
+/** POST /api/ai/generate-title */
+export interface GenerateListingTitleRequest {
+  purpose: ListingPurposeLabel;
+  propertyType?: string;
+  subtype?: string;
+}
+
+/** POST /api/ai/generate-description — core fields plus any listing extras the backend forwards to the model. */
+export type GenerateListingDescriptionRequest = {
+  title: string;
+  purpose: ListingPurposeLabel;
+  propertyType?: string;
+  subtype?: string;
+} & Record<string, unknown>;
+
+const PROPERTIES_LIST_DEFAULT_PAGE = 1;
+const PROPERTIES_LIST_DEFAULT_LIMIT = 20;
+const PROPERTIES_LIST_MAX_LIMIT = 50;
+
 @Injectable({ providedIn: 'root' })
 export class AddListingService {
   private readonly baseUrl = `${environment.apiUrl}/api/properties`;
   private readonly catalogUrl = `${environment.apiUrl}/api/property-catalog`;
   private readonly featuresUrl = `${environment.apiUrl}/api/property-features`;
+  private readonly aiBaseUrl = `${environment.apiUrl}/api/ai`;
 
   /** In-memory cache for the session (set after first successful fetch). */
   private catalogCache: PropertyCatalogData | null = null;
@@ -33,6 +61,61 @@ export class AddListingService {
   private featuresRequest$: Observable<PropertyFeature[]> | null = null;
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * The UI builds a nested `AddListingModel`. The backend create/draft endpoints
+   * still expect the legacy flat payload, so we normalize here.
+   */
+  private toCreateListingApiPayload(payload: AddListingModel): Record<string, unknown> {
+    const anyPayload = payload as unknown as Record<string, unknown>;
+    const basic = (payload as any)?.basicInformation ?? {};
+    const pricing = (payload as any)?.pricingDetails ?? {};
+    const contact = (payload as any)?.contactInformation ?? {};
+    const location = (payload as any)?.location ?? {};
+
+    const subtype =
+      (basic.subtype ??
+        (anyPayload as any).subtype ??
+        (anyPayload as any).propertySubtype ??
+        null) as string | null;
+
+    return {
+      // Preserve any existing flat keys already present on payload.
+      ...anyPayload,
+
+      // Canonical flat keys the API validates.
+      purpose: (basic.purpose ?? (anyPayload as any).purpose ?? null) as string | null,
+      propertyType: (basic.propertyType ?? (anyPayload as any).propertyType ?? null) as string | null,
+      subtype,
+      propertySubtype: subtype,
+      propertyCategoryName:
+        (basic.propertyCategoryName ?? (anyPayload as any).propertyCategoryName ?? null) as
+          | string
+          | null,
+      propertySubtypeName:
+        (basic.propertySubtypeName ?? (anyPayload as any).propertySubtypeName ?? null) as
+          | string
+          | null,
+      listingTitle: (basic.title ?? (anyPayload as any).listingTitle ?? null) as string | null,
+      propertyDescription:
+        (basic.description ?? (anyPayload as any).propertyDescription ?? null) as string | null,
+
+      price: (pricing.price ?? (anyPayload as any).price ?? null) as number | null,
+      areaSize: ((anyPayload as any).areaSize ?? pricing.area ?? null) as number | null,
+      areaUnit: ((anyPayload as any).areaUnit ?? pricing.areaUnit ?? null) as string | null,
+      numBedrooms: ((anyPayload as any).numBedrooms ?? pricing.bedrooms ?? null) as number | null,
+      numBathrooms: ((anyPayload as any).numBathrooms ?? pricing.bathrooms ?? null) as number | null,
+
+      contactName: ((anyPayload as any).contactName ?? contact.contactName ?? null) as string | null,
+      contactEmail: ((anyPayload as any).contactEmail ?? contact.contactEmail ?? null) as string | null,
+      contactPhoneNumber:
+        ((anyPayload as any).contactPhoneNumber ?? contact.contactPhone ?? null) as string | null,
+
+      city: ((anyPayload as any).city ?? location.city ?? null) as string | null,
+      latitude: ((anyPayload as any).latitude ?? location.latitude ?? null) as number | null,
+      longitude: ((anyPayload as any).longitude ?? location.longitude ?? null) as number | null,
+    };
+  }
 
   
   getPropertyCatalog(): Observable<PropertyCatalogData> {
@@ -141,16 +224,103 @@ export class AddListingService {
 
   createListing(payload: AddListingModel): Observable<ApiResponse<AddListingResponse>> {
     return this.http.post<ApiResponse<AddListingResponse>>(`${this.baseUrl}`, {
-      ...payload,
+      ...this.toCreateListingApiPayload(payload),
       status: 'Published',
     });
   }
 
   saveDraft(payload: AddListingModel): Observable<ApiResponse<AddListingResponse>> {
     return this.http.post<ApiResponse<AddListingResponse>>(`${this.baseUrl}`, {
-      ...payload,
+      ...this.toCreateListingApiPayload(payload),
       status: 'Draft',
     });
+  }
+
+  /** GET /api/properties/:id */
+  getPropertyById(id: string): Observable<PropertyDetailDocument | null> {
+    const safeId = (id ?? '').trim();
+    if (!safeId) return of(null);
+    return this.http.get<PropertyDetailApiResponse>(`${this.baseUrl}/${encodeURIComponent(safeId)}`).pipe(
+      map((res) => res?.data?.property ?? null)
+    );
+  }
+
+  /** PUT /api/properties/:id */
+  updateProperty(id: string, payload: AddListingModel): Observable<ApiResponse<AddListingResponse>> {
+    const safeId = (id ?? '').trim();
+    if (!safeId) {
+      return throwError(() => new Error('Missing property id'));
+    }
+    return this.http.put<ApiResponse<AddListingResponse>>(
+      `${this.baseUrl}/${encodeURIComponent(safeId)}`,
+      this.toCreateListingApiPayload(payload)
+    );
+  }
+
+  /**
+   * GET /api/properties — same base URL as create/draft. Bearer token is added by `authInterceptor`.
+   */
+  getProperties(query: PropertiesListQuery = {}): Observable<PropertiesListResult> {
+    const params = this.buildPropertiesListParams(query);
+    return this.http.get<PropertiesListApiResponse>(this.baseUrl, { params }).pipe(
+      map((res) => this.normalizePropertiesListResponse(res))
+    );
+  }
+
+  private buildPropertiesListParams(query: PropertiesListQuery): HttpParams {
+    const page = Math.max(1, query.page ?? PROPERTIES_LIST_DEFAULT_PAGE);
+    const limit = Math.min(
+      PROPERTIES_LIST_MAX_LIMIT,
+      Math.max(1, query.limit ?? PROPERTIES_LIST_DEFAULT_LIMIT)
+    );
+
+    let p = new HttpParams().set('page', String(page)).set('limit', String(limit));
+
+    const setParam = (key: keyof PropertiesListQuery, value: string | number | undefined) => {
+      if (value === undefined || value === null || value === '') return;
+      p = p.set(key, String(value));
+    };
+
+    setParam('listedBy', query.listedBy);
+    setParam('status', query.status);
+    setParam('purpose', query.purpose);
+    setParam('propertyType', query.propertyType);
+    if (query.minPrice != null) setParam('minPrice', query.minPrice);
+    if (query.maxPrice != null) setParam('maxPrice', query.maxPrice);
+    setParam('city', query.city);
+    setParam('sortBy', query.sortBy);
+    setParam('sortOrder', query.sortOrder);
+
+    return p;
+  }
+
+  private normalizePropertiesListResponse(res: PropertiesListApiResponse): PropertiesListResult {
+    return {
+      success: res.success ?? true,
+      properties: res.data?.properties ?? [],
+      count: res.count ?? 0,
+      total: res.total ?? 0,
+      page: res.page ?? PROPERTIES_LIST_DEFAULT_PAGE,
+      totalPages: res.totalPages ?? 0,
+    };
+  }
+
+  /**
+   * Protected route: `Authorization` is attached by `authInterceptor` for `environment.apiUrl` requests.
+   */
+  generateListingTitle(body: GenerateListingTitleRequest): Observable<string> {
+    return this.http
+      .post<ApiResponse<{ title?: string }>>(`${this.aiBaseUrl}/generate-title`, body)
+      .pipe(map((res) => (res?.data?.title ?? '').trim()));
+  }
+
+  /**
+   * Protected route: send the same JSON shape your API validates; extra keys are passed through to the LLM.
+   */
+  generateListingDescription(body: GenerateListingDescriptionRequest): Observable<string> {
+    return this.http
+      .post<ApiResponse<{ description?: string }>>(`${this.aiBaseUrl}/generate-description`, body)
+      .pipe(map((res) => (res?.data?.description ?? '').trim()));
   }
 }
 

@@ -9,27 +9,82 @@
       [text]="contactBanner()"
     />
 
-    @for (field of fields(); track field.id) {
-      <div>
-        <label class="field-label">{{ field.label }}</label>
+    <div>
+      <label class="field-label">Contact Name</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          type="text"
+          formControlName="contactName"
+          placeholder="Enter full name"
+          (blur)="markContactTouched('contactName')"
+        />
+        <mat-error>
+          @if (form.get('contactName')?.hasError('server')) {
+            {{ form.get('contactName')?.getError('server') }}
+          } @else {
+            Contact name is required
+          }
+        </mat-error>
+      </mat-form-field>
+    </div>
 
-        <mat-form-field appearance="outline" class="w-100">
-          <input
-            matInput
-            [type]="field.type ?? 'text'"
-            [placeholder]="field.placeholder"
-            [formControlName]="
-              field.id === 'name'
-                ? 'contactName'
-                : field.id === 'email'
-                  ? 'contactEmail'
-                  : field.id === 'phone'
-                    ? 'contactPhoneNumber'
-                    : 'contactLocation'
-            "
-          />
-        </mat-form-field>
-      </div>
-    }
+    <div>
+      <label class="field-label">Contact Email</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          type="email"
+          formControlName="contactEmail"
+          placeholder="Enter email address"
+          autocomplete="email"
+          (blur)="markContactTouched('contactEmail')"
+        />
+        <mat-error>
+          @if (form.get('contactEmail')?.hasError('server')) {
+            {{ form.get('contactEmail')?.getError('server') }}
+          } @else if (form.get('contactEmail')?.hasError('required')) {
+            Email is required
+          } @else if (form.get('contactEmail')?.hasError('email')) {
+            Enter a valid email address
+          }
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <label class="field-label">Contact Phone Number</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          type="tel"
+          formControlName="contactPhoneNumber"
+          placeholder="Enter mobile or WhatsApp number"
+          autocomplete="tel"
+          (blur)="markContactTouched('contactPhoneNumber')"
+        />
+        <mat-error>
+          @if (form.get('contactPhoneNumber')?.hasError('server')) {
+            {{ form.get('contactPhoneNumber')?.getError('server') }}
+          } @else if (form.get('contactPhoneNumber')?.hasError('required')) {
+            Phone number is required
+          } @else if (form.get('contactPhoneNumber')?.hasError('phoneFormat')) {
+            Enter a valid phone number (10–15 digits)
+          }
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <label class="field-label">Contact Location</label>
+      <mat-form-field appearance="outline" class="w-100">
+        <input
+          matInput
+          type="text"
+          formControlName="contactLocation"
+          placeholder="Enter office, branch or contact location"
+        />
+      </mat-form-field>
+    </div>
   </div>
 </app-step-card>

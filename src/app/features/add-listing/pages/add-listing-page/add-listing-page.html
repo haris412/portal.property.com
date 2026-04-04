@@ -5,6 +5,14 @@
                      [actions]="pageActions()"
                      (actionClicked)="onHeaderAction($event)" />
 
+    @if (editingId()) {
+      @if (editLoading()) {
+        <app-info-banner class="d-block mb-3" icon="hourglass_empty" text="Loading property…" />
+      } @else if (editLoadError(); as err) {
+        <app-info-banner class="d-block mb-3" icon="error_outline" [text]="err" />
+      }
+    }
+
     <div class="row g-4">
       <div class="col-12 col-xl-8">
         <div class="add-listing-page__left">
@@ -19,6 +27,12 @@
         <div class="add-listing-page__right">
           <app-property-location-step [form]="locationForm" />
           <app-contact-information-step [form]="contactForm" />
+          <app-property-description-step
+            [form]="descriptionForm"
+            [aiDescriptionEnabled]="aiDescriptionContextReady()"
+            [aiDescriptionLoading]="isGeneratingDescription()"
+            (generateDescription)="onGenerateDescription()"
+          />
         </div>
       </div>
     </div>

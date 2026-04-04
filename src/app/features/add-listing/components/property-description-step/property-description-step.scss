@@ -1,0 +1,15 @@
+.field-label {
+  display: inline-block;
+  margin-bottom: 0.625rem;
+  color: var(--font-main);
+  font-weight: 600;
+}
+
+.property-description-step__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.625rem;
+  flex-wrap: wrap;
+}

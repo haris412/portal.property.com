@@ -9,3 +9,9 @@
   color: var(--font-secondary);
   font-weight: 500;
 }
+
+.field-validation-msg {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--mat-form-field-error-text-color, #b3261e);
+}

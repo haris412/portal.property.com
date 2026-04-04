@@ -23,6 +23,11 @@
     border: 1px solid #d0d5dd;
     border-radius: 0.5rem;
     background: #f9fafb;
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
   }
 
   &__value {

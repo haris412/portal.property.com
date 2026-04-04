@@ -1,8 +1,11 @@
 import { ApplicationConfig, APP_INITIALIZER, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 
 import { routes } from './app.routes';
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
 

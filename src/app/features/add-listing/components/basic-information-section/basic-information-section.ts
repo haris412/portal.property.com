@@ -1,14 +1,16 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DestroyRef,
   Input,
   OnInit,
   inject,
-  signal
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormGroup, Validators } from '@angular/forms';
+import { merge } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -37,7 +39,7 @@ type ListingPurpose = 'sale' | 'rent';
     SectionCardComponent,
     InfoBannerComponent,
     SegmentedOptionGroupComponent,
-    ActionChipListComponent
+    ActionChipListComponent,
   ],
   templateUrl: './basic-information-section.html',
   styleUrl: './basic-information-section.scss',
@@ -46,6 +48,7 @@ type ListingPurpose = 'sale' | 'rent';
 export class BasicInformationSectionComponent implements OnInit {
   private readonly addListingService = inject(AddListingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly purposeOptions = signal<readonly OptionItem<ListingPurpose>[]>([
     { value: 'sale', label: 'For Sale' },
@@ -59,18 +62,26 @@ export class BasicInformationSectionComponent implements OnInit {
 
   readonly titleActions = signal<readonly ActionChipData[]>([
     { id: 'generate-title', label: 'Ask AI to generate title' },
-    { id: 'title-loading', label: 'Generating and populating field', muted: true, disabled: true }
-  ]);
-
-  readonly descriptionActions = signal<readonly ActionChipData[]>([
-    { id: 'generate-description', label: 'Ask AI to generate description' },
-    { id: 'description-loading', label: 'AI loader preview shown here', muted: true, disabled: true }
+    { id: 'title-loading', label: 'Generating and populating field', muted: true, disabled: true },
   ]);
 
   @Input({ required: true }) form!: FormGroup;
 
   ngOnInit(): void {
     this.loadCatalog();
+
+    const purpose = this.form.get('purpose');
+    const propertyType = this.form.get('propertyCategoryName');
+    const categoryField = this.form.get('propertySubtypeName');
+    const title = this.form.get('listingTitle');
+    const streams = [purpose, propertyType, categoryField, title]
+      .filter(Boolean)
+      .map((c) => merge(c!.valueChanges, c!.statusChanges));
+    if (streams.length) {
+      merge(...streams)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.cdr.markForCheck());
+    }
 
     this.form
       .get('propertyCategoryName')
@@ -79,6 +90,32 @@ export class BasicInformationSectionComponent implements OnInit {
         this.form.get('propertySubtypeName')?.setValue('', { emitEvent: false });
         this.applyCategorySelection(categoryName ?? '');
       });
+  }
+
+  onPurposeChange(value: string): void {
+    const c = this.form.get('purpose');
+    c?.setValue(value as ListingPurpose);
+    c?.markAsTouched();
+    this.cdr.markForCheck();
+  }
+
+  onPropertyTypePanelToggle(opened: boolean): void {
+    if (!opened) {
+      this.form.get('propertyCategoryName')?.markAsTouched();
+      this.cdr.markForCheck();
+    }
+  }
+
+  onCategoryFieldPanelToggle(opened: boolean): void {
+    if (!opened) {
+      this.form.get('propertySubtypeName')?.markAsTouched();
+      this.cdr.markForCheck();
+    }
+  }
+
+  onListingTitleBlur(): void {
+    this.form.get('listingTitle')?.markAsTouched();
+    this.cdr.markForCheck();
   }
 
   retryLoadCatalog(): void {

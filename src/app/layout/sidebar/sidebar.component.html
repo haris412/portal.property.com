@@ -22,7 +22,7 @@
           <a
             [routerLink]="item.route"
             routerLinkActive="sidebar__nav-link--active"
-            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' || item.route === '/properties' }"
             class="sidebar__nav-link"
             [attr.title]="collapsed() && !mobileOpen() ? item.label : null"
           >

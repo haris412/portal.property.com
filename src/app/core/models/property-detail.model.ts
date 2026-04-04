@@ -1,0 +1,51 @@
+/**
+ * Best-effort shape for GET /api/properties/:id.
+ * Keep optional so the UI can tolerate backend evolution.
+ */
+export interface PropertyDetailDocument {
+  _id?: string;
+  purpose?: string | null;
+  propertyType?: string | null;
+  subtype?: string | null;
+  propertySubtype?: string | null;
+  propertyCategoryName?: string | null;
+  propertySubtypeName?: string | null;
+  listingTitle?: string | null;
+  title?: string | null;
+  propertyDescription?: string | null;
+  description?: string | null;
+
+  price?: number | null;
+  areaSize?: number | null;
+  areaUnit?: string | null;
+  numBedrooms?: number | null;
+  numBathrooms?: number | null;
+  numParkingSpaces?: number | null;
+  numFloors?: number | null;
+
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhoneNumber?: string | null;
+  contactPhone?: string | null;
+  phone?: string | null;
+  contactLocation?: string | null;
+
+  city?: string | null;
+  neighborhood?: string | null;
+  fullAddress?: string | null;
+  mapLink?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+
+  images?: { url?: string }[] | null;
+  videoTourUrl?: string | null;
+}
+
+export interface PropertyDetailApiResponse {
+  success: boolean;
+  data?: {
+    property?: PropertyDetailDocument;
+  };
+  message?: string;
+}
+
