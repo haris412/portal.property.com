@@ -17,7 +17,7 @@ import type {
   ValueFormatterParams,
   ValueGetterParams,
 } from 'ag-grid-community';
-import { debounceTime, distinctUntilChanged, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, merge, switchMap, take } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -28,6 +28,7 @@ import { PageHeaderComponent, PageHeaderAction } from '../../../shared/ui/page-h
 import { InfoBannerComponent } from '../../../shared/ui/info-banner/info-banner';
 import { DataGridComponent } from '../../../shared/ui/data-grid/data-grid.component';
 import { gridActionsColumnDef } from '../../../shared/ui/grid-row-menu-cell/grid-row-menu-cell.component';
+import { ConfirmationDialogService } from '../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
 import {
@@ -124,6 +125,7 @@ export class AdminAgenciesPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly notifications = inject(NotificationService);
+  private readonly confirmation = inject(ConfirmationDialogService);
 
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
@@ -191,17 +193,68 @@ export class AdminAgenciesPageComponent implements OnInit {
     },
     {
       colId: 'contact',
-      headerName: 'Contact',
+      headerName: 'Contacts',
       flex: 2,
-      minWidth: 160,
+      minWidth: 200,
       wrapText: true,
       autoHeight: true,
       valueGetter: (p: ValueGetterParams<AgencyListItem>) => {
         const d = p.data;
         if (!d) return '';
-        return [d.contactName || '—', d.contactEmail || '', d.contactPhone || ''].join('\n');
+        
+        const contacts = d.contacts || [];
+        if (contacts.length === 0) return '—';
+        
+        return contacts.map(c => {
+          const parts = [];
+          if (c.name?.trim()) parts.push(c.name.trim());
+          if (c.email?.trim()) parts.push(c.email.trim());
+          if (c.phone?.trim()) parts.push(c.phone.trim());
+          return parts.join(' • ');
+        }).join('\n');
       },
       cellStyle: { lineHeight: '1.45', fontSize: '0.92rem', whiteSpace: 'pre-line' },
+      cellRenderer: (p: ICellRendererParams<AgencyListItem>) => {
+        const d = p.data;
+        if (!d || !d.contacts || d.contacts.length === 0) {
+          const el = document.createElement('span');
+          el.textContent = '—';
+          el.style.color = '#64748b';
+          return el;
+        }
+
+        const container = document.createElement('div');
+        container.style.cssText = 'display: flex; flex-direction: column; gap: 4px; padding: 4px 0;';
+
+        d.contacts.forEach((contact, index) => {
+          const contactEl = document.createElement('div');
+          contactEl.style.cssText = 'display: flex; align-items: flex-start; gap: 6px;';
+          
+          // Primary indicator
+          if (contact.isPrimary) {
+            const starEl = document.createElement('span');
+            starEl.innerHTML = '★';
+            starEl.style.cssText = 'color: #fbbf24; font-size: 12px; line-height: 1.4; font-weight: 600;';
+            contactEl.appendChild(starEl);
+          }
+
+          // Contact details
+          const detailsEl = document.createElement('div');
+          detailsEl.style.cssText = 'flex: 1; line-height: 1.4;';
+          
+          const parts = [];
+          if (contact.name?.trim()) parts.push(`<strong>${contact.name.trim()}</strong>`);
+          if (contact.email?.trim()) parts.push(contact.email.trim());
+          if (contact.phone?.trim()) parts.push(contact.phone.trim());
+          
+          detailsEl.innerHTML = parts.join('<br>');
+          contactEl.appendChild(detailsEl);
+          
+          container.appendChild(contactEl);
+        });
+
+        return container;
+      },
     },
     {
       colId: 'status',
@@ -241,6 +294,11 @@ export class AdminAgenciesPageComponent implements OnInit {
             }
           },
         },
+        {
+          label: 'Delete agency',
+          icon: 'delete_outline',
+          action: (id: string, row?: unknown) => this.confirmDeleteAgency(id, row),
+        },
       ],
     },
   };
@@ -270,6 +328,36 @@ export class AdminAgenciesPageComponent implements OnInit {
       .subscribe(() => {
         this.page.set(1);
         this.fetchList();
+      });
+  }
+
+  private confirmDeleteAgency(rowId: string, rowData?: unknown): void {
+    const row = rowData as AgencyListItem | undefined;
+    const name = row?.name?.trim() || 'this agency';
+
+    this.confirmation
+      .confirm({
+        title: 'Delete agency?',
+        message: `Delete "${name}"? This action cannot be undone.`,
+        confirmLabel: 'Delete',
+        cancelLabel: 'Cancel',
+        tone: 'warn',
+        icon: 'warning',
+      })
+      .pipe(
+        take(1),
+        filter((ok: boolean): ok is true => ok === true),
+        switchMap(() => this.adminAgency.deleteAgency(rowId)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: () => {
+          this.notifications.success('Agency deleted');
+          this.fetchList();
+        },
+        error: (err: unknown) => {
+          this.notifications.error(apiErrorSummary(err));
+        },
       });
   }
 

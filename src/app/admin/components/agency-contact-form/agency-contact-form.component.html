@@ -1,0 +1,73 @@
+<div class="contact-card" [class.primary]="isPrimary">
+  <div class="contact-header">
+    <div class="contact-avatar">
+      <div class="avatar-initials">{{ contactInitials }}</div>
+      @if (isPrimary) {
+        <div class="primary-badge">
+          <mat-icon>star</mat-icon>
+        </div>
+      }
+    </div>
+    <div class="contact-info">
+      <div class="contact-title">
+        {{ isPrimary ? 'Primary Contact' : 'Contact' }}
+        @if (!isPrimary && canBePrimary) {
+          <span class="make-primary-link" (click)="makePrimary()">
+            <mat-icon>star_border</mat-icon>
+            Make primary
+          </span>
+        }
+      </div>
+    </div>
+    @if (canRemove) {
+      <button
+        mat-icon-button
+        type="button"
+        class="remove-btn"
+        (click)="onRemove()"
+        matTooltip="Remove contact">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </div>
+
+  <div class="contact-fields">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Contact Name</mat-label>
+      <input matInput [formControl]="nameControl" placeholder="Enter contact name">
+      @if (nameControl.hasError('required') && nameControl.touched) {
+        <mat-error>Contact name is required</mat-error>
+      }
+      @if (nameControl.hasError('maxlength')) {
+        <mat-error>Name is too long</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="field-row">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Email Address</mat-label>
+        <input matInput [formControl]="emailControl" placeholder="contact@example.com">
+        @if (emailControl.hasError('required') && emailControl.touched) {
+          <mat-error>Email is required</mat-error>
+        }
+        @if (emailControl.hasError('email')) {
+          <mat-error>Please enter a valid email</mat-error>
+        }
+        @if (emailControl.hasError('maxlength')) {
+          <mat-error>Email is too long</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Phone Number</mat-label>
+        <input matInput [formControl]="phoneControl" placeholder="+1234567890">
+        @if (phoneControl.hasError('required') && phoneControl.touched) {
+          <mat-error>Phone number is required</mat-error>
+        }
+        @if (phoneControl.hasError('maxlength')) {
+          <mat-error>Phone number is too long</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+</div>

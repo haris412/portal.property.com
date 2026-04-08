@@ -6,6 +6,7 @@ import { AdminDashboardPageComponent } from './pages/admin-dashboard-page/admin-
 import { AdminAgenciesPageComponent } from './pages/admin-agencies-page/admin-agencies-page.component';
 import { AdminAddAgencyPageComponent } from './pages/admin-add-agency-page/admin-add-agency-page.component';
 import { AdminAccessDeniedPageComponent } from './pages/admin-access-denied-page/admin-access-denied-page.component';
+import { AdminAgencyUsersPageComponent } from './pages/admin-agency-users-page/admin-agency-users-page.component';
 import { adminAgenciesResolver } from './resolvers/admin-agencies.resolver';
 
 export const ADMIN_ROUTES: Routes = [
@@ -42,6 +43,11 @@ export const ADMIN_ROUTES: Routes = [
         title: 'Agencies',
         resolve: { adminAgencies: adminAgenciesResolver },
         runGuardsAndResolvers: 'always',
+      },
+      {
+        path: 'users',
+        component: AdminAgencyUsersPageComponent,
+        title: 'Users',
       },
     ],
   },

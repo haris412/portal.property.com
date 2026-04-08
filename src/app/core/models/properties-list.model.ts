@@ -8,7 +8,7 @@ export const PROPERTIES_LIST_INITIAL_PAGE_SIZE = 20;
 export interface PropertiesListQuery {
   page?: number;
   limit?: number;
-  /** Lister’s Mongo ObjectId string; invalid id → 400 from API. */
+  /** Lister’s Mongo ObjectId string; invalid id → 400 from API. Server maps this to `userId` in the DB. */
   listedBy?: string;
   status?: 'Draft' | 'Published';
   purpose?: string;
@@ -20,7 +20,7 @@ export interface PropertiesListQuery {
   sortOrder?: 'asc' | 'desc';
 }
 
-/** Populated `listedBy` from API. */
+/** Populated owner from API (`userId` and/or legacy `listedBy`). */
 export interface PropertyListedByUser {
   _id?: string;
   firstName?: string;
@@ -40,7 +40,10 @@ export interface PropertyListDocument {
   purpose?: string | null;
   price?: number | null;
   status?: string | null;
+  /** Legacy/alternate name if the API still sends it. */
   listedBy?: PropertyListedByUser | string | null;
+  /** Owner ref; Mongoose `populate('userId')` returns this shape. */
+  userId?: PropertyListedByUser | string | null;
   createdAt?: string;
   propertyType?: string | null;
 }
@@ -70,7 +73,9 @@ export interface PropertiesListResult {
   errorMessage?: string;
 }
 
-export function formatListedByLabel(listedBy: PropertyListDocument['listedBy']): string {
+export function formatListedByLabel(
+  listedBy: PropertyListDocument['listedBy'] | PropertyListDocument['userId']
+): string {
   if (listedBy == null || listedBy === '') return '—';
   if (typeof listedBy === 'string') return listedBy;
   const name = [listedBy.firstName, listedBy.lastName].filter(Boolean).join(' ').trim();
@@ -100,6 +105,6 @@ export function mapPropertyDocumentToGridRow(doc: PropertyListDocument): Propert
     purpose: (doc.purpose ?? '').toString() || '—',
     price: doc.price ?? null,
     status: (doc.status ?? '').toString() || '—',
-    lister: formatListedByLabel(doc.listedBy),
+    lister: formatListedByLabel(doc.userId ?? doc.listedBy),
   };
 }

@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
   BehaviorSubject,
   Observable,
@@ -12,15 +12,32 @@ import {
   tap,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginPayload, User, toStoredUser } from './auth.service';
+import { LoginPayload, User, fromApiUser } from './auth.service';
 
 export const ADMIN_REFRESH_KEY = 'adminRefreshToken';
 export const ADMIN_USER_KEY = 'adminUser';
+/** Short-lived token between admin login step 1 (password) and step 2 (OTP). */
+export const ADMIN_CHALLENGE_TOKEN_KEY = 'adminChallengeToken';
+
+const adminAuthApiBase = `${environment.apiUrl}/api/auth`;
 
 interface AuthApiResponse {
   user: Record<string, unknown>;
   accessToken: string;
   refreshToken: string;
+}
+
+interface AdminLoginStep1Body {
+  success?: boolean;
+  message?: string;
+  data?: { challengeToken?: string };
+  challengeToken?: string;
+}
+
+interface AdminLoginVerifyBody {
+  success?: boolean;
+  message?: string;
+  data?: AuthApiResponse;
 }
 
 /** True when API user payload has role.name === 'Admin'. */
@@ -85,7 +102,7 @@ export class AdminAuthService {
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
-      const user = toStoredUser(parsed);
+      const user = fromApiUser(parsed);
       this.userSubject.next(user);
       this.storage?.setItem(ADMIN_USER_KEY, JSON.stringify(user));
     } catch {
@@ -96,7 +113,7 @@ export class AdminAuthService {
   private storeAuthData(data: AuthApiResponse): void {
     if (!this.storage || !data.accessToken || !data.refreshToken || !data.user) return;
     this.accessToken = data.accessToken;
-    const user = toStoredUser(data.user);
+    const user = fromApiUser(data.user);
     this.storage.setItem(ADMIN_REFRESH_KEY, data.refreshToken);
     this.storage.setItem(ADMIN_USER_KEY, JSON.stringify(user));
     this.userSubject.next(user);
@@ -107,35 +124,30 @@ export class AdminAuthService {
     this.userSubject.next(null);
     this.storage?.removeItem(ADMIN_REFRESH_KEY);
     this.storage?.removeItem(ADMIN_USER_KEY);
+    this.clearAdminLoginChallenge();
   }
 
-  login(payload: LoginPayload): Observable<{ user: User }> {
-    const fallback = 'Login failed. Please try again.';
+  /**
+   * Step 1: POST /api/auth/admin/login — sends OTP; persists `challengeToken` for step 2.
+   */
+  requestAdminLoginOtp(payload: LoginPayload): Observable<void> {
+    const fallback = 'Could not start sign-in. Please try again.';
     return this.http
-      .post<
-        {
-          success?: boolean;
-          data?: AuthApiResponse;
-          reason?: string;
-          message?: string;
-        } & AuthApiResponse
-      >(`${environment.apiUrl}/api/auth/login`, payload)
+      .post<AdminLoginStep1Body>(`${adminAuthApiBase}/admin/login`, payload)
       .pipe(
         switchMap((response) => {
           if (response.success === false) {
             return throwError(() => ({ message: response.message ?? fallback }));
           }
-          const data = (response.data ?? response) as AuthApiResponse;
-          const rawUser = data.user;
-          if (!isAdminRoleFromPayload(rawUser)) {
+          const token =
+            response.data?.challengeToken ?? response.challengeToken ?? '';
+          if (!token) {
             return throwError(() => ({
-              message:
-                'Access denied. This account does not have administrator privileges.',
-              code: 'NOT_ADMIN' as const,
+              message: response.message ?? fallback,
             }));
           }
-          this.storeAuthData({ ...data, user: rawUser });
-          return of({ user: toStoredUser(rawUser) });
+          this.persistChallengeToken(token);
+          return of(undefined);
         }),
         catchError((err: unknown) => {
           if (
@@ -148,6 +160,76 @@ export class AdminAuthService {
           return throwError(() => ({ message: this.getAuthMessage(err, fallback) }));
         })
       );
+  }
+
+  /**
+   * Step 2: POST /api/auth/admin/login/verify — exchanges OTP + stored challenge for session.
+   */
+  verifyAdminLoginOtp(otpRaw: string): Observable<{ user: User }> {
+    const fallback = 'Could not complete sign-in. Please try again.';
+    const challengeToken = this.getChallengeToken();
+    const otp = otpRaw.replace(/\D/g, '');
+    if (!challengeToken) {
+      return throwError(() => ({
+        message: 'Sign-in session expired. Please enter your email and password again.',
+      }));
+    }
+    if (otp.length !== 5) {
+      return throwError(() => ({
+        message: 'Enter the 5-digit code from your email.',
+      }));
+    }
+
+    return this.http
+      .post<AdminLoginVerifyBody>(
+        `${adminAuthApiBase}/admin/login/verify`,
+        { challengeToken, otp }
+      )
+      .pipe(
+        switchMap((response) => {
+          if (response.success === false) {
+            return throwError(() => ({ message: response.message ?? fallback }));
+          }
+          const data = (response.data ?? response) as AuthApiResponse;
+          const rawUser = data.user;
+          if (!rawUser) {
+            return throwError(() => ({ message: fallback }));
+          }
+          if (!isAdminRoleFromPayload(rawUser)) {
+            return throwError(() => ({
+              message:
+                'Access denied. This account does not have administrator privileges.',
+              code: 'NOT_ADMIN' as const,
+            }));
+          }
+          this.clearAdminLoginChallenge();
+          this.storeAuthData({ ...data, user: rawUser });
+          return of({ user: fromApiUser(rawUser) });
+        }),
+        catchError((err: unknown) => {
+          if (
+            typeof err === 'object' &&
+            err !== null &&
+            (err as { code?: string }).code === 'NOT_ADMIN'
+          ) {
+            return throwError(() => err);
+          }
+          return throwError(() => ({ message: this.getAuthMessage(err, fallback) }));
+        })
+      );
+  }
+
+  /** Remove challenge token (e.g. user goes back to email/password step). */
+  clearAdminLoginChallenge(): void {
+    this.storage?.removeItem(ADMIN_CHALLENGE_TOKEN_KEY);
+  }
+
+  private persistChallengeToken(token: string): void {
+    this.storage?.setItem(ADMIN_CHALLENGE_TOKEN_KEY, token);
+  }
+
+  private getChallengeToken(): string | null {
+    return this.storage?.getItem(ADMIN_CHALLENGE_TOKEN_KEY) ?? null;
   }
 
   logout(): void {
@@ -211,14 +293,35 @@ export class AdminAuthService {
   }
 
   private getAuthMessage(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 429) {
+        return this.messageFromHttpBody(err.error) ?? 'Too many attempts, please try again later';
+      }
+      return this.messageFromHttpBody(err.error) ?? err.message ?? fallback;
+    }
     if (err == null || typeof err !== 'object') return fallback;
-    if (err instanceof Error) return err.message || fallback;
     const e = err as {
       error?: { message?: string; errors?: Array<{ msg?: string }> };
       message?: string;
     };
-    return (
-      e.error?.message ?? e.error?.errors?.[0]?.msg ?? e.message ?? fallback
-    );
+    const fromPayload =
+      e.message ??
+      e.error?.message ??
+      e.error?.errors?.[0]?.msg ??
+      (err instanceof Error ? err.message : undefined);
+    if (fromPayload) return fromPayload;
+    return fallback;
+  }
+
+  private messageFromHttpBody(body: unknown): string | null {
+    if (typeof body === 'string' && body.trim()) return body.trim();
+    if (body == null || typeof body !== 'object') return null;
+    const o = body as {
+      message?: string;
+      errors?: Array<{ msg?: string }>;
+    };
+    if (o.message) return o.message;
+    if (o.errors?.[0]?.msg) return o.errors[0].msg ?? null;
+    return null;
   }
 }

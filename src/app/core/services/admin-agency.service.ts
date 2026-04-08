@@ -25,14 +25,19 @@ export interface ListAgenciesQuery {
   sortOrder?: AgencySortOrder;
 }
 
+export interface AgencyContact {
+  name: string;
+  email: string;
+  phone: string;
+  isPrimary: boolean;
+}
+
 export interface AgencyListItem {
   _id: string;
   name: string;
   logoUrl?: string;
   location?: string;
-  contactName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
+  contacts?: AgencyContact[];
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -49,11 +54,9 @@ export interface ListAgenciesResult {
 /** Body for POST /api/admin/agencies */
 export interface CreateAgencyPayload {
   name: string;
-  contactName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  location?: string;
   logoUrl?: string;
+  location?: string;
+  contacts: AgencyContact[];
 }
 
 interface ListAgenciesApiResponse {
@@ -82,14 +85,41 @@ function normalizeAgencyRow(row: unknown): AgencyListItem | null {
   if (!isRecord(row)) return null;
   const id = row['_id'] ?? row['id'];
   if (typeof id !== 'string' || !id.length) return null;
+  
+  // Normalize contacts array
+  let contacts: AgencyContact[] = [];
+  const rawContacts = row['contacts'];
+  if (Array.isArray(rawContacts)) {
+    contacts = rawContacts
+      .filter((c): c is Record<string, unknown> => isRecord(c))
+      .map((c): AgencyContact => ({
+        name: typeof c['name'] === 'string' ? c['name'] : '',
+        email: typeof c['email'] === 'string' ? c['email'] : '',
+        phone: typeof c['phone'] === 'string' ? c['phone'] : '',
+        isPrimary: typeof c['isPrimary'] === 'boolean' ? c['isPrimary'] : false,
+      }));
+  } else {
+    // Backward compatibility: single contact fields
+    const contactName = typeof row['contactName'] === 'string' ? row['contactName'] : '';
+    const contactEmail = typeof row['contactEmail'] === 'string' ? row['contactEmail'] : '';
+    const contactPhone = typeof row['contactPhone'] === 'string' ? row['contactPhone'] : '';
+    
+    if (contactName || contactEmail || contactPhone) {
+      contacts = [{
+        name: contactName,
+        email: contactEmail,
+        phone: contactPhone,
+        isPrimary: true,
+      }];
+    }
+  }
+  
   return {
     _id: id,
     name: typeof row['name'] === 'string' ? row['name'] : '',
     logoUrl: typeof row['logoUrl'] === 'string' ? row['logoUrl'] : undefined,
     location: typeof row['location'] === 'string' ? row['location'] : undefined,
-    contactName: typeof row['contactName'] === 'string' ? row['contactName'] : undefined,
-    contactEmail: typeof row['contactEmail'] === 'string' ? row['contactEmail'] : undefined,
-    contactPhone: typeof row['contactPhone'] === 'string' ? row['contactPhone'] : undefined,
+    contacts,
     isActive: typeof row['isActive'] === 'boolean' ? row['isActive'] : undefined,
     createdAt: typeof row['createdAt'] === 'string' ? row['createdAt'] : undefined,
     updatedAt: typeof row['updatedAt'] === 'string' ? row['updatedAt'] : undefined,
@@ -148,11 +178,14 @@ export class AdminAgencyService {
   createAgency(payload: CreateAgencyPayload): Observable<AgencyListItem> {
     const body = {
       name: payload.name.trim(),
-      ...(payload.contactName?.trim() ? { contactName: payload.contactName.trim() } : {}),
-      ...(payload.contactEmail?.trim() ? { contactEmail: payload.contactEmail.trim() } : {}),
-      ...(payload.contactPhone?.trim() ? { contactPhone: payload.contactPhone.trim() } : {}),
-      ...(payload.location?.trim() ? { location: payload.location.trim() } : {}),
       ...(payload.logoUrl?.trim() ? { logoUrl: payload.logoUrl.trim() } : {}),
+      ...(payload.location?.trim() ? { location: payload.location.trim() } : {}),
+      contacts: payload.contacts.map(contact => ({
+        name: contact.name.trim(),
+        email: contact.email.trim(),
+        phone: contact.phone.trim(),
+        isPrimary: contact.isPrimary,
+      })),
     };
 
     return this.http.post<CreateAgencyApiResponse>(this.baseUrl, body).pipe(
@@ -167,6 +200,21 @@ export class AdminAgencyService {
           throw new Error(res.message ?? 'Invalid create agency response');
         }
         return agency;
+      }),
+      catchError((err) => throwError(() => err))
+    );
+  }
+
+  /**
+   * DELETE /api/admin/agencies/:id — remove agency (Bearer admin token).
+   */
+  deleteAgency(id: string): Observable<void> {
+    const url = `${this.baseUrl}/${encodeURIComponent(id)}`;
+    return this.http.delete<{ success?: boolean; message?: string } | null>(url).pipe(
+      map((body) => {
+        if (body && typeof body === 'object' && body.success === false) {
+          throw new Error(body.message ?? 'Could not delete agency');
+        }
       }),
       catchError((err) => throwError(() => err))
     );

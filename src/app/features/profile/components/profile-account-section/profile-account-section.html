@@ -6,66 +6,86 @@
 
   <form class="profile-form" [formGroup]="form" (ngSubmit)="save()">
     <div class="row g-3">
+
+      <!-- Editable: First name -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
           <mat-label>First name</mat-label>
-          <input matInput formControlName="firstName" />
+          <input matInput formControlName="firstName" autocomplete="given-name" />
+          @if (form.controls.firstName.hasError('required') && form.controls.firstName.touched) {
+            <mat-error>First name is required</mat-error>
+          }
+          @if (form.controls.firstName.hasError('maxlength')) {
+            <mat-error>Too long</mat-error>
+          }
         </mat-form-field>
       </div>
 
+      <!-- Editable: Last name -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
           <mat-label>Last name</mat-label>
-          <input matInput formControlName="lastName" />
+          <input matInput formControlName="lastName" autocomplete="family-name" />
+          @if (form.controls.lastName.hasError('required') && form.controls.lastName.touched) {
+            <mat-error>Last name is required</mat-error>
+          }
+          @if (form.controls.lastName.hasError('maxlength')) {
+            <mat-error>Too long</mat-error>
+          }
         </mat-form-field>
       </div>
 
+      <!-- Readonly: Email -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
           <mat-label>Email address</mat-label>
-          <input matInput type="email" formControlName="email" />
+          <input matInput [value]="profile().email" readonly disabled />
         </mat-form-field>
       </div>
 
+      <!-- Editable: Phone number -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
           <mat-label>Phone number</mat-label>
-          <input matInput formControlName="phone" />
+          <input matInput formControlName="phoneNumber" autocomplete="tel" placeholder="+923001234567" />
+          @if (form.controls.phoneNumber.hasError('required') && form.controls.phoneNumber.touched) {
+            <mat-error>Phone number is required</mat-error>
+          }
+          @if (form.controls.phoneNumber.hasError('pattern')) {
+            <mat-error>Enter a valid phone number (10–15 digits)</mat-error>
+          }
         </mat-form-field>
       </div>
 
+      <!-- Readonly: Company / Agency -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Title</mat-label>
-          <input matInput formControlName="title" />
+          <mat-label>Agency / Company</mat-label>
+          <input matInput [value]="profile().company ?? ''" readonly disabled />
         </mat-form-field>
       </div>
 
+      <!-- Editable: Location -->
       <div class="col-12 col-md-6">
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Company</mat-label>
-          <input matInput formControlName="company" />
-        </mat-form-field>
-      </div>
-
-      <div class="col-12">
         <mat-form-field appearance="outline" class="w-100">
           <mat-label>Location</mat-label>
-          <input matInput formControlName="location" />
+          <input matInput formControlName="location" placeholder="e.g. Karachi, Pakistan" />
+          @if (form.controls.location.hasError('maxlength')) {
+            <mat-error>Too long</mat-error>
+          }
         </mat-form-field>
       </div>
 
-      <div class="col-12">
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Bio</mat-label>
-          <textarea matInput rows="5" formControlName="bio"></textarea>
-        </mat-form-field>
-      </div>
     </div>
 
     <div class="profile-form__actions">
-      <button mat-flat-button type="submit" class="profile-form__primary-btn">
-        Save Changes
+      <button
+        mat-flat-button
+        type="submit"
+        class="profile-form__primary-btn"
+        [disabled]="saving()"
+      >
+        {{ saving() ? 'Saving…' : 'Save Changes' }}
       </button>
     </div>
   </form>

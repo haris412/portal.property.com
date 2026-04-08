@@ -14,8 +14,8 @@ export interface GridRowMenuItem {
   label: string;
   /** Material icon ligature name, e.g. `edit`, `content_copy`. */
   icon: string;
-  /** Receives row id from `data.id` or `data._id`. */
-  action: (rowId: string) => void;
+  /** Receives row id from `data.id` or `data._id`, and optional full row for context (e.g. labels in dialogs). */
+  action: (rowId: string, rowData?: unknown) => void;
 }
 
 /**
@@ -111,6 +111,6 @@ export class GridRowMenuCellRendererComponent implements ICellRendererAngularCom
   run(item: GridRowMenuItem): void {
     const id = rowIdFromData(this.params?.data);
     if (!id) return;
-    item.action(id);
+    item.action(id, this.params?.data);
   }
 }
