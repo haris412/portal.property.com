@@ -1,10 +1,22 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  input,
+  signal
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
+import { catchError, finalize, switchMap, take } from 'rxjs/operators';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { SegmentedTabsComponent } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
-import {
-  AppointmentsListComponent
-} from '../../components/appointments-list/appointments-list';
+import { AppointmentsListComponent } from '../../components/appointments-list/appointments-list';
 import { AppointmentListItem } from '../../../../core/models/appointment.models';
+import { AppointmentsService } from '../../../../core/services/appointments.service';
+import { AuthService, User } from '../../../../core/services/auth.service';
 
 export type AppointmentTab = 'all' | 'confirmed' | 'pending' | 'completed';
 export type AppointmentViewerRole = 'agent' | 'user';
@@ -27,70 +39,24 @@ interface SegmentedTabItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppointmentsPageComponent {
+  private readonly auth = inject(AuthService);
+  private readonly appointmentsService = inject(AppointmentsService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly viewerRole = input<AppointmentViewerRole>('agent');
 
   readonly activeTab = signal<AppointmentTab>('all');
 
-  readonly appointments = signal<AppointmentListItem[]>([
-    {
-      id: 'appt-1',
-      property: '1200 Skyline Boulevard, Apt 4B',
-      area: 'Downtown Seattle',
-      date: '12 Mar 2026',
-      type: 'Property viewing',
-      client: 'Emma Johnson',
-      agent: 'Michael Carter',
-      role: 'Buyer',
-      phone: '+1 (206) 555-4812',
-      time: '10:30 AM',
-      status: 'confirmed'
-    },
-    {
-      id: 'appt-2',
-      property: '88 Harbor View Residence',
-      area: 'Waterfront District',
-      date: '13 Mar 2026',
-      type: 'Rental inspection',
-      client: 'Daniel Lee',
-      agent: 'Sophia Adams',
-      role: 'Tenant',
-      phone: '+1 (425) 555-7740',
-      time: '1:00 PM',
-      status: 'pending'
-    },
-    {
-      id: 'appt-3',
-      property: 'Maple Grove Family House',
-      area: 'Bellevue Heights',
-      date: '14 Mar 2026',
-      type: 'Final walkthrough',
-      client: 'Sophia Carter',
-      agent: 'Olivia Brooks',
-      role: 'Buyer',
-      phone: '+1 (360) 555-9021',
-      time: '4:15 PM',
-      status: 'completed'
-    },
-    {
-      id: 'appt-4',
-      property: 'Lakeview Park Townhomes',
-      area: 'North Creek',
-      date: '15 Mar 2026',
-      type: 'Property viewing',
-      client: 'Carlos Rivera',
-      agent: 'Rachel Green',
-      role: 'Buyer',
-      phone: '+1 (509) 555-4481',
-      time: '11:45 AM',
-      status: 'pending'
-    }
-  ]);
+  readonly appointments = signal<AppointmentListItem[]>([]);
+  readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
 
   readonly tabs = computed<SegmentedTabItem[]>(() => {
     const items = this.appointments();
-    const confirmedCount = items.filter(item => item.status === 'confirmed').length;
-    const pendingCount = items.filter(item => item.status === 'pending').length;
-    const completedCount = items.filter(item => item.status === 'completed').length;
+    const confirmedCount = items.filter((item) => item.status === 'confirmed').length;
+    const pendingCount = items.filter((item) => item.status === 'pending').length;
+    const completedCount = items.filter((item) => item.status === 'completed').length;
 
     return [
       { key: 'all', label: `All (${items.length})` },
@@ -108,8 +74,42 @@ export class AppointmentsPageComponent {
       return items;
     }
 
-    return items.filter(item => item.status === active);
+    return items.filter((item) => item.status === active);
   });
+
+  constructor() {
+    this.auth.currentUser$
+      .pipe(
+        take(1),
+        switchMap((user) => this.fetchForUser(user)),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((items) => {
+        this.appointments.set(items);
+        this.cdr.markForCheck();
+      });
+  }
+
+  private fetchForUser(user: User | null) {
+    this.loading.set(true);
+    this.loadError.set(null);
+
+    if (!user?._id) {
+      this.loadError.set('Sign in to view your appointments.');
+      return of([] as AppointmentListItem[]);
+    }
+
+    return this.appointmentsService.getByUserId(user._id).pipe(
+      catchError(() => {
+        this.loadError.set('Could not load appointments. Please try again later.');
+        return of([]);
+      })
+    );
+  }
 
   onTabChanged(tab: string): void {
     this.activeTab.set(tab as AppointmentTab);
@@ -134,17 +134,14 @@ export class AppointmentsPageComponent {
     });
   }
 
-  private updateAppointment(
-    id: string,
-    changes: Partial<AppointmentListItem>
-  ): void {
-    this.appointments.update(items =>
-      items.map(item =>
+  private updateAppointment(id: string, changes: Partial<AppointmentListItem>): void {
+    this.appointments.update((items) =>
+      items.map((item) =>
         item.id === id
           ? {
-            ...item,
-            ...changes
-          }
+              ...item,
+              ...changes
+            }
           : item
       )
     );

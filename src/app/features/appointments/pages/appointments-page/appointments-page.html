@@ -3,22 +3,32 @@
     title="All Appointments"
     description="Track upcoming site visits, buyer meetings, and tenant viewing requests in one place."
   >
-    <app-segmented-tabs
-      [tabs]="tabs()"
-      [active]="activeTab()"
-      ariaLabel="Appointment filters"
-      (changed)="onTabChanged($event)"
-    />
+    @if (loadError()) {
+      <p class="appointments-page__message appointments-page__message--error" role="alert">
+        {{ loadError() }}
+      </p>
+    }
 
-    <div class="appointments-page__list">
-      <app-appointments-list
-        [appointments]="filteredAppointments()"
-        [viewerRole]="viewerRole()"
-        [showActions]="true"
-        (confirmClicked)="confirmAppointment($event.id)"
-        (rescheduleClicked)="rescheduleAppointment($event.id)"
-        (cancelClicked)="cancelAppointment($event.id)"
+    @if (loading()) {
+      <p class="appointments-page__message">Loading appointments…</p>
+    } @else {
+      <app-segmented-tabs
+        [tabs]="tabs()"
+        [active]="activeTab()"
+        ariaLabel="Appointment filters"
+        (changed)="onTabChanged($event)"
       />
-    </div>
+
+      <div class="appointments-page__list">
+        <app-appointments-list
+          [appointments]="filteredAppointments()"
+          [viewerRole]="viewerRole()"
+          [showActions]="true"
+          (confirmClicked)="confirmAppointment($event.id)"
+          (rescheduleClicked)="rescheduleAppointment($event.id)"
+          (cancelClicked)="cancelAppointment($event.id)"
+        />
+      </div>
+    }
   </app-section-card>
 </section>

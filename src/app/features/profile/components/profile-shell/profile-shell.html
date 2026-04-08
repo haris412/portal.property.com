@@ -59,7 +59,7 @@
 
         @if (activeSection() === 'availability' && profile().role === 'agent') {
           <app-profile-availability-section
-            [availability]="profile().availability || []"
+            [availabilityUserId]="availabilityUserId()"
             (saved)="availabilitySaved.emit($event)"
           />
         }
