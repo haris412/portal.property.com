@@ -283,6 +283,13 @@ export class AdminAgenciesPageComponent implements OnInit {
     context: {
       menuItems: [
         {
+          label: 'Add user',
+          icon: 'person_add',
+          action: (id: string) => {
+            void this.router.navigate(['/admin/add-user'], { queryParams: { agencyId: id } });
+          },
+        },
+        {
           label: 'Copy agency ID',
           icon: 'content_copy',
           action: async (id: string) => {

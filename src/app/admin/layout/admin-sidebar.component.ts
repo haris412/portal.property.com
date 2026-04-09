@@ -29,6 +29,7 @@ export class AdminSidebarComponent {
     /** Primary action: keep icon as generic `add` for broad Material font coverage */
     { label: 'Add Agency', route: '/admin/add-agency', icon: 'add' },
     { label: 'Agency Users', route: '/admin/users', icon: 'people' },
+    { label: 'Add User', route: '/admin/add-user', icon: 'person_add' },
   ];
 
   onCollapseClick(): void {

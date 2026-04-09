@@ -51,6 +51,33 @@ export interface ListAgenciesResult {
   totalPages: number;
 }
 
+/** Body for POST /api/admin/agencies/:agencyId/users */
+export interface CreateAgencyUserPayload {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  displayName?: string;
+  profileImageUrl?: string;
+  roleName?: string;
+}
+
+export interface AgencyUserItem {
+  _id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  displayName?: string;
+  phoneNumber: string;
+  profileImageUrl?: string;
+  isActive: boolean;
+  isEmailVerified: boolean;
+  role?: { _id: string; name: string };
+  agency?: { _id: string; name: string; logoUrl?: string };
+  createdAt?: string;
+}
+
 /** Body for POST /api/admin/agencies */
 export interface CreateAgencyPayload {
   name: string;
@@ -200,6 +227,35 @@ export class AdminAgencyService {
           throw new Error(res.message ?? 'Invalid create agency response');
         }
         return agency;
+      }),
+      catchError((err) => throwError(() => err))
+    );
+  }
+
+  /**
+   * POST /api/admin/agencies/:agencyId/users — create user for agency (Bearer admin token).
+   */
+  createAgencyUser(agencyId: string, payload: CreateAgencyUserPayload): Observable<AgencyUserItem> {
+    const url = `${this.baseUrl}/${encodeURIComponent(agencyId)}/users`;
+    return this.http.post<{ success?: boolean; message?: string; data?: { user?: unknown } }>(url, payload).pipe(
+      map((res) => {
+        if (res.success === false) throw new Error(res.message ?? 'Could not create user');
+        const raw = res.data?.user;
+        if (!isRecord(raw)) throw new Error('Invalid response from server');
+        return {
+          _id:              typeof raw['_id'] === 'string' ? raw['_id'] : '',
+          email:            typeof raw['email'] === 'string' ? raw['email'] : '',
+          firstName:        typeof raw['firstName'] === 'string' ? raw['firstName'] : '',
+          lastName:         typeof raw['lastName'] === 'string' ? raw['lastName'] : '',
+          displayName:      typeof raw['displayName'] === 'string' ? raw['displayName'] : undefined,
+          phoneNumber:      typeof raw['phoneNumber'] === 'string' ? raw['phoneNumber'] : '',
+          profileImageUrl:  typeof raw['profileImageUrl'] === 'string' ? raw['profileImageUrl'] : undefined,
+          isActive:         typeof raw['isActive'] === 'boolean' ? raw['isActive'] : true,
+          isEmailVerified:  typeof raw['isEmailVerified'] === 'boolean' ? raw['isEmailVerified'] : true,
+          role:             isRecord(raw['role']) ? { _id: String(raw['role']['_id'] ?? ''), name: String(raw['role']['name'] ?? '') } : undefined,
+          agency:           isRecord(raw['agency']) ? { _id: String(raw['agency']['_id'] ?? ''), name: String(raw['agency']['name'] ?? ''), logoUrl: typeof raw['agency']['logoUrl'] === 'string' ? raw['agency']['logoUrl'] : undefined } : undefined,
+          createdAt:        typeof raw['createdAt'] === 'string' ? raw['createdAt'] : undefined,
+        } satisfies AgencyUserItem;
       }),
       catchError((err) => throwError(() => err))
     );

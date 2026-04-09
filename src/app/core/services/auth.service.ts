@@ -28,6 +28,7 @@ export interface User {
   profileImageUrl?: string;
   location?: string;
   role?: string;
+  agencyName?: string;
 }
 
 /** Stored in localStorage — no PII (no email, no phone). */
@@ -52,7 +53,11 @@ export function fromApiUser(raw: Record<string, unknown>): User {
   const role = typeof r === 'object' && r && 'name' in r
     ? (r as { name: string }).name
     : (r as string | undefined);
-  return { _id: id, email, firstName, lastName, name, phoneNumber, profileImageUrl, location, role };
+  const agency = raw['agency'];
+  const agencyName = typeof agency === 'object' && agency && 'name' in agency
+    ? (agency as { name: string }).name || undefined
+    : undefined;
+  return { _id: id, email, firstName, lastName, name, phoneNumber, profileImageUrl, location, role, agencyName };
 }
 
 /** Extracts session data to persist in localStorage — names only, no email/phone. */

@@ -68,7 +68,7 @@ export class ProfilePageComponent {
       location:     u?.location       ?? '',
       avatarUrl:    u?.profileImageUrl,
       bio:          '',
-      company:      '',
+      company:      u?.agencyName ?? '',
       availability: DEFAULT_AVAILABILITY,
     };
   }
