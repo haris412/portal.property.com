@@ -2,7 +2,7 @@
   <!-- <app-dashboard-topbar /> -->
 
   <section class="agent-dashboard-page__welcome">
-    <h1>Welcome back, Michael!</h1>
+    <h1>Welcome back, {{ displayName() }}!</h1>
     <p>Here is what’s happening with your properties today.</p>
   </section>
 
@@ -14,7 +14,7 @@
     <div class="row g-4 align-items-stretch">
       <div class="col-12 col-xl-8">
         <app-portfolio-breakdown-card [activePortfolio]="portfolioSummary.activePortfolio"
-                                      [monthlyHint]="portfolioSummary.monthlyHint"
+ [monthlyHint]="portfolioSummary.monthlyHint"
                                       [saleShare]="portfolioSummary.saleShare"
                                       [rentShare]="portfolioSummary.rentShare"
                                       [footerText]="portfolioSummary.footerText"

@@ -14,6 +14,7 @@ interface UploadUrlData {
 interface UploadUrlResponse {
   success: boolean;
   data: UploadUrlData;
+  message?: string;
 }
 
 export interface ListingImagePayload {

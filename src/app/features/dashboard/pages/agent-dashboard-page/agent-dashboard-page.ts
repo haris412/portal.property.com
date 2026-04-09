@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import type { EChartsOption } from 'echarts';
 
 import { PageShellComponent } from '../../../../shared/ui/page-shell/page-shell';
+import { AuthService } from '../../../../core/services/auth.service';
 
 import { DashboardTopbarComponent } from '../../components/dashboard-topbar/dashboard-topbar';
 import { DashboardHeroCardComponent } from '../../components/dashboard-hero-card/dashboard-hero-card';
@@ -39,6 +41,14 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AgentDashboardPageComponent {
+  private readonly auth = inject(AuthService);
+  private readonly currentUser = toSignal(this.auth.currentUser$);
+
+  readonly displayName = computed(() => {
+    const name = this.currentUser()?.name?.trim();
+    return name ? name.split(' ')[0] : 'there';
+  });
+
   readonly hero = HERO_CARD;
   readonly portfolioSummary = PORTFOLIO_SUMMARY;
   readonly portfolioMetrics = PORTFOLIO_METRICS;

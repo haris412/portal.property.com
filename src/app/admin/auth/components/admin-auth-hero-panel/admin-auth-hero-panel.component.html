@@ -1,0 +1,42 @@
+<section class="admin-hero-panel position-relative overflow-hidden">
+  <img
+    ngSrc="images/hero-img.png"
+    width="900"
+    height="1200"
+    priority
+    alt="Property backdrop for admin sign-in"
+    class="admin-hero-image"
+  />
+
+  <div class="admin-hero-overlay"></div>
+
+  <div class="admin-hero-content d-flex flex-column h-100">
+    <div class="admin-hero-top">
+      <app-brand-logo />
+    </div>
+
+    <div class="admin-hero-bottom mt-auto">
+      <div class="admin-hero-chip">
+        <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">
+          admin_panel_settings
+        </mat-icon>
+        <span>Internal tools for LocateHome operations</span>
+      </div>
+
+      <h1 class="admin-hero-title">Manage users, listings and platform health in one place.</h1>
+
+      <p class="admin-hero-description">
+        Administrator accounts are separate from buyer and agent portal logins. Use this console only if
+        you have been granted admin access.
+      </p>
+
+      <div class="row g-3 mt-1">
+        @for (item of stats(); track item.label) {
+          <div class="col-12 col-sm-4">
+            <app-stat-card [value]="item.value" [label]="item.label" />
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>

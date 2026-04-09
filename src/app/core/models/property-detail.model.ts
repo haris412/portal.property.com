@@ -4,6 +4,8 @@
  */
 export interface PropertyDetailDocument {
   _id?: string;
+  /** Owner ref; may be populated when the API uses populate('userId'). */
+  userId?: string | { _id?: string; firstName?: string; lastName?: string; email?: string } | null;
   purpose?: string | null;
   propertyType?: string | null;
   subtype?: string | null;

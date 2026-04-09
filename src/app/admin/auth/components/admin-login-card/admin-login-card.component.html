@@ -1,0 +1,107 @@
+<section class="section-card admin-auth-card h-100" aria-labelledby="admin-login-title">
+  <div class="admin-card-inner">
+    <h2 id="admin-login-title" class="admin-auth-card-title">Admin log in</h2>
+    <p class="admin-auth-card-copy text-muted-auth">
+      Use your administrator email and password. After you sign in, enter the one-time code sent to your email.
+    </p>
+
+    @if (error()) {
+      <div class="alert alert-danger mb-3" role="alert">
+        {{ error() }}
+      </div>
+    }
+
+    @if (otpStep()) {
+      <p class="admin-otp-hint text-muted-auth mb-3" role="status">
+        We sent a 5-digit code to <strong>{{ form.controls.identifier.value }}</strong>. Enter it below to finish signing in.
+      </p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label-auth" for="admin-login-email">Work email</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="admin-login-email"
+              matInput
+              formControlName="identifier"
+              placeholder="admin@yourorg.com"
+              autocomplete="username"
+              [readonly]="otpStep()"
+            />
+          </mat-form-field>
+          <app-form-field-error [control]="form.controls.identifier" label="Email" />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label-auth" for="admin-login-password">Password</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="admin-login-password"
+              matInput
+              [type]="hidePassword() ? 'password' : 'text'"
+              formControlName="password"
+              autocomplete="current-password"
+              [readonly]="otpStep()"
+            />
+            @if (!otpStep()) {
+              <button
+                type="button"
+                mat-icon-button
+                matSuffix
+                [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+                (click)="hidePassword.set(!hidePassword())"
+              >
+                <mat-icon [fontIcon]="hidePassword() ? 'visibility_off' : 'visibility'"></mat-icon>
+              </button>
+            }
+          </mat-form-field>
+          <app-form-field-error [control]="form.controls.password" label="Password" />
+        </div>
+
+        @if (otpStep()) {
+          <div class="col-12">
+            <label class="form-label-auth" for="admin-login-otp">Verification code</label>
+            <mat-form-field appearance="outline">
+              <input
+                id="admin-login-otp"
+                matInput
+                formControlName="otp"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="32"
+                placeholder="00000"
+                aria-describedby="admin-login-otp-hint"
+              />
+            </mat-form-field>
+            <span id="admin-login-otp-hint" class="visually-hidden">Five digit code from email</span>
+            <app-form-field-error [control]="form.controls.otp" label="Code" />
+          </div>
+        }
+
+        @if (!otpStep()) {
+          <div class="col-12">
+            <mat-checkbox formControlName="rememberMe">Remember this device</mat-checkbox>
+          </div>
+        }
+
+        <div class="col-12 d-flex flex-column gap-2">
+          <button
+            type="submit"
+            mat-raised-button
+            class="auth-primary-btn w-100"
+            [disabled]="!canSubmit()"
+          >
+            {{ primaryActionLabel() }}
+          </button>
+          @if (otpStep()) {
+            <button type="button" mat-button class="w-100" (click)="backToCredentials()">
+              Use a different account
+            </button>
+          }
+        </div>
+      </div>
+    </form>
+  </div>
+</section>

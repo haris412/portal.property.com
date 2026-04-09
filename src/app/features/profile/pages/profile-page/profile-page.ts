@@ -1,9 +1,18 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ProfileShellComponent } from '../../components/profile-shell/profile-shell';
-import {
-  AgentDayAvailability,
-  UserProfileModel
-} from '../../../../core/models/profile.models';
+import { AgentDayAvailability, UserProfileModel } from '../../../../core/models/profile.models';
+import { AuthService } from '../../../../core/services/auth.service';
+
+const DEFAULT_AVAILABILITY: AgentDayAvailability[] = [
+  { day: 'Monday',    enabled: true,  startTime: '09:00', endTime: '18:00' },
+  { day: 'Tuesday',   enabled: true,  startTime: '09:00', endTime: '18:00' },
+  { day: 'Wednesday', enabled: true,  startTime: '09:00', endTime: '18:00' },
+  { day: 'Thursday',  enabled: true,  startTime: '09:00', endTime: '18:00' },
+  { day: 'Friday',    enabled: true,  startTime: '09:00', endTime: '18:00' },
+  { day: 'Saturday',  enabled: true,  startTime: '10:00', endTime: '15:00' },
+  { day: 'Sunday',    enabled: false, startTime: '10:00', endTime: '15:00' },
+];
 
 @Component({
   selector: 'app-profile-page',
@@ -11,59 +20,56 @@ import {
   imports: [ProfileShellComponent],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfilePageComponent {
-  readonly profile = signal<UserProfileModel>({
-    id: 'user-001',
-    role: 'agent',
-    firstName: 'Sarah',
-    lastName: 'Jenkins',
-    email: 'sarah.jenkins@locatehome.com',
-    phone: '+1 (555) 123-4567',
-    bio: 'Helping buyers and renters discover premium homes with a smooth, transparent experience.',
-    company: 'LocateHome Realty',
-    title: 'Senior Property Consultant',
-    location: 'Toronto, Ontario',
-    avatarUrl: 'assets/images/agents/agent-1.jpg',
-    availability: this.buildDefaultAvailability()
-  });
+  private readonly auth = inject(AuthService);
+  private readonly currentUser = toSignal(this.auth.currentUser$);
 
-  onAccountSaved(payload: Partial<UserProfileModel>): void {
-    this.profile.update((current) => ({
-      ...current,
-      ...payload
-    }));
+  readonly profile = signal<UserProfileModel>(this.mapUserToProfile());
 
-    console.log('account saved', payload);
+  constructor() {
+    const id = this.auth.getUserId();
+    if (!id) return;
+
+    // Fetch full profile once — populates email, phone, location, avatar from API
+    this.auth.fetchUserProfile(id)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        // Preserve availability edits — only update user fields from the API response
+        this.profile.update((current) => ({
+          ...this.mapUserToProfile(),
+          availability: current.availability,
+        }));
+      });
   }
 
-  onPasswordChanged(payload: {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  }): void {
-    console.log('password changed', payload);
+  onAccountSaved(payload: Partial<UserProfileModel>): void {
+    this.profile.update((current) => ({ ...current, ...payload }));
+  }
+
+  onPasswordChanged(_payload: { currentPassword: string; newPassword: string; confirmPassword: string }): void {
+    // TODO: wire up change password API
   }
 
   onAvailabilitySaved(payload: AgentDayAvailability[]): void {
-    this.profile.update((current) => ({
-      ...current,
-      availability: payload
-    }));
-
-    console.log('availability saved', payload);
+    this.profile.update((current) => ({ ...current, availability: payload }));
   }
 
-  private buildDefaultAvailability(): AgentDayAvailability[] {
-    return [
-      { day: 'Monday', enabled: true, startTime: '09:00', endTime: '18:00' },
-      { day: 'Tuesday', enabled: true, startTime: '09:00', endTime: '18:00' },
-      { day: 'Wednesday', enabled: true, startTime: '09:00', endTime: '18:00' },
-      { day: 'Thursday', enabled: true, startTime: '09:00', endTime: '18:00' },
-      { day: 'Friday', enabled: true, startTime: '09:00', endTime: '18:00' },
-      { day: 'Saturday', enabled: true, startTime: '10:00', endTime: '15:00' },
-      { day: 'Sunday', enabled: false, startTime: '10:00', endTime: '15:00' }
-    ];
+  private mapUserToProfile(): UserProfileModel {
+    const u = this.currentUser();
+    return {
+      id:           u?._id            ?? '',
+      role:         'agent',
+      firstName:    u?.firstName      ?? '',
+      lastName:     u?.lastName       ?? '',
+      email:        u?.email          ?? '',
+      phone:        u?.phoneNumber    ?? '',
+      location:     u?.location       ?? '',
+      avatarUrl:    u?.profileImageUrl,
+      bio:          '',
+      company:      u?.agencyName ?? '',
+      availability: DEFAULT_AVAILABILITY,
+    };
   }
 }

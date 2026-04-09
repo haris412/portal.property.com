@@ -19,6 +19,10 @@ const DEFAULT_COL_DEF: ColDef = {
 /**
  * Thin wrapper around AG Grid Community for consistent sizing, defaults, and module setup.
  * Register `AllCommunityModule` once in `app.config.ts` (already done).
+ *
+ * For a reusable ⋮ row menu, use `GridRowMenuCellRendererComponent` and `gridActionsColumnDef`
+ * from `../grid-row-menu-cell/` (pass the component as `cellRenderer` — do not add it here; AG Grid
+ * loads it dynamically, so it is not a template import).
  */
 @Component({
   selector: 'app-data-grid',

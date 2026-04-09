@@ -1,0 +1,24 @@
+<h2 mat-dialog-title class="confirmation-dialog__title">
+  @if (data.icon) {
+    <mat-icon class="confirmation-dialog__title-icon" [fontIcon]="data.icon" aria-hidden="true" />
+  }
+  <span>{{ data.title }}</span>
+</h2>
+
+<mat-dialog-content class="confirmation-dialog__body">
+  <p class="confirmation-dialog__message">{{ data.message }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="confirmation-dialog__actions">
+  <button mat-stroked-button type="button" [mat-dialog-close]="false">
+    {{ data.cancelLabel ?? 'Cancel' }}
+  </button>
+  <button
+    mat-flat-button
+    type="button"
+    [color]="data.tone === 'warn' ? 'warn' : 'primary'"
+    [mat-dialog-close]="true"
+  >
+    {{ data.confirmLabel }}
+  </button>
+</mat-dialog-actions>

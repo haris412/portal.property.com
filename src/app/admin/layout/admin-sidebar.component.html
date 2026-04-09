@@ -1,0 +1,61 @@
+<aside
+  class="sidebar"
+  [class.sidebar--collapsed]="collapsed()"
+  [class.sidebar--mobile-open]="mobileOpen()"
+>
+  <div class="sidebar__brand">
+    <a routerLink="/admin/dashboard" class="sidebar__brand-link" aria-label="Admin home">
+      <span class="sidebar__brand-icon">
+        <img src="/images/logo.png" alt="EstatePortal Logo" />
+      </span>
+
+      @if (!collapsed() || mobileOpen()) {
+        <span class="sidebar__brand-name">Admin</span>
+      }
+    </a>
+  </div>
+
+  <nav class="sidebar__nav" aria-label="Admin navigation">
+    <ul class="sidebar__nav-list">
+      @for (item of navItems; track item.route) {
+        <li class="sidebar__nav-item">
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="sidebar__nav-link--active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="sidebar__nav-link"
+            [attr.title]="collapsed() && !mobileOpen() ? item.label : null"
+          >
+            <mat-icon class="sidebar__nav-icon" [fontIcon]="item.icon" aria-hidden="true"></mat-icon>
+
+            @if (!collapsed() || mobileOpen()) {
+              <span class="sidebar__nav-label">{{ item.label }}</span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <div class="sidebar__footer">
+    <button
+      type="button"
+      class="sidebar__collapse-btn"
+      (click)="onCollapseClick()"
+      [attr.aria-label]="
+        mobileOpen() ? 'Close sidebar' : collapsed() ? 'Expand sidebar' : 'Collapse sidebar'
+      "
+    >
+      <mat-icon
+        [fontIcon]="
+          mobileOpen() ? 'close' : collapsed() ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left'
+        "
+        aria-hidden="true"
+      ></mat-icon>
+
+      @if (!collapsed() || mobileOpen()) {
+        <span>{{ mobileOpen() ? 'Close' : 'Collapse' }}</span>
+      }
+    </button>
+  </div>
+</aside>

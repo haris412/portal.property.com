@@ -1,0 +1,211 @@
+<div class="add-user-page">
+  <div class="container-fluid add-user-page__container">
+
+    <!-- Breadcrumb -->
+    <nav class="add-user-page__breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/admin/users" class="add-user-page__breadcrumb-link">
+        <mat-icon fontIcon="arrow_back" aria-hidden="true" />
+        Agency Users
+      </a>
+    </nav>
+
+    <!-- Identity header -->
+    <section class="add-user-page__header">
+      <div class="add-user-page__identity">
+        <div class="add-user-page__avatar">
+          {{ userInitials }}
+        </div>
+        <div>
+          <h1 class="add-user-page__title">{{ fullName }}</h1>
+          <p class="add-user-page__subtitle">Create a new agency user and assign a role.</p>
+        </div>
+      </div>
+    </section>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="add-user-page__grid">
+
+        <!-- Left column -->
+        <div class="add-user-page__col">
+
+          <!-- Personal info card -->
+          <div class="add-user-page__card">
+            <div class="add-user-page__card-header">
+              <div class="add-user-page__card-icon">
+                <mat-icon>person</mat-icon>
+              </div>
+              <div>
+                <h2>Personal Information</h2>
+                <p>Basic identity details for the new user.</p>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>First name</mat-label>
+                  <input matInput formControlName="firstName" autocomplete="given-name" />
+                  @if (form.controls.firstName.hasError('required') && form.controls.firstName.touched) {
+                    <mat-error>First name is required</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>Last name</mat-label>
+                  <input matInput formControlName="lastName" autocomplete="family-name" />
+                  @if (form.controls.lastName.hasError('required') && form.controls.lastName.touched) {
+                    <mat-error>Last name is required</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="col-12">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>Email address</mat-label>
+                  <mat-icon matPrefix>mail_outline</mat-icon>
+                  <input matInput formControlName="email" type="email" autocomplete="email" />
+                  @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+                    <mat-error>Email is required</mat-error>
+                  }
+                  @if (form.controls.email.hasError('email')) {
+                    <mat-error>Enter a valid email address</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="col-12">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>Phone number</mat-label>
+                  <mat-icon matPrefix>phone</mat-icon>
+                  <input matInput formControlName="phoneNumber" placeholder="+923001234567" />
+                  @if (form.controls.phoneNumber.hasError('required') && form.controls.phoneNumber.touched) {
+                    <mat-error>Phone number is required</mat-error>
+                  }
+                  @if (form.controls.phoneNumber.hasError('pattern')) {
+                    <mat-error>Enter a valid phone number (10–15 digits)</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password card -->
+          <div class="add-user-page__card">
+            <div class="add-user-page__card-header">
+              <div class="add-user-page__card-icon add-user-page__card-icon--security">
+                <mat-icon>lock</mat-icon>
+              </div>
+              <div>
+                <h2>Account Security</h2>
+                <p>Set an initial password. User can change it later.</p>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Password</mat-label>
+              <input
+                matInput
+                formControlName="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                autocomplete="new-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+                <mat-error>Password is required</mat-error>
+              }
+              @if (form.controls.password.hasError('minlength')) {
+                <mat-error>Password must be at least 6 characters</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+        </div>
+
+        <!-- Right column -->
+        <div class="add-user-page__col">
+
+          <!-- Agency & Role card -->
+          <div class="add-user-page__card">
+            <div class="add-user-page__card-header">
+              <div class="add-user-page__card-icon add-user-page__card-icon--agency">
+                <mat-icon>apartment</mat-icon>
+              </div>
+              <div>
+                <h2>Agency & Role</h2>
+                <p>Assign the user to an agency and set their role.</p>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>Agency</mat-label>
+                  <mat-icon matPrefix>business</mat-icon>
+                  <mat-select formControlName="agencyId">
+                    @if (agenciesLoading()) {
+                      <mat-option disabled>Loading agencies…</mat-option>
+                    } @else if (agencies().length === 0) {
+                      <mat-option disabled>No active agencies found</mat-option>
+                    } @else {
+                      @for (agency of agencies(); track agency._id) {
+                        <mat-option [value]="agency._id">{{ agency.name }}</mat-option>
+                      }
+                    }
+                  </mat-select>
+                  @if (form.controls.agencyId.hasError('required') && form.controls.agencyId.touched) {
+                    <mat-error>Please select an agency</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="col-12">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>Role</mat-label>
+                  <mat-icon matPrefix>badge</mat-icon>
+                  <mat-select formControlName="roleName">
+                    @for (role of roles; track role) {
+                      <mat-option [value]="role">{{ role }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info banner -->
+          <div class="add-user-page__info-banner">
+            <mat-icon class="add-user-page__info-icon">info</mat-icon>
+            <div class="add-user-page__info-text">
+              <strong>Auto-verified account</strong>
+              <span>Admin-created accounts skip email verification and are active immediately.</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="add-user-page__actions">
+        <a mat-stroked-button type="button" routerLink="/admin/users">Cancel</a>
+        <button mat-flat-button type="submit" class="add-user-page__submit" [disabled]="submitting()">
+          @if (submitting()) {
+            <mat-progress-spinner diameter="20" mode="indeterminate" />
+          } @else {
+            Create user
+          }
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
