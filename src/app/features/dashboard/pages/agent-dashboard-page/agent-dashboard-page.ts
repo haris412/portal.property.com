@@ -1,9 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import type { EChartsOption } from 'echarts';
+import { of } from 'rxjs';
+import { catchError, finalize, switchMap, take } from 'rxjs/operators';
 
 import { PageShellComponent } from '../../../../shared/ui/page-shell/page-shell';
-import { AuthService } from '../../../../core/services/auth.service';
 
 import { DashboardTopbarComponent } from '../../components/dashboard-topbar/dashboard-topbar';
 import { DashboardHeroCardComponent } from '../../components/dashboard-hero-card/dashboard-hero-card';
@@ -13,8 +22,11 @@ import { ChartPanelComponent } from '../../components/chart-panel/chart-panel';
 import { LocationsDemandCardComponent } from '../../components/locations-demand-card/locations-demand-card';
 import { AppointmentsTableCardComponent } from '../../components/appointment-table-card/appointment-table-card';
 
+import { AppointmentListItem } from '../../../../core/models/appointment.models';
+import { AppointmentsService } from '../../../../core/services/appointments.service';
+import { AuthService, User } from '../../../../core/services/auth.service';
+
 import {
-  APPOINTMENTS,
   HERO_CARD,
   LOCATION_DEMAND,
   PLAN_FEATURES,
@@ -42,11 +54,23 @@ import {
 })
 export class AgentDashboardPageComponent {
   private readonly auth = inject(AuthService);
-  private readonly currentUser = toSignal(this.auth.currentUser$);
+  private readonly appointmentsService = inject(AppointmentsService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
+  private readonly currentUser = toSignal<User | null>(this.auth.currentUser$, {
+    initialValue: null
+  });
+
+  /** Greeting line in the dashboard header. */
   readonly displayName = computed(() => {
-    const name = this.currentUser()?.name?.trim();
-    return name ? name.split(' ')[0] : 'there';
+    const u = this.currentUser();
+    if (!u) return 'there';
+    const full = u.name?.trim();
+    if (full) return full;
+    const fromParts = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+    if (fromParts) return fromParts;
+    return u.email || 'there';
   });
 
   readonly hero = HERO_CARD;
@@ -55,7 +79,28 @@ export class AgentDashboardPageComponent {
   readonly planSummary = PLAN_SUMMARY;
   readonly planFeatures = PLAN_FEATURES;
   readonly locationDemand = LOCATION_DEMAND;
-  readonly appointments = APPOINTMENTS;
+  readonly appointments = signal<AppointmentListItem[]>([]);
+
+  constructor() {
+    this.auth.currentUser$
+      .pipe(
+        take(1),
+        switchMap((user) => {
+          if (!user?._id) {
+            return of([] as AppointmentListItem[]);
+          }
+          return this.appointmentsService.getByUserId(user._id).pipe(
+            catchError(() => of([] as AppointmentListItem[]))
+          );
+        }),
+        finalize(() => this.cdr.markForCheck()),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((items) => {
+        this.appointments.set(items);
+        this.cdr.markForCheck();
+      });
+  }
 
   readonly viewsChartOptions = computed<EChartsOption>(() => ({
     tooltip: {

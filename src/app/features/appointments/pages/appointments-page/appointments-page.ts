@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { catchError, finalize, switchMap, take } from 'rxjs/operators';
+import { catchError, finalize, switchMap, take, tap } from 'rxjs/operators';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { SegmentedTabsComponent } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
 import { AppointmentsListComponent } from '../../components/appointments-list/appointments-list';
@@ -51,6 +51,7 @@ export class AppointmentsPageComponent {
   readonly appointments = signal<AppointmentListItem[]>([]);
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
+  readonly actionError = signal<string | null>(null);
 
   readonly tabs = computed<SegmentedTabItem[]>(() => {
     const items = this.appointments();
@@ -116,9 +117,20 @@ export class AppointmentsPageComponent {
   }
 
   confirmAppointment(id: string): void {
-    this.updateAppointment(id, {
-      status: 'confirmed'
-    });
+    this.actionError.set(null);
+    this.appointmentsService
+      .patchStatus(id, 'Confirmed')
+      .pipe(
+        tap(() => this.updateAppointment(id, { status: 'confirmed' })),
+        catchError(() => {
+          this.actionError.set('Could not confirm appointment. Please try again.');
+          return of(null);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.cdr.markForCheck();
+      });
   }
 
   rescheduleAppointment(id: string): void {
@@ -128,10 +140,28 @@ export class AppointmentsPageComponent {
     });
   }
 
-  cancelAppointment(id: string): void {
-    this.updateAppointment(id, {
-      status: 'cancelled'
-    });
+  cancelAppointment(item: AppointmentListItem): void {
+    const next =
+      item.status === 'confirmed'
+        ? { api: 'Cancelled', ui: 'cancelled' as const }
+        : item.status === 'pending'
+          ? { api: 'Rejected', ui: 'rejected' as const }
+          : { api: 'Cancelled', ui: 'cancelled' as const };
+
+    this.actionError.set(null);
+    this.appointmentsService
+      .patchStatus(item.id, next.api)
+      .pipe(
+        tap(() => this.updateAppointment(item.id, { status: next.ui })),
+        catchError(() => {
+          this.actionError.set(`Could not ${next.ui} appointment. Please try again.`);
+          return of(null);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.cdr.markForCheck();
+      });
   }
 
   private updateAppointment(id: string, changes: Partial<AppointmentListItem>): void {

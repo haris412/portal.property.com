@@ -23,6 +23,11 @@
     color: #ffffff;
   }
 
+  &--rejected {
+    background: var(--error);
+    color: #ffffff;
+  }
+
   &--rescheduled {
     background: var(--warning);
     color: #ffffff;

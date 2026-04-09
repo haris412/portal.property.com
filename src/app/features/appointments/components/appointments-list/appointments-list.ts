@@ -27,32 +27,52 @@ export class AppointmentsListComponent {
   readonly rescheduleClicked = output<AppointmentListItem>();
   readonly cancelClicked = output<AppointmentListItem>();
 
-  readonly personColumnLabel = computed(() =>
-    this.viewerRole() === 'agent' ? 'Client' : 'Agent'
-  );
+  readonly personColumnLabel = computed(() => 'Client');
 
   getPersonName(item: AppointmentListItem): string {
-    return this.viewerRole() === 'agent' ? item.client ?? '' : item.agent ?? '';
+    return (
+      item.clientName ??
+      [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ').trim()
+    );
   }
 
   getPersonSubline(item: AppointmentListItem): string {
-    const phone =
-      this.viewerRole() === 'agent'
-        ? (item.clientPhone ?? item.phone)
-        : (item.agentPhone ?? item.phone);
-    return `${item.role} · ${phone}`;
+    const phone = item.clientPhoneNumber ?? item.phone;
+    return `${phone}`;
   }
 
-  canConfirm(item: AppointmentListItem): boolean {
-    return this.viewerRole() === 'agent' && item.status === 'pending';
+  getPropertyTitle(item: AppointmentListItem): string {
+    return item.propertyObj?.listingTitle || item.propertyObj?.fullAddress || item.property;
+  }
+
+  getPropertySubline(item: AppointmentListItem): string {
+    return item.propertyObj?.neighborhood || item.propertyObj?.city || item.area;
+  }
+
+  /** Confirm control shown for appointments that can still be confirmed. */
+  canShowConfirmAction(item: AppointmentListItem): boolean {
+    return (
+      item.status !== 'completed' &&
+      item.status !== 'confirmed' &&
+      item.status !== 'cancelled' &&
+      item.status !== 'rejected'
+    );
   }
 
   canReschedule(item: AppointmentListItem): boolean {
-    return item.status !== 'completed' && item.status !== 'cancelled';
+    return (
+      item.status !== 'completed' &&
+      item.status !== 'cancelled' &&
+      item.status !== 'rejected'
+    );
   }
 
   canCancel(item: AppointmentListItem): boolean {
-    return item.status !== 'completed' && item.status !== 'cancelled';
+    return (
+      item.status !== 'completed' &&
+      item.status !== 'cancelled' &&
+      item.status !== 'rejected'
+    );
   }
 
   onRowClick(item: AppointmentListItem): void {
