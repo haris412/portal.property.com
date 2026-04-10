@@ -28,7 +28,9 @@
           <h1 class="admin-add-agency-page__title">
             {{ form.controls.name.value.trim() || 'New agency' }}
           </h1>
-          <p class="admin-add-agency-page__subtitle">Create a new agency and add contact information.</p>
+          <p class="admin-add-agency-page__subtitle">
+            {{ isEditMode() ? 'Edit agency details and contacts.' : 'Create a new agency and add contact information.' }}
+          </p>
         </div>
       </div>
     </section>
@@ -128,11 +130,11 @@
 
         <div class="admin-add-agency-page__actions">
           <a mat-stroked-button type="button" routerLink="/admin/agencies">Cancel</a>
-          <button mat-flat-button type="submit" class="admin-add-agency-page__submit" [disabled]="submitting()">
+          <button mat-flat-button type="submit" class="admin-add-agency-page__submit" [disabled]="submitting() || loadingAgency()">
             @if (submitting()) {
               <mat-progress-spinner diameter="20" mode="indeterminate" />
             } @else {
-              Create agency
+              {{ isEditMode() ? 'Save Changes' : 'Create agency' }}
             }
           </button>
         </div>
