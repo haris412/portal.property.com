@@ -1,18 +1,132 @@
 <div class="admin-agency-users-page">
   <div class="container-fluid admin-agency-users-page__container">
+
     <app-page-header
       title="Agency Users"
       subtitle="Manage registered agency users on the platform."
+      [actions]="headerActions"
+      (actionClicked)="onHeaderAction($event)"
     />
 
-    <div class="admin-agency-users-page__table-wrap section-card">
-      <div class="admin-agency-users-page__empty">
-        <mat-icon fontIcon="people" aria-hidden="true" />
-        <p class="admin-agency-users-page__empty-title">No agency users yet</p>
-        <p class="admin-agency-users-page__empty-copy">
-          Agency users registered on the platform will appear here.
-        </p>
+    @if (loadError(); as err) {
+      <app-info-banner class="d-block mb-3" icon="error_outline" [text]="err" />
+    }
+
+    <!-- Filters -->
+    <form
+      class="admin-agency-users-page__filters section-card"
+      [formGroup]="filterForm"
+      (ngSubmit)="$event.preventDefault()"
+    >
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4 col-lg-3">
+          <label class="admin-agency-users-page__filter-label">Search</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput placeholder="Name, email, phone…" formControlName="search" />
+          </mat-form-field>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="admin-agency-users-page__filter-label">Role</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="role">
+              <mat-option value="all">All roles</mat-option>
+              <mat-option value="Agent">Agent</mat-option>
+              <mat-option value="Buyer">Buyer</mat-option>
+              <mat-option value="Seller">Seller</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="admin-agency-users-page__filter-label">Status</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="isActive">
+              <mat-option value="all">All</mat-option>
+              <mat-option value="true">Active</mat-option>
+              <mat-option value="false">Inactive</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="admin-agency-users-page__filter-label">Sort by</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="sortBy">
+              <mat-option value="createdAt">Created</mat-option>
+              <mat-option value="updatedAt">Updated</mat-option>
+              <mat-option value="firstName">First name</mat-option>
+              <mat-option value="lastName">Last name</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-6 col-md-2 col-lg-1">
+          <label class="admin-agency-users-page__filter-label">Order</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="sortOrder">
+              <mat-option value="desc">Desc</mat-option>
+              <mat-option value="asc">Asc</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-6 col-md-2 col-lg-2">
+          <label class="admin-agency-users-page__filter-label">Per page</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="limit">
+              <mat-option [value]="10">10</mat-option>
+              <mat-option [value]="20">20</mat-option>
+              <mat-option [value]="50">50</mat-option>
+              <mat-option [value]="100">100</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
       </div>
+    </form>
+
+    <!-- Grid -->
+    <div class="admin-agency-users-page__table-wrap section-card">
+      @if (loading()) {
+        <div class="admin-agency-users-page__loading">
+          <mat-progress-spinner mode="indeterminate" diameter="40" />
+          <span>Loading users…</span>
+        </div>
+      } @else if (users().length === 0) {
+        <div class="admin-agency-users-page__empty">
+          <mat-icon fontIcon="people" aria-hidden="true" />
+          <p class="admin-agency-users-page__empty-title">No users found</p>
+          <p class="admin-agency-users-page__empty-copy">
+            No agency users match your filters, or none have been added yet.
+          </p>
+        </div>
+      } @else {
+        <app-data-grid
+          [rowData]="users()"
+          [columnDefs]="columnDefs"
+          [defaultColDef]="defaultColDef"
+          [gridOptions]="gridOptions"
+          [pagination]="false"
+          [heightPx]="520"
+        />
+
+        <footer class="admin-agency-users-page__pager">
+          <span class="admin-agency-users-page__pager-meta">
+            Page {{ page() }} of {{ totalPages() }} · {{ total() }} total
+          </span>
+          <div class="admin-agency-users-page__pager-btns">
+            <button mat-stroked-button type="button" [disabled]="page() <= 1 || loading()" (click)="goPrev()">
+              <mat-icon fontIcon="chevron_left" aria-hidden="true" />
+              Previous
+            </button>
+            <button mat-stroked-button type="button" [disabled]="page() >= totalPages() || loading()" (click)="goNext()">
+              Next
+              <mat-icon fontIcon="chevron_right" aria-hidden="true" />
+            </button>
+          </div>
+        </footer>
+      }
     </div>
+
   </div>
 </div>

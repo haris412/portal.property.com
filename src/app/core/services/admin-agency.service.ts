@@ -78,6 +78,19 @@ export interface AgencyUserItem {
   createdAt?: string;
 }
 
+/** Body for PATCH /api/admin/agencies/:agencyId/users/:userId */
+export interface UpdateAgencyUserPayload {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
+  phoneNumber?: string;
+  displayName?: string;
+  profileImageUrl?: string;
+  location?: string;
+  roleName?: string;
+}
+
 /** Body for POST /api/admin/agencies */
 export interface CreateAgencyPayload {
   name: string;
@@ -200,6 +213,44 @@ export class AdminAgencyService {
   }
 
   /**
+   * GET /api/admin/agencies/:id — fetch single agency (Bearer admin token).
+   */
+  getAgencyById(id: string): Observable<AgencyListItem> {
+    return this.http
+      .get<{ success?: boolean; message?: string; data?: { agency?: unknown } }>(
+        `${this.baseUrl}/${encodeURIComponent(id)}`
+      )
+      .pipe(
+        map((res) => {
+          if (res.success === false) throw new Error(res.message ?? 'Could not load agency');
+          const agency = normalizeAgencyRow(res.data?.agency);
+          if (!agency) throw new Error('Invalid response from server');
+          return agency;
+        }),
+        catchError((err) => throwError(() => err))
+      );
+  }
+
+  /**
+   * PATCH /api/admin/agencies/:id — update agency (Bearer admin token).
+   */
+  updateAgency(id: string, payload: Partial<CreateAgencyPayload>): Observable<AgencyListItem> {
+    return this.http
+      .patch<CreateAgencyApiResponse>(`${this.baseUrl}/${encodeURIComponent(id)}`, payload)
+      .pipe(
+        map((res) => {
+          if (res.success === false) throw new Error(res.message ?? 'Could not update agency');
+          const d = res.data;
+          const raw = isRecord(d) && 'agency' in d ? d['agency'] : d;
+          const agency = normalizeAgencyRow(raw);
+          if (!agency) throw new Error('Invalid response from server');
+          return agency;
+        }),
+        catchError((err) => throwError(() => err))
+      );
+  }
+
+  /**
    * POST /api/admin/agencies — create (Bearer admin token).
    */
   createAgency(payload: CreateAgencyPayload): Observable<AgencyListItem> {
@@ -255,6 +306,35 @@ export class AdminAgencyService {
           role:             isRecord(raw['role']) ? { _id: String(raw['role']['_id'] ?? ''), name: String(raw['role']['name'] ?? '') } : undefined,
           agency:           isRecord(raw['agency']) ? { _id: String(raw['agency']['_id'] ?? ''), name: String(raw['agency']['name'] ?? ''), logoUrl: typeof raw['agency']['logoUrl'] === 'string' ? raw['agency']['logoUrl'] : undefined } : undefined,
           createdAt:        typeof raw['createdAt'] === 'string' ? raw['createdAt'] : undefined,
+        } satisfies AgencyUserItem;
+      }),
+      catchError((err) => throwError(() => err))
+    );
+  }
+
+  /**
+   * PATCH /api/admin/agencies/:agencyId/users/:userId — update agency user (Bearer admin token).
+   */
+  updateAgencyUser(agencyId: string, userId: string, payload: UpdateAgencyUserPayload): Observable<AgencyUserItem> {
+    const url = `${this.baseUrl}/${encodeURIComponent(agencyId)}/users/${encodeURIComponent(userId)}`;
+    return this.http.patch<{ success?: boolean; message?: string; data?: { user?: unknown } }>(url, payload).pipe(
+      map((res) => {
+        if (res.success === false) throw new Error(res.message ?? 'Could not update user');
+        const raw = res.data?.user;
+        if (!isRecord(raw)) throw new Error('Invalid response from server');
+        return {
+          _id:             typeof raw['_id'] === 'string' ? raw['_id'] : '',
+          email:           typeof raw['email'] === 'string' ? raw['email'] : '',
+          firstName:       typeof raw['firstName'] === 'string' ? raw['firstName'] : '',
+          lastName:        typeof raw['lastName'] === 'string' ? raw['lastName'] : '',
+          displayName:     typeof raw['displayName'] === 'string' ? raw['displayName'] : undefined,
+          phoneNumber:     typeof raw['phoneNumber'] === 'string' ? raw['phoneNumber'] : '',
+          profileImageUrl: typeof raw['profileImageUrl'] === 'string' ? raw['profileImageUrl'] : undefined,
+          isActive:        typeof raw['isActive'] === 'boolean' ? raw['isActive'] : true,
+          isEmailVerified: typeof raw['isEmailVerified'] === 'boolean' ? raw['isEmailVerified'] : false,
+          role:    isRecord(raw['role'])   ? { _id: String(raw['role']['_id'] ?? ''),   name: String(raw['role']['name'] ?? '') }   : undefined,
+          agency:  isRecord(raw['agency']) ? { _id: String(raw['agency']['_id'] ?? ''), name: String(raw['agency']['name'] ?? ''), logoUrl: typeof raw['agency']['logoUrl'] === 'string' ? raw['agency']['logoUrl'] : undefined } : undefined,
+          createdAt: typeof raw['createdAt'] === 'string' ? raw['createdAt'] : undefined,
         } satisfies AgencyUserItem;
       }),
       catchError((err) => throwError(() => err))

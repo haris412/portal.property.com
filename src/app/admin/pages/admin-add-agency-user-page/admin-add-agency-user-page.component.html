@@ -17,7 +17,9 @@
         </div>
         <div>
           <h1 class="add-user-page__title">{{ fullName }}</h1>
-          <p class="add-user-page__subtitle">Create a new agency user and assign a role.</p>
+          <p class="add-user-page__subtitle">
+            {{ isEditMode() ? 'Edit user details and role.' : 'Create a new agency user and assign a role.' }}
+          </p>
         </div>
       </div>
     </section>
@@ -91,7 +93,8 @@
             </div>
           </div>
 
-          <!-- Password card -->
+          <!-- Password card (hidden in edit mode) -->
+          @if (!isEditMode()) {
           <div class="add-user-page__card">
             <div class="add-user-page__card-header">
               <div class="add-user-page__card-icon add-user-page__card-icon--security">
@@ -128,6 +131,7 @@
               }
             </mat-form-field>
           </div>
+          }
 
         </div>
 
@@ -197,11 +201,11 @@
       <!-- Actions -->
       <div class="add-user-page__actions">
         <a mat-stroked-button type="button" routerLink="/admin/users">Cancel</a>
-        <button mat-flat-button type="submit" class="add-user-page__submit" [disabled]="submitting()">
+        <button mat-flat-button type="submit" class="add-user-page__submit" [disabled]="submitting() || loadingUser()">
           @if (submitting()) {
             <mat-progress-spinner diameter="20" mode="indeterminate" />
           } @else {
-            Create user
+            {{ isEditMode() ? 'Save Changes' : 'Create user' }}
           }
         </button>
       </div>
