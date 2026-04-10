@@ -1,4 +1,3 @@
-import { AppointmentListItem } from "../../core/models/appointment.models";
 export interface PortfolioMetric {
   title: string;
   value: number;
@@ -14,21 +13,6 @@ export interface PlanFeature {
 export interface LocationDemand {
   name: string;
   percent: number;
-}
-
-export type AppointmentStatus = 'confirmed' | 'pending' | 'rescheduled';
-
-export interface AppointmentItem {
-  id: number;
-  property: string;
-  area: string;
-  date: string;
-  type: string;
-  client: string;
-  role: string;
-  phone: string;
-  time: string;
-  status: AppointmentStatus;
 }
 
 export const HERO_CARD = {
@@ -95,43 +79,4 @@ export const LOCATION_DEMAND: LocationDemand[] = [
   { name: 'Kirkland', percent: 64 },
   { name: 'Redmond', percent: 48 },
   { name: 'Capitol Hill', percent: 30 }
-];
-
-export const APPOINTMENTS: AppointmentListItem[] = [
-  {
-    id: '1',
-    property: '1200 Skyline Boulevard, Apt 4B',
-    area: 'Downtown Seattle',
-    date: '12 Mar 2026',
-    type: 'Property viewing',
-    client: 'Emma Johnson',
-    role: 'Buyer',
-    phone: '+1 (206) 555-4812',
-    time: '10:30 AM',
-    status: 'confirmed'
-  },
-  {
-    id: '2',
-    property: '88 Harbor View Residence',
-    area: 'Waterfront District',
-    date: '13 Mar 2026',
-    type: 'Rental inspection',
-    client: 'Daniel Lee',
-    role: 'Tenant',
-    phone: '+1 (425) 555-7740',
-    time: '1:00 PM',
-    status: 'pending'
-  },
-  {
-    id: '3',
-    property: 'Maple Grove Family House',
-    area: 'Bellevue Heights',
-    date: '14 Mar 2026',
-    type: 'Rescheduled visit',
-    client: 'Sophia Carter',
-    role: 'Buyer',
-    phone: '+1 (360) 555-9021',
-    time: '4:15 PM',
-    status: 'rescheduled'
-  }
 ];

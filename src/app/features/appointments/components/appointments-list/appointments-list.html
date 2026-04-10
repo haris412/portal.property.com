@@ -17,15 +17,18 @@
     </div>
 
     @for (appointment of appointments(); track trackById($index, appointment)) {
-    <button type="button"
-            class="appointments-list__row"
-            [class.appointments-list__row--clickable]="clickableRows()"
-            [class.appointments-list__row--with-actions]="showActions()"
-            [class.appointments-list__row--with-arrow]="showArrow()"
-            (click)="onRowClick(appointment)">
+    <div class="appointments-list__row"
+         [class.appointments-list__row--clickable]="clickableRows()"
+         [class.appointments-list__row--with-actions]="showActions()"
+         [class.appointments-list__row--with-arrow]="showArrow()"
+         [attr.role]="clickableRows() ? 'button' : null"
+         [attr.tabindex]="clickableRows() ? '0' : null"
+         (click)="onRowClick(appointment)"
+         (keydown.enter)="onRowClick(appointment)"
+         (keydown.space)="$event.preventDefault(); onRowClick(appointment)">
       <div>
-        <strong>{{ appointment.property }}</strong>
-        <span>{{ appointment.area }}</span>
+        <strong>{{ getPropertyTitle(appointment) }}</strong>
+        <span>{{ getPropertySubline(appointment) }}</span>
       </div>
 
       <div>
@@ -54,27 +57,25 @@
 
       @if (showActions()) {
       <div class="appointments-list__actions">
-        @if (canConfirm(appointment)) {
+        @if (canShowConfirmAction(appointment)) {
         <button type="button"
-                class="appointments-list__action appointments-list__action--primary"
+                class="appointments-list__action appointments-list__action--primary appointments-list__action--icon"
+                title="Confirm appointment"
+                aria-label="Confirm appointment"
                 (click)="onConfirm(appointment, $event)">
-          Confirm
-        </button>
-        }
-
-        @if (canReschedule(appointment)) {
-        <button type="button"
-                class="appointments-list__action"
-                (click)="onReschedule(appointment, $event)">
-          Reschedule
+          <mat-icon fontSet="material-symbols-outlined"
+                    inline>check_circle</mat-icon>
         </button>
         }
 
         @if (canCancel(appointment)) {
         <button type="button"
-                class="appointments-list__action appointments-list__action--danger"
+                class="appointments-list__action appointments-list__action--danger appointments-list__action--icon"
+                title="Cancel appointment"
+                aria-label="Cancel appointment"
                 (click)="onCancel(appointment, $event)">
-          Cancel
+          <mat-icon fontSet="material-symbols-outlined"
+                    inline>cancel</mat-icon>
         </button>
         }
       </div>
@@ -84,22 +85,25 @@
                   inline>chevron_right</mat-icon>
       </div>
       }
-    </button>
+    </div>
     }
   </div>
 
   <div class="appointments-list__mobile d-lg-none">
     @for (appointment of appointments(); track trackById($index, appointment)) {
-    <button type="button"
-            class="appointments-list__mobile-item"
-            [class.appointments-list__mobile-item--clickable]="clickableRows()"
-            (click)="onRowClick(appointment)">
+    <div class="appointments-list__mobile-item"
+         [class.appointments-list__mobile-item--clickable]="clickableRows()"
+         [attr.role]="clickableRows() ? 'button' : null"
+         [attr.tabindex]="clickableRows() ? '0' : null"
+         (click)="onRowClick(appointment)"
+         (keydown.enter)="onRowClick(appointment)"
+         (keydown.space)="$event.preventDefault(); onRowClick(appointment)">
       <div class="appointments-list__mobile-top">
-        <strong>{{ appointment.property }}</strong>
+        <strong>{{ getPropertyTitle(appointment) }}</strong>
         <app-status-badge [status]="appointment.status" />
       </div>
 
-      <div class="appointments-list__mobile-meta">{{ appointment.area }}</div>
+      <div class="appointments-list__mobile-meta">{{ getPropertySubline(appointment) }}</div>
       <div class="appointments-list__mobile-meta">{{ appointment.date }} · {{ appointment.time }}</div>
       <div class="appointments-list__mobile-meta">
         {{ getPersonName(appointment) }} · {{ appointment.role }}
@@ -107,32 +111,30 @@
 
       @if (showActions()) {
       <div class="appointments-list__mobile-actions">
-        @if (canConfirm(appointment)) {
+        @if (canShowConfirmAction(appointment)) {
         <button type="button"
-                class="appointments-list__action appointments-list__action--primary"
+                class="appointments-list__action appointments-list__action--primary appointments-list__action--icon"
+                title="Confirm appointment"
+                aria-label="Confirm appointment"
                 (click)="onConfirm(appointment, $event)">
-          Confirm
-        </button>
-        }
-
-        @if (canReschedule(appointment)) {
-        <button type="button"
-                class="appointments-list__action"
-                (click)="onReschedule(appointment, $event)">
-          Reschedule
+          <mat-icon fontSet="material-symbols-outlined"
+                    inline>check_circle</mat-icon>
         </button>
         }
 
         @if (canCancel(appointment)) {
         <button type="button"
-                class="appointments-list__action appointments-list__action--danger"
+                class="appointments-list__action appointments-list__action--danger appointments-list__action--icon"
+                title="Cancel appointment"
+                aria-label="Cancel appointment"
                 (click)="onCancel(appointment, $event)">
-          Cancel
+          <mat-icon fontSet="material-symbols-outlined"
+                    inline>cancel</mat-icon>
         </button>
         }
       </div>
       }
-    </button>
+    </div>
     }
   </div>
 </div>

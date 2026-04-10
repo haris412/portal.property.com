@@ -6,6 +6,8 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   AppointmentListItem,
+  AppointmentApiProperty,
+  AppointmentApiUser,
   AppointmentStatus
 } from '../models/appointment.models';
 
@@ -47,6 +49,7 @@ function normalizeStatus(raw: string): AppointmentStatus {
     lower === 'confirmed' ||
     lower === 'pending' ||
     lower === 'completed' ||
+    lower === 'rejected' ||
     lower === 'cancelled' ||
     lower === 'rescheduled'
   ) {
@@ -115,25 +118,71 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
   const propertyId = o['propertyId'];
   let property = 'Property';
   let area = '—';
+  let listingPropertyId: string | undefined;
   let listingOwner: unknown = null;
+  let propertyObj: AppointmentApiProperty | undefined;
 
   if (propertyId && typeof propertyId === 'object') {
     const p = propertyId as Record<string, unknown>;
+    const pid = String(p['_id'] ?? '');
+    if (pid) listingPropertyId = pid;
     property =
       pickString(p, 'listingTitle', 'title') ||
       pickString(p, 'fullAddress') ||
       'Property';
     area = pickString(p, 'neighborhood', 'city', 'area') || '—';
     listingOwner = p['userId'];
+
+    propertyObj = {
+      _id: pid || undefined,
+      listingTitle: pickString(p, 'listingTitle', 'title') || undefined,
+      fullAddress: pickString(p, 'fullAddress') || undefined,
+      neighborhood: pickString(p, 'neighborhood') || undefined,
+      city: pickString(p, 'city') || undefined,
+      price:
+        typeof p['price'] === 'number'
+          ? (p['price'] as number)
+          : undefined,
+      propertyType: pickString(p, 'propertyType') || undefined,
+      purpose: pickString(p, 'purpose') || undefined,
+      status: pickString(p, 'status') || undefined
+    };
   }
 
   const appointmentUser = o['userId'];
+  let userObj: AppointmentApiUser | undefined;
+  if (appointmentUser && typeof appointmentUser === 'object') {
+    const u = appointmentUser as Record<string, unknown>;
+    const roleRaw = u['role'];
+    const roleObj =
+      roleRaw && typeof roleRaw === 'object'
+        ? (roleRaw as Record<string, unknown>)
+        : null;
 
-  const agentName = personName(appointmentUser);
-  const agentPhone = personPhone(appointmentUser);
+    userObj = {
+      _id: pickString(u, '_id', 'id') || undefined,
+      email: pickString(u, 'email') || undefined,
+      firstName: pickString(u, 'firstName') || undefined,
+      lastName: pickString(u, 'lastName') || undefined,
+      phoneNumber: pickString(u, 'phoneNumber', 'phone') || undefined,
+      role: roleObj
+        ? {
+            _id: pickString(roleObj, '_id', 'id') || undefined,
+            name: pickString(roleObj, 'name') || undefined
+          }
+        : undefined
+    };
+  }
 
-  const clientName = personName(listingOwner);
-  const clientPhone = personPhone(listingOwner);
+  const clientNameFromApi = pickString(o, 'clientName');
+  const clientPhoneFromApi = pickString(o, 'clientPhoneNumber', 'clientPhone');
+  const clientEmailFromApi = pickString(o, 'clientEmail');
+
+  const clientName = clientNameFromApi || personName(appointmentUser);
+  const clientPhone = clientPhoneFromApi || personPhone(appointmentUser);
+
+  const agentName = personName(listingOwner);
+  const agentPhone = personPhone(listingOwner);
 
   const { date: dateDisplay, time: timeDisplay } = formatAppointmentDateTime(
     o['date'],
@@ -146,7 +195,12 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
 
   const role = roleLabel(appointmentUser);
 
-  const fallbackPhone = agentPhone || clientPhone || '—';
+  const fallbackPhone = clientPhone || agentPhone || '—';
+
+  const createdAt =
+    o['createdAt'] != null ? String(o['createdAt']) : undefined;
+  const updatedAt =
+    o['updatedAt'] != null ? String(o['updatedAt']) : undefined;
 
   return {
     id,
@@ -154,15 +208,21 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
     area,
     date: dateDisplay,
     type,
-    client: clientName || undefined,
-    clientPhone: clientPhone || undefined,
+    clientName: clientName || undefined,
+    clientEmail: clientEmailFromApi || undefined,
+    clientPhoneNumber: clientPhone || undefined,
     agent: agentName || undefined,
     agentPhone: agentPhone || undefined,
+    listingPropertyId,
+    user: userObj,
+    propertyObj,
     role,
     phone: fallbackPhone,
     time: timeDisplay,
     status,
-    isRescheduled: Boolean(o['isRescheduled'] ?? o['rescheduled'])
+    isRescheduled: Boolean(o['isRescheduled'] ?? o['rescheduled']),
+    createdAt,
+    updatedAt
   };
 }
 
@@ -184,5 +244,11 @@ export class AppointmentsService {
         return out;
       })
     );
+  }
+
+  /** PATCH /api/appointments/:id/status — API status values may be PascalCase (e.g. `Confirmed`). */
+  patchStatus(appointmentId: string, status: string): Observable<unknown> {
+    const url = `${this.base}/${encodeURIComponent(appointmentId)}/status`;
+    return this.http.patch<unknown>(url, { status });
   }
 }

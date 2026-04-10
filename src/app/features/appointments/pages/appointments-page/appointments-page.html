@@ -9,6 +9,12 @@
       </p>
     }
 
+    @if (actionError()) {
+      <p class="appointments-page__message appointments-page__message--error" role="alert">
+        {{ actionError() }}
+      </p>
+    }
+
     @if (loading()) {
       <p class="appointments-page__message">Loading appointments…</p>
     } @else {
@@ -26,7 +32,7 @@
           [showActions]="true"
           (confirmClicked)="confirmAppointment($event.id)"
           (rescheduleClicked)="rescheduleAppointment($event.id)"
-          (cancelClicked)="cancelAppointment($event.id)"
+          (cancelClicked)="cancelAppointment($event)"
         />
       </div>
     }
