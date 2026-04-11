@@ -18,6 +18,7 @@ import { UserService, UpdateUserPayload } from '../../../../core/services/user.s
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
+import { ActionButtonComponent } from "../../../../shared/ui/action-button/action-button";
 
 @Component({
   selector: 'app-profile-account-section',
@@ -27,7 +28,8 @@ import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-  ],
+    ActionButtonComponent
+],
   templateUrl: './profile-account-section.html',
   styleUrl: './profile-account-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -6,7 +6,13 @@ import {
   output,
 } from '@angular/core';
 import { AgGridAngular } from 'ag-grid-angular';
-import type { ColDef, GridApi, GridOptions, GridReadyEvent } from 'ag-grid-community';
+import {
+  type ColDef,
+  type GridApi,
+  type GridOptions,
+  type GridReadyEvent,
+  type RowSelectionOptions,
+} from 'ag-grid-community';
 
 const DEFAULT_COL_DEF: ColDef = {
   sortable: true,
@@ -16,58 +22,60 @@ const DEFAULT_COL_DEF: ColDef = {
   minWidth: 120,
 };
 
-/**
- * Thin wrapper around AG Grid Community for consistent sizing, defaults, and module setup.
- * Register `AllCommunityModule` once in `app.config.ts` (already done).
- *
- * For a reusable ⋮ row menu, use `GridRowMenuCellRendererComponent` and `gridActionsColumnDef`
- * from `../grid-row-menu-cell/` (pass the component as `cellRenderer` — do not add it here; AG Grid
- * loads it dynamically, so it is not a template import).
- */
 @Component({
   selector: 'app-data-grid',
-  standalone: true,
   imports: [AgGridAngular],
   templateUrl: './data-grid.component.html',
   styleUrl: './data-grid.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    role: 'region',
+    'aria-label': 'Data table',
+  },
 })
 export class DataGridComponent<TData = unknown> {
-  /** Table rows (replace with API data later). */
   readonly rowData = input<TData[]>([]);
-
-  readonly columnDefs = input<ColDef<TData>[]>([]);
-
-  /** Merged over {@link DEFAULT_COL_DEF}; pass `{}` to use defaults only. */
-  readonly defaultColDef = input<ColDef<TData>>({});
-
-  /** Total height of the grid including header (px). */
+  readonly columnDefs = input<ColDef[]>([]);
+  readonly defaultColDef = input<ColDef>({});
   readonly heightPx = input(480);
-
   readonly pagination = input(true);
-
   readonly paginationPageSize = input(25);
+  readonly rowSelection = input<RowSelectionOptions['mode']>('singleRow');
+  readonly gridOptionsInput = input<GridOptions>({});
 
-  /** Extra grid options; avoid setting `rowData` / `columnDefs` here — use inputs instead. */
-  readonly gridOptions = input<GridOptions<TData>>({});
+  readonly rowClickedEvent = output<TData>();
+  readonly gridReady = output<GridApi>();
 
-  readonly gridReady = output<GridApi<TData>>();
-
-  readonly mergedDefaultColDef = computed(
-    (): ColDef<TData> =>
-      ({
-        ...DEFAULT_COL_DEF,
-        ...this.defaultColDef(),
-      }) as ColDef<TData>
-  );
-
-  readonly mergedGridOptions = computed((): GridOptions<TData> => ({
+  readonly gridOptions = computed<GridOptions>(() => ({
+    rowHeight: 80,
+    rowStyle: { maxHeight: '72px' },
+    rowSelection: {
+      mode: this.rowSelection(),
+    },
+    headerHeight: 56,
+    pagination: this.pagination(),
+    paginationPageSize: this.paginationPageSize(),
+    suppressRowClickSelection: true,
+    rowClassRules: {
+      'clickable-row': () => true,
+    },
     animateRows: true,
     suppressCellFocus: true,
-    ...this.gridOptions(),
+    ...this.gridOptionsInput(),
   }));
 
-  onGridReady(event: GridReadyEvent<TData>): void {
+  readonly mergedDefaultColDef = computed<ColDef>(() => ({
+    ...DEFAULT_COL_DEF,
+    ...this.defaultColDef(),
+  }));
+
+  onGridReady(event: GridReadyEvent): void {
     this.gridReady.emit(event.api);
+  }
+
+  onRowClicked(event: { data?: TData }): void {
+    if (event.data !== undefined) {
+      this.rowClickedEvent.emit(event.data);
+    }
   }
 }

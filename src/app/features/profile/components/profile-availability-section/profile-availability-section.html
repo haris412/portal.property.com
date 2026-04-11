@@ -41,19 +41,13 @@
       </div>
 
       <div class="profile-form__actions">
-        <button
-          mat-flat-button
-          type="button"
-          class="profile-form__primary-btn"
+        <app-action-button
+          [label]="saving() ? 'Saving…' : 'Save Availability'"
+          variant="filled"
+          [icon]="''"
+          (clicked)="save()"
           [disabled]="saving()"
-          (click)="save()"
-        >
-          @if (saving()) {
-            Saving…
-          } @else {
-            Save Availability
-          }
-        </button>
+          />
       </div>
     </form>
   }

@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, Validati
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button';
 
 @Component({
   selector: 'app-profile-security-section',
@@ -11,7 +12,8 @@ import { MatInputModule } from '@angular/material/input';
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    ActionButtonComponent
   ],
   templateUrl: './profile-security-section.html',
   styleUrl: './profile-security-section.scss',

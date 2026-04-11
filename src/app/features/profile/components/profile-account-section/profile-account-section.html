@@ -79,14 +79,13 @@
     </div>
 
     <div class="profile-form__actions">
-      <button
-        mat-flat-button
-        type="submit"
-        class="profile-form__primary-btn"
-        [disabled]="saving()"
-      >
-        {{ saving() ? 'Saving…' : 'Save Changes' }}
-      </button>
+      <app-action-button
+        [label]="saving() ? 'Saving…' : 'Save Changes'"
+        [icon]="''"
+        variant="filled"
+        (clicked)="save()"
+        [disabled]="saving() || form.pristine"
+        />
     </div>
   </form>
 </section>

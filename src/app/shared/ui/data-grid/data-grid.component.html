@@ -1,12 +1,13 @@
-<div class="data-grid-wrap" [style.height.px]="heightPx()">
+<div class="data-grid-wrap ag-theme-material" [style.height.px]="heightPx()">
   <ag-grid-angular
-    class="ag-theme-quartz data-grid"
+    class="data-grid "
     [rowData]="rowData()"
     [columnDefs]="columnDefs()"
     [defaultColDef]="mergedDefaultColDef()"
-    [gridOptions]="mergedGridOptions()"
+    [gridOptions]="gridOptionsInput()"
     [pagination]="pagination()"
     [paginationPageSize]="paginationPageSize()"
     (gridReady)="onGridReady($event)"
+    [attr.aria-rowcount]="rowData().length"
   />
 </div>

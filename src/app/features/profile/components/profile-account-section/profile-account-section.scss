@@ -25,13 +25,18 @@
 .profile-form {
   &__actions {
     margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: end;
   }
 
   &__primary-btn {
-    --mdc-filled-button-container-color: var(--primary);
-    --mdc-filled-button-label-text-color: #fff;
+    background-color: var(--primary);
+    color: #fff;
     min-height: 46px;
     border-radius: 12px;
     font-weight: 700;
+    border: none;
+
   }
 }

@@ -50,6 +50,8 @@
     border-radius: var(--radius-md);
     font-size: 0.9375rem;
     font-weight: 600;
+    display: flex;
+    align-items: center;
 
     .mat-icon {
       margin-right: 0.25rem;

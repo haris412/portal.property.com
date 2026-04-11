@@ -1,5 +1,11 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .data-grid-wrap {
   width: 100%;
+  min-width: 0;
 }
 
 .data-grid {

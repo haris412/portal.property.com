@@ -1,94 +1,86 @@
-<app-section-card
-  title="Basic Information"
-  description="Set the primary details of the property you want to list. You can also use AI to draft the title for faster publishing."
->
-  <div class="row g-4" [formGroup]="form">
-    <div class="col-12 col-lg-6">
+<app-section-card title="Basic Information">
+  <div class="row g-4"
+       [formGroup]="form">
+    <div class="col-12 col-lg-4">
       <label class="field-label">Purpose</label>
-
-      <app-segmented-option-group
-        [items]="purposeOptions()"
-        [selectedValue]="form.get('purpose')?.value"
-        (changed)="onPurposeChange($event)"
-      />
+      <app-segmented-option-group [items]="purposeOptions()"
+                                  [selectedValue]="form.get('purpose')?.value"
+                                  (changed)="onPurposeChange($event)" />
       @if (form.get('purpose')?.hasError('server')) {
-        <div class="field-validation-msg" role="alert">{{ form.get('purpose')?.getError('server') }}</div>
+      <div class="field-validation-msg"
+           role="alert">{{ form.get('purpose')?.getError('server') }}</div>
       } @else if (form.get('purpose')?.invalid && form.get('purpose')?.touched) {
-        <div class="field-validation-msg" role="alert">Purpose is required</div>
-      }
-
-      @if (!catalogError()) {
-        <label class="field-label d-block mt-4">Category</label>
-
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-select
-            formControlName="propertySubtypeName"
-            placeholder="Select category"
-            [disabled]="
-              catalogLoading() ||
-              !form.get('propertyCategoryName')?.value ||
-              availableSubtypes().length === 0
-            "
-            (openedChange)="onCategoryFieldPanelToggle($event)"
-          >
-            @for (st of availableSubtypes(); track st._id) {
-              <mat-option [value]="st.name">{{ st.name }}</mat-option>
-            }
-          </mat-select>
-          @if (
-            form.get('propertyCategoryName')?.value &&
-            availableSubtypes().length === 0 &&
-            !catalogLoading()
-          ) {
-            <mat-hint>No categories listed for this property type.</mat-hint>
-          }
-          <mat-error>
-            @if (form.get('propertySubtypeName')?.hasError('server')) {
-              {{ form.get('propertySubtypeName')?.getError('server') }}
-            } @else {
-              Category is required
-            }
-          </mat-error>
-        </mat-form-field>
+      <div class="field-validation-msg"
+           role="alert">Purpose is required</div>
       }
     </div>
 
-    <div class="col-12 col-lg-6">
-      <label class="field-label">Property type</label>
-
+    <div class="col-12 col-lg-8">
       @if (catalogError()) {
-        <app-info-banner
-          icon="error_outline"
-          text="Property categories could not be loaded. Check your connection and try again."
-        />
-        <button
-          type="button"
-          mat-stroked-button
-          class="mt-2"
-          (click)="retryLoadCatalog()"
-        >
-          Retry
-        </button>
+      <app-info-banner icon="error_outline"
+                       text="Property categories could not be loaded. Check your connection and try again." />
+      <button type="button"
+              mat-stroked-button
+              class="mt-2"
+              (click)="retryLoadCatalog()">
+        Retry
+      </button>
       } @else {
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-select
-            formControlName="propertyCategoryName"
-            placeholder="Select property type"
-            [disabled]="catalogLoading()"
-            (openedChange)="onPropertyTypePanelToggle($event)"
-          >
-            @for (cat of categories(); track cat._id) {
+      <div class="row">
+        <div class="col-6">
+          <label class="field-label d-block">Category</label>
+          <mat-form-field appearance="outline"
+                          class="w-100">
+            <mat-select formControlName="propertySubtypeName"
+                        placeholder="Select category"
+                        [disabled]="
+                catalogLoading() ||
+                !form.get('propertyCategoryName')?.value ||
+                availableSubtypes().length === 0
+              "
+                        (openedChange)="onCategoryFieldPanelToggle($event)">
+              @for (st of availableSubtypes(); track st._id) {
+              <mat-option [value]="st.name">{{ st.name }}</mat-option>
+              }
+            </mat-select>
+            @if (
+            form.get('propertyCategoryName')?.value &&
+            availableSubtypes().length === 0 &&
+            !catalogLoading()
+            ) {
+            <mat-hint>No categories listed for this property type.</mat-hint>
+            }
+            <mat-error>
+              @if (form.get('propertySubtypeName')?.hasError('server')) {
+              {{ form.get('propertySubtypeName')?.getError('server') }}
+              } @else {
+              Category is required
+              }
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="col-6">
+          <label class="field-label">Property type</label>
+          <mat-form-field appearance="outline"
+                          class="w-100">
+            <mat-select formControlName="propertyCategoryName"
+                        placeholder="Select property type"
+                        [disabled]="catalogLoading()"
+                        (openedChange)="onPropertyTypePanelToggle($event)">
+              @for (cat of categories(); track cat._id) {
               <mat-option [value]="cat.name">{{ cat.name }}</mat-option>
-            }
-          </mat-select>
-          <mat-error>
-            @if (form.get('propertyCategoryName')?.hasError('server')) {
+              }
+            </mat-select>
+            <mat-error>
+              @if (form.get('propertyCategoryName')?.hasError('server')) {
               {{ form.get('propertyCategoryName')?.getError('server') }}
-            } @else {
+              } @else {
               Property type is required
-            }
-          </mat-error>
-        </mat-form-field>
+              }
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
       }
     </div>
 
@@ -98,28 +90,25 @@
         <app-action-chip-list [items]="titleActions()" />
       </div>
 
-      <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          formControlName="listingTitle"
-          placeholder="2 Bed Apartment in DHA"
-          (blur)="onListingTitleBlur()"
-        />
+      <mat-form-field appearance="outline"
+                      class="w-100">
+        <input matInput
+               formControlName="listingTitle"
+               placeholder="2 Bed Apartment in DHA"
+               (blur)="onListingTitleBlur()" />
         <mat-error>
           @if (form.get('listingTitle')?.hasError('server')) {
-            {{ form.get('listingTitle')?.getError('server') }}
+          {{ form.get('listingTitle')?.getError('server') }}
           } @else if (form.get('listingTitle')?.hasError('required')) {
-            Listing title is required
+          Listing title is required
           } @else if (form.get('listingTitle')?.hasError('maxlength')) {
-            Use at most 120 characters
+          Use at most 120 characters
           }
         </mat-error>
       </mat-form-field>
 
-      <app-info-banner
-        icon="auto_awesome"
-        text="AI can create a polished headline based on purpose, property type, category, bedrooms, location and amenities, then place it directly into the title field."
-      />
+      <app-info-banner icon="auto_awesome"
+                       text="AI can create a polished headline based on purpose, property type, category, bedrooms, location and amenities, then place it directly into the title field." />
     </div>
   </div>
 </app-section-card>

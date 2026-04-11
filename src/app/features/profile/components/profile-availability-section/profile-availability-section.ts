@@ -21,6 +21,7 @@ import {
   defaultWeekAvailability,
   mergeWeekWithDefaults
 } from '../../../../core/services/user-availability.service';
+import { ActionButtonComponent } from "../../../../shared/ui/action-button/action-button";
 
 @Component({
   selector: 'app-profile-availability-section',
@@ -28,8 +29,9 @@ import {
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
-    MatSlideToggleModule
-  ],
+    MatSlideToggleModule,
+    ActionButtonComponent
+],
   templateUrl: './profile-availability-section.html',
   styleUrl: './profile-availability-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

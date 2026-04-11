@@ -32,9 +32,12 @@
     </div>
 
     <div class="profile-form__actions">
-      <button mat-flat-button type="submit" class="profile-form__primary-btn">
-        Update Password
-      </button>
+        <app-action-button
+          [label]="'Update Password'"
+          [icon]="''"
+          variant="filled"
+          (clicked)="save()"
+        />
     </div>
   </form>
 </section>
