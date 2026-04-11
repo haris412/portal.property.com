@@ -1,4 +1,4 @@
-<app-section-card [title]="name()" [description]="description()">
+<app-section-card [title]="name()" [description]="description()" density="compact">
   <div class="plan-summary-card">
     <div class="plan-summary-card__list">
       @for (feature of features(); track feature.label) {
@@ -19,6 +19,6 @@
       </div>
     </div>
 
-    <app-action-button label="Upgrade Plan" icon="trending_up" />
+    <app-action-button label="Upgrade Plan" icon="trending_up" size="compact" />
   </div>
 </app-section-card>

@@ -2,7 +2,7 @@
   &__label {
     display: inline-block;
     margin-bottom: 0.625rem;
-    color: #1f1630;
+    color: var(--font-main);
     font-weight: 600;
   }
 
@@ -14,15 +14,20 @@
     border: 1px solid #e4e7ec;
     border-radius: 0.75rem;
     background: #fff;
+    padding-inline: 1rem;
   }
 
   &__btn {
     width: 2rem;
     height: 2rem;
     margin-inline: auto;
-    border: 1px solid #d0d5dd;
+    border: 1px solid transparent;
     border-radius: 0.5rem;
-    background: #f9fafb;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--font-main);
 
     &:disabled {
       opacity: 0.45;
@@ -33,6 +38,6 @@
   &__value {
     text-align: center;
     font-weight: 700;
-    color: #1f1630;
+    color: var(--font-main);
   }
 }

@@ -34,6 +34,7 @@ import {
   PORTFOLIO_METRICS,
   PORTFOLIO_SUMMARY
 } from '../../dashboard.mock';
+import { PageHeaderComponent } from "../../../../shared/ui/page-header/page-header";
 
 @Component({
   selector: 'app-agent-dashboard-page',
@@ -46,8 +47,9 @@ import {
     PlanSummaryCardComponent,
     ChartPanelComponent,
     LocationsDemandCardComponent,
-    AppointmentsTableCardComponent
-  ],
+    AppointmentsTableCardComponent,
+    PageHeaderComponent
+],
   templateUrl: './agent-dashboard-page.html',
   styleUrl: './agent-dashboard-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

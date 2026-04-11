@@ -1,4 +1,19 @@
-<button type="button" class="action-button" [class]="classes()" (click)="clicked.emit()">
-  <mat-icon fontSet="material-symbols-outlined" inline>{{ icon() }}</mat-icon>
-  <span>{{ label() }}</span>
+<button
+  [type]="type()"
+  class="action-button"
+  [class]="classes()"
+  [disabled]="disabled()"
+  (click)="clicked.emit()"
+>
+  @if (icon()) {
+    <mat-icon
+      fontSet="material-symbols-outlined"
+      inline
+      aria-hidden="true"
+    >
+      {{ icon() }}
+    </mat-icon>
+  }
+
+  <span class="action-button__label">{{ label() }}</span>
 </button>

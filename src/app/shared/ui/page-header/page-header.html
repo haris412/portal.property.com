@@ -18,7 +18,7 @@
           @case ('flat') {
             <button
               type="button"
-              mat-flat-button
+              
               class="page-header__action-btn page-header__action-btn--flat"
               [disabled]="action.disabled"
               (click)="onActionClick(action.id)"
@@ -33,7 +33,7 @@
           @case ('stroked') {
             <button
               type="button"
-              mat-stroked-button
+              
               class="page-header__action-btn page-header__action-btn--stroked"
               [disabled]="action.disabled"
               (click)="onActionClick(action.id)"
@@ -48,7 +48,7 @@
           @default {
             <button
               type="button"
-              mat-button
+              
               class="page-header__action-btn page-header__action-btn--text"
               [disabled]="action.disabled"
               (click)="onActionClick(action.id)"

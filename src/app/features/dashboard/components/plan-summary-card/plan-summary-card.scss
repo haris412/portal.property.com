@@ -1,60 +1,64 @@
 .plan-summary-card {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 .plan-summary-card__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .plan-summary-card__eyebrow {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   color: var(--font-secondary);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
 }
 
 .plan-summary-card__head h3 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   color: var(--font-main);
-  font-size: 1.875rem;
+  font-size: 1.5rem;
   font-weight: 800;
+  line-height: 1.15;
 }
 
 .plan-summary-card__head p {
   margin: 0;
   color: var(--font-secondary);
-  line-height: 1.6;
+  font-size: 0.9375rem;
+  line-height: 1.45;
 }
 
 .plan-summary-card__status {
   background: rgba(39, 174, 96, 0.12);
   color: var(--success);
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 999px;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .plan-summary-card__list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .plan-summary-card__item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: #fff7f3;
   border: 1px solid var(--border-soft);
+  font-size: 0.9375rem;
 }
 
 .plan-summary-card__item span {
@@ -63,26 +67,28 @@
 
 .plan-summary-card__item strong {
   color: var(--font-main);
+  line-height: 1.2;
 }
 
 .plan-summary-card__usage {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .plan-summary-card__usage-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   color: var(--font-secondary);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
 }
 
 .plan-summary-card__progress {
   width: 100%;
-  height: 10px;
+  height: 8px;
   border-radius: 999px;
   background: var(--surface-muted);
   overflow: hidden;

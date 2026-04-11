@@ -1,42 +1,39 @@
-<app-step-card
-  [step]="3"
-  title="Description"
-  description="Tell buyers what makes this property worth viewing."
->
-  <div class="d-grid gap-4" [formGroup]="form()">
-    <app-info-banner icon="subject" [text]="descriptionBanner()" />
+<app-step-card [step]="3"
+               title="Description"
+               description="Tell buyers what makes this property worth viewing.">
+  <div class="d-grid gap-4"
+       [formGroup]="form()">
+    <app-info-banner icon="subject"
+                     [text]="descriptionBanner()" />
 
     <div>
       <div class="property-description-step__header">
         <label class="field-label mb-0">Property description</label>
-        <app-action-chip-list
-          [items]="descriptionActions()"
-          (actionClicked)="onDescriptionAction($event)"
-        />
+        <app-action-chip-list [items]="descriptionActions()"
+                              (actionClicked)="onDescriptionAction($event)" />
       </div>
 
-      <mat-form-field appearance="outline" class="w-100">
-        <textarea
-          matInput
-          rows="6"
-          formControlName="propertyDescription"
-          placeholder="Nice apartment..."
-        ></textarea>
+      <mat-form-field appearance="outline"
+                      class="w-100">
+        <textarea matInput
+                  cdkTextareaAutosize
+                  cdkAutosizeMinRows="4"
+                  cdkAutosizeMaxRows="12"
+                  formControlName="propertyDescription"
+                  placeholder="Nice apartment..."></textarea>
         <mat-error>
           @if (form().get('propertyDescription')?.hasError('server')) {
-            {{ form().get('propertyDescription')?.getError('server') }}
+          {{ form().get('propertyDescription')?.getError('server') }}
           } @else if (form().get('propertyDescription')?.hasError('required')) {
-            Description is required
+          Description is required
           } @else if (form().get('propertyDescription')?.hasError('minlength')) {
-            Description is too short
+          Description is too short
           }
         </mat-error>
       </mat-form-field>
 
-      <app-info-banner
-        icon="smart_toy"
-        text="The AI assistant can draft a complete description and auto-fill this field so the user does not need to write everything manually."
-      />
+      <app-info-banner icon="smart_toy"
+                       text="The AI assistant can draft a complete description and auto-fill this field so the user does not need to write everything manually." />
     </div>
   </div>
 </app-step-card>

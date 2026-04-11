@@ -1,43 +1,45 @@
 <app-page-shell>
-  <!-- <app-dashboard-topbar /> -->
-
-  <section class="agent-dashboard-page__welcome">
-    <h1>Welcome back, {{ displayName() }}!</h1>
-    <p>Here is what’s happening with your properties today.</p>
-  </section>
+  <app-page-header
+    [title]="'Welcome back, ' + displayName() + '!'"
+    [subtitle]="'Here is what’s happening with your properties today.'">
+  </app-page-header>
 
   <div class="agent-dashboard-page__stack">
-    <app-dashboard-hero-card [title]="hero.title"
-                             [description]="hero.description"
-                             [ctaLabel]="hero.ctaLabel" />
+    <app-dashboard-hero-card
+      [title]="hero.title"
+      [description]="hero.description"
+      [ctaLabel]="hero.ctaLabel" />
 
-    <div class="row g-4 align-items-stretch">
+    <div class="row g-3 align-items-stretch">
       <div class="col-12 col-xl-8">
-        <app-portfolio-breakdown-card [activePortfolio]="portfolioSummary.activePortfolio"
- [monthlyHint]="portfolioSummary.monthlyHint"
-                                      [saleShare]="portfolioSummary.saleShare"
-                                      [rentShare]="portfolioSummary.rentShare"
-                                      [footerText]="portfolioSummary.footerText"
-                                      [metrics]="portfolioMetrics" />
+        <app-portfolio-breakdown-card
+          [activePortfolio]="portfolioSummary.activePortfolio"
+          [monthlyHint]="portfolioSummary.monthlyHint"
+          [saleShare]="portfolioSummary.saleShare"
+          [rentShare]="portfolioSummary.rentShare"
+          [footerText]="portfolioSummary.footerText"
+          [metrics]="portfolioMetrics" />
       </div>
 
       <div class="col-12 col-xl-4">
-        <app-plan-summary-card [name]="planSummary.name"
-                               [price]="planSummary.price"
-                               [renewalText]="planSummary.renewalText"
-                               [status]="planSummary.status"
-                               [listingLimit]="planSummary.listingLimit"
-                               [used]="planSummary.used"
-                               [features]="planFeatures" />
+        <app-plan-summary-card
+          [name]="planSummary.name"
+          [price]="planSummary.price"
+          [renewalText]="planSummary.renewalText"
+          [status]="planSummary.status"
+          [listingLimit]="planSummary.listingLimit"
+          [used]="planSummary.used"
+          [features]="planFeatures" />
       </div>
     </div>
 
-    <div class="row g-4 align-items-stretch">
+    <div class="row g-3 align-items-stretch">
       <div class="col-12 col-xl-8">
-        <app-chart-panel title="Trending Properties Views"
-                         subtitle="Daily profile visits for your top listings over the last 7 days."
-                         [options]="viewsChartOptions()"
-                         height="320px" />
+        <app-chart-panel
+          title="Trending Properties Views"
+          subtitle="Daily profile visits for your top listings over the last 7 days."
+          [options]="viewsChartOptions()"
+          height="320px" />
       </div>
 
       <div class="col-12 col-xl-4">

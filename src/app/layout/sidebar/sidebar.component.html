@@ -6,12 +6,10 @@
   <div class="sidebar__brand">
     <a routerLink="/" class="sidebar__brand-link" aria-label="Portal home">
       <span class="sidebar__brand-icon">
-        <img src="/images/logo.png" alt="EstatePortal Logo">
+        <img src="/images/logo.png" alt="EstatePortal Logo" />
       </span>
 
-      @if (!collapsed() || mobileOpen()) {
-        <span class="sidebar__brand-name">EstatePortal</span>
-      }
+      <span class="sidebar__brand-name">EstatePortal</span>
     </a>
   </div>
 
@@ -22,21 +20,23 @@
           <a
             [routerLink]="item.route"
             routerLinkActive="sidebar__nav-link--active"
-            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' || item.route === '/properties' }"
+            [routerLinkActiveOptions]="{
+              exact: item.route === '/dashboard' || item.route === '/properties'
+            }"
             class="sidebar__nav-link"
             [attr.title]="collapsed() && !mobileOpen() ? item.label : null"
           >
+            <span class="sidebar__nav-link-indicator"></span>
+
             <mat-icon
               class="sidebar__nav-icon"
               [fontIcon]="item.icon"
               aria-hidden="true"
             ></mat-icon>
 
-            @if (!collapsed() || mobileOpen()) {
-              <span class="sidebar__nav-label">{{ item.label }}</span>
-            }
+            <span class="sidebar__nav-label">{{ item.label }}</span>
 
-            @if (item.badge && (!collapsed() || mobileOpen())) {
+            @if (item.badge) {
               <span class="sidebar__nav-badge">{{ item.badge }}</span>
             }
           </a>
@@ -57,9 +57,9 @@
         aria-hidden="true"
       ></mat-icon>
 
-      @if (!collapsed() || mobileOpen()) {
-        <span>{{ mobileOpen() ? 'Close' : 'Collapse' }}</span>
-      }
+      <span class="sidebar__collapse-label">
+        {{ mobileOpen() ? 'Close' : 'Collapse' }}
+      </span>
     </button>
   </div>
 </aside>
