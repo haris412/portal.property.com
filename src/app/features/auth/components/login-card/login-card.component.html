@@ -11,6 +11,12 @@
       </div>
     }
 
+    @if (isAdmin && otpStep()) {
+      <p class="text-muted-auth mb-3" role="status">
+        We sent a 5-digit code to <strong>{{ form.controls.identifier.value }}</strong>. Enter it below to finish signing in.
+      </p>
+    }
+
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="row g-3">
         <div class="col-12">
@@ -22,12 +28,10 @@
               formControlName="identifier"
               placeholder="jane@example.com"
               autocomplete="username"
+              [readonly]="isAdmin && otpStep()"
             />
           </mat-form-field>
-          <app-form-field-error
-            [control]="form.controls.identifier"
-            label="Email"
-          />
+          <app-form-field-error [control]="form.controls.identifier" label="Email" />
         </div>
 
         <div class="col-12">
@@ -39,61 +43,89 @@
               [type]="hidePassword() ? 'password' : 'text'"
               formControlName="password"
               autocomplete="current-password"
+              [readonly]="isAdmin && otpStep()"
             />
-            <button
-              type="button"
-              mat-icon-button
-              matSuffix
-              [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
-              (click)="hidePassword.set(!hidePassword())"
-            >
-              <mat-icon [fontIcon]="hidePassword() ? 'visibility_off' : 'visibility'"></mat-icon>
-            </button>
+            @if (!(isAdmin && otpStep())) {
+              <button
+                type="button"
+                mat-icon-button
+                matSuffix
+                [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+                (click)="hidePassword.set(!hidePassword())"
+              >
+                <mat-icon [fontIcon]="hidePassword() ? 'visibility_off' : 'visibility'"></mat-icon>
+              </button>
+            }
           </mat-form-field>
-          <app-form-field-error
-            [control]="form.controls.password"
-            label="Password"
-          />
+          <app-form-field-error [control]="form.controls.password" label="Password" />
         </div>
 
-        <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
-          <mat-checkbox formControlName="rememberMe">Remember me</mat-checkbox>
-          <a routerLink="/forgot-password" class="auth-link">Forgot password?</a>
-        </div>
+        @if (isAdmin && otpStep()) {
+          <div class="col-12">
+            <label class="form-label-auth" for="login-otp">Verification code</label>
+            <mat-form-field appearance="outline">
+              <input
+                id="login-otp"
+                matInput
+                formControlName="otp"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="32"
+                placeholder="00000"
+              />
+            </mat-form-field>
+            <app-form-field-error [control]="form.controls.otp" label="Code" />
+          </div>
+        }
 
-        <div class="col-12">
+        @if (!(isAdmin && otpStep())) {
+          <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <mat-checkbox formControlName="rememberMe">Remember me</mat-checkbox>
+            @if (!isAdmin) {
+              <a routerLink="/forgot-password" class="auth-link">Forgot password?</a>
+            }
+          </div>
+        }
+
+        <div class="col-12 d-flex flex-column gap-2">
           <button
             type="submit"
             mat-raised-button
             class="auth-primary-btn w-100"
             [disabled]="!canSubmit()"
           >
-            {{ loading() ? 'Signing in…' : 'Log in' }}
+            {{ primaryActionLabel() }}
           </button>
+          @if (isAdmin && otpStep()) {
+            <button type="button" mat-button class="w-100" (click)="backToCredentials()">
+              Use a different account
+            </button>
+          }
         </div>
       </div>
     </form>
 
-    <div class="mt-3 d-grid gap-3">
-      @for (feature of features(); track feature.title) {
-        <app-feature-card
-          [icon]="feature.icon"
-          [title]="feature.title"
-          [description]="feature.description"
-        />
-      }
-    </div>
-
-    <div class="visually-divider my-3">Quick access</div>
-
-    <div class="row g-3">
-      <div class="col-12 col-sm-6">
-        <app-social-button label="Google" icon="mail" />
+    @if (!isAdmin) {
+      <div class="mt-3 d-grid gap-3">
+        @for (feature of features(); track feature.title) {
+          <app-feature-card
+            [icon]="feature.icon"
+            [title]="feature.title"
+            [description]="feature.description"
+          />
+        }
       </div>
 
-      <div class="col-12 col-sm-6">
-        <app-social-button label="Apple" icon="phone_iphone" />
+      <div class="visually-divider my-3">Quick access</div>
+
+      <div class="row g-3">
+        <div class="col-12 col-sm-6">
+          <app-social-button label="Google" icon="mail" />
+        </div>
+        <div class="col-12 col-sm-6">
+          <app-social-button label="Apple" icon="phone_iphone" />
+        </div>
       </div>
-    </div>
+    }
   </div>
 </section>
