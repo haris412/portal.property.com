@@ -2,37 +2,69 @@
   <div class="container">
     <div class="auth-shell">
       <div class="row g-4 align-items-stretch auth-layout-row">
+
+        <!-- Left: hero panel — same for both agent and admin -->
         <div class="d-none d-lg-block col-lg-6 hero-column">
           <app-auth-hero-panel />
         </div>
 
         <div class="col-12 col-lg-6">
           <section class="right-column">
-            @if (successMessage()) {
-              <div class="alert alert-success mb-3" role="alert">
-                {{ successMessage() }}
+
+            @if (isAdminMode) {
+              <!-- ── Admin mode: heading + login card with OTP ── -->
+              <div class="admin-header">
+                <p class="admin-header__eyebrow">Administrator</p>
+                <h1 class="admin-header__title">LocateHome Admin</h1>
+                <p class="admin-header__sub">
+                  Sign in with an existing admin account. This area is separate from the public property portal.
+                </p>
+              </div>
+
+              <div class="auth-form-area mt-3">
+                <div class="auth-card-anim">
+                  <app-login-card [isAdmin]="true" />
+                </div>
+              </div>
+
+              <p class="admin-portal-link mt-4 mb-0">
+                <a routerLink="/auth" class="admin-portal-link__anchor">Not an admin? Open the user portal</a>
+              </p>
+
+            } @else {
+              <!-- ── Agent mode: tabs + login / signup ── -->
+              @if (successMessage()) {
+                <div class="alert alert-success mb-3" role="alert">
+                  {{ successMessage() }}
+                </div>
+              }
+
+              <app-segmented-tabs
+                [active]="activeSegment()"
+                [tabs]="authTabs"
+                (changed)="onTabChanged($event)"
+              />
+
+              <div class="auth-form-area mt-3">
+                @if (activeSegment() === 'signup') {
+                  <div class="auth-card-anim"
+                       animate.enter="auth-card-enter"
+                       animate.leave="auth-card-leave">
+                    <app-signup-card />
+                  </div>
+                } @else {
+                  <div class="auth-card-anim"
+                       animate.enter="auth-card-enter"
+                       animate.leave="auth-card-leave">
+                    <app-login-card />
+                  </div>
+                }
               </div>
             }
-            <app-segmented-tabs [active]="activeSegment()"
-                                (changed)="onTabChanged($event)" [tabs]="authTabs" />
 
-            <div class="auth-form-area mt-3">
-              @if (activeSegment() === 'signup') {
-              <div class="auth-card-anim"
-                   animate.enter="auth-card-enter"
-                   animate.leave="auth-card-leave">
-                <app-signup-card />
-              </div>
-              } @else {
-              <div class="auth-card-anim"
-                   animate.enter="auth-card-enter"
-                   animate.leave="auth-card-leave">
-                <app-login-card />
-              </div>
-              }
-            </div>
           </section>
         </div>
+
       </div>
     </div>
   </div>
