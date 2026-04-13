@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminAuthGuard, adminAuthPageGuard } from '../core/guards/admin-auth.guard';
-import { AdminAuthPortalComponent } from './auth/pages/admin-auth-portal/admin-auth-portal.component';
+import { AuthPortalPageComponent } from '../features/auth/pages/auth-portal-page/auth-portal-page.component';
 import { AdminLayoutComponent } from './layout/admin-layout.component';
 import { AdminDashboardPageComponent } from './pages/admin-dashboard-page/admin-dashboard-page.component';
 import { AdminAgenciesPageComponent } from './pages/admin-agencies-page/admin-agencies-page.component';
@@ -13,8 +13,9 @@ import { adminAgenciesResolver } from './resolvers/admin-agencies.resolver';
 export const ADMIN_ROUTES: Routes = [
   {
     path: 'auth',
-    component: AdminAuthPortalComponent,
-    // canActivate: [adminAuthPageGuard],
+    component: AuthPortalPageComponent,  // uses agent shell; data.mode drives admin content
+    data: { mode: 'admin' },
+    canActivate: [adminAuthPageGuard],
     title: 'Admin — Sign in',
   },
   {
@@ -25,7 +26,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     component: AdminLayoutComponent,
-    // canActivate: [adminAuthGuard],
+    canActivate: [adminAuthGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuthHeroPanelComponent } from '../../components/auth-hero-panel/auth-hero-panel.component';
 import { SignupCardComponent } from '../../components/signup-card/signup-card.component';
@@ -10,34 +10,42 @@ import { SegmentedTabsComponent, SegmentedTabItem } from '../../../../shared/ui/
   selector: 'app-auth-portal-page',
   standalone: true,
   imports: [
+    RouterLink,
     AuthHeroPanelComponent,
     SignupCardComponent,
     LoginCardComponent,
-    SegmentedTabsComponent
+    SegmentedTabsComponent,
   ],
   templateUrl: './auth-portal-page.component.html',
   styleUrl: './auth-portal-page.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AuthPortalPageComponent implements OnInit {
+export class AuthPortalPageComponent {
+  private readonly router = inject(Router);
+  private readonly route  = inject(ActivatedRoute);
+  private readonly auth   = inject(AuthService);
+
+  /** True when route data carries { mode: 'admin' } — drives the admin layout branch. */
+  readonly isAdminMode = this.route.snapshot.data['mode'] === 'admin';
+
   readonly authTabs: SegmentedTabItem[] = [
-    { key: 'login', label: 'Login' },
+    { key: 'login',  label: 'Login'   },
     { key: 'signup', label: 'Sign Up' },
   ];
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly auth = inject(AuthService);
 
-  readonly activeSegment = signal<'signup' | 'login'>('login');
+  readonly activeSegment  = signal<'signup' | 'login'>('login');
   readonly successMessage = signal<string | null>(null);
 
-  ngOnInit(): void {
-    const msg = this.auth.getAndClearRedirectMessage();
-    if (msg) this.successMessage.set(msg);
-    if (this.route.snapshot.queryParamMap.keys.length > 0) {
-      this.router.navigate(['/auth'], { replaceUrl: true });
+  constructor() {
+    if (!this.isAdminMode) {
+      const msg = this.auth.getAndClearRedirectMessage();
+      if (msg) this.successMessage.set(msg);
+      if (this.route.snapshot.queryParamMap.keys.length > 0) {
+        void this.router.navigate(['/auth'], { replaceUrl: true });
+      }
     }
   }
+
   onTabChanged(tab: string): void {
     this.activeSegment.set(tab as 'login' | 'signup');
   }
