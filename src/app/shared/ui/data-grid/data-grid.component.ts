@@ -52,7 +52,7 @@ export class DataGridComponent<TData = unknown> {
     rowSelection: {
       mode: this.rowSelection(),
     },
-    headerHeight: 56,
+    headerHeight: 48,
     pagination: this.pagination(),
     paginationPageSize: this.paginationPageSize(),
     suppressRowClickSelection: true,
