@@ -26,6 +26,7 @@ export interface UserListItem {
   phoneNumber?: string;
   isActive: boolean;
   isEmailVerified: boolean;
+  inviteStatus?: string;
   role?: { name: string };
   agency?: { _id?: string; name: string; logoUrl?: string; isActive?: boolean };
   createdBy?: { firstName: string; lastName: string; email: string };
@@ -109,6 +110,7 @@ function normalizeUserRow(raw: unknown): UserListItem | null {
     phoneNumber:     typeof raw['phoneNumber'] === 'string' ? raw['phoneNumber'] : undefined,
     isActive:        typeof raw['isActive']  === 'boolean' ? raw['isActive']  : true,
     isEmailVerified: typeof raw['isEmailVerified'] === 'boolean' ? raw['isEmailVerified'] : false,
+    inviteStatus:    typeof raw['inviteStatus'] === 'string' ? raw['inviteStatus'] : undefined,
     role,
     agency,
     createdBy,

@@ -51,10 +51,9 @@ export interface ListAgenciesResult {
   totalPages: number;
 }
 
-/** Body for POST /api/admin/agencies/:agencyId/users */
+/** Body for POST /api/admin/agencies/:agencyId/users — no password; invite email is sent automatically. */
 export interface CreateAgencyUserPayload {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;
@@ -73,6 +72,7 @@ export interface AgencyUserItem {
   profileImageUrl?: string;
   isActive: boolean;
   isEmailVerified: boolean;
+  inviteStatus?: string;
   role?: { _id: string; name: string };
   agency?: { _id: string; name: string; logoUrl?: string };
   createdAt?: string;
@@ -83,7 +83,6 @@ export interface UpdateAgencyUserPayload {
   firstName?: string;
   lastName?: string;
   email?: string;
-  password?: string;
   phoneNumber?: string;
   displayName?: string;
   profileImageUrl?: string;
@@ -301,8 +300,9 @@ export class AdminAgencyService {
           displayName:      typeof raw['displayName'] === 'string' ? raw['displayName'] : undefined,
           phoneNumber:      typeof raw['phoneNumber'] === 'string' ? raw['phoneNumber'] : '',
           profileImageUrl:  typeof raw['profileImageUrl'] === 'string' ? raw['profileImageUrl'] : undefined,
-          isActive:         typeof raw['isActive'] === 'boolean' ? raw['isActive'] : true,
-          isEmailVerified:  typeof raw['isEmailVerified'] === 'boolean' ? raw['isEmailVerified'] : true,
+          isActive:         typeof raw['isActive'] === 'boolean' ? raw['isActive'] : false,
+          isEmailVerified:  typeof raw['isEmailVerified'] === 'boolean' ? raw['isEmailVerified'] : false,
+          inviteStatus:     typeof raw['inviteStatus'] === 'string' ? raw['inviteStatus'] : undefined,
           role:             isRecord(raw['role']) ? { _id: String(raw['role']['_id'] ?? ''), name: String(raw['role']['name'] ?? '') } : undefined,
           agency:           isRecord(raw['agency']) ? { _id: String(raw['agency']['_id'] ?? ''), name: String(raw['agency']['name'] ?? ''), logoUrl: typeof raw['agency']['logoUrl'] === 'string' ? raw['agency']['logoUrl'] : undefined } : undefined,
           createdAt:        typeof raw['createdAt'] === 'string' ? raw['createdAt'] : undefined,
@@ -310,6 +310,22 @@ export class AdminAgencyService {
       }),
       catchError((err) => throwError(() => err))
     );
+  }
+
+  /**
+   * POST /api/admin/agencies/:agencyId/users/:userId/resend-invite — resend invite email (Bearer admin token).
+   * Generates a new token, invalidates the old one, and sends a fresh invite email.
+   */
+  resendInvite(agencyId: string, userId: string): Observable<void> {
+    const url = `${this.baseUrl}/${encodeURIComponent(agencyId)}/users/${encodeURIComponent(userId)}/resend-invite`;
+    return this.http
+      .post<{ success?: boolean; message?: string }>(url, {})
+      .pipe(
+        map((res) => {
+          if (res.success === false) throw new Error(res.message ?? 'Could not resend invite');
+        }),
+        catchError((err) => throwError(() => err)),
+      );
   }
 
   /**

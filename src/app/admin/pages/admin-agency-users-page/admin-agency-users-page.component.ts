@@ -21,6 +21,7 @@ import { InfoBannerComponent } from '../../../shared/ui/info-banner/info-banner'
 import { DataGridComponent } from '../../../shared/ui/data-grid/data-grid.component';
 import { gridActionsColumnDef } from '../../../shared/ui/grid-row-menu-cell/grid-row-menu-cell.component';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
+import { AdminAgencyService } from '../../../core/services/admin-agency.service';
 import { UserService, UserListItem } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ConfirmationDialogService } from '../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
@@ -74,6 +75,7 @@ export class AdminAgencyUsersPageComponent {
   private readonly fb            = inject(FormBuilder);
   private readonly router        = inject(Router);
   private readonly adminAuth     = inject(AdminAuthService);
+  private readonly adminAgency   = inject(AdminAgencyService);
   private readonly userService   = inject(UserService);
   private readonly notifications = inject(NotificationService);
   private readonly confirmDialog = inject(ConfirmationDialogService);
@@ -192,6 +194,12 @@ export class AdminAgencyUsersPageComponent {
           },
         },
         {
+          label: 'Resend invite',
+          icon: 'forward_to_inbox',
+          hidden: (rowData: unknown) => (rowData as UserListItem | undefined)?.isActive === true,
+          action: (id: string, rowData?: unknown) => this.resendInvite(id, rowData as UserListItem),
+        },
+        {
           label: 'Delete user',
           icon: 'delete_outline',
           action: (id: string) => this.deleteUser(id),
@@ -238,6 +246,19 @@ export class AdminAgencyUsersPageComponent {
   }
 
   // ── Private ────────────────────────────────────────────────────────────────
+  private resendInvite(userId: string, user: UserListItem): void {
+    const agencyId = user?.agency?._id;
+    if (!agencyId) {
+      this.notifications.error('Cannot resend invite: agency not found for this user.');
+      return;
+    }
+
+    this.adminAgency.resendInvite(agencyId, userId).pipe(take(1)).subscribe({
+      next: () => this.notifications.success('Invite resent successfully.'),
+      error: (err: unknown) => this.notifications.error(apiErrorSummary(err)),
+    });
+  }
+
   private deleteUser(id: string): void {
     this.confirmDialog
       .confirm({

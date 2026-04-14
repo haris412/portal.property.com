@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { AuthPortalPageComponent } from './features/auth/pages/auth-portal-page/auth-portal-page.component';
 import { VerifyEmailComponent } from './features/auth/components/verify-email/verify-email.component';
-import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -19,6 +18,11 @@ export const routes: Routes = [
     path: 'forgot-password',
     loadChildren: () =>
       import('./features/auth/forgot-password.routes').then((m) => m.FORGOT_PASSWORD_ROUTES),
+  },
+  {
+    path: 'accept-invite',
+    loadChildren: () =>
+      import('./features/auth/invite.routes').then((m) => m.INVITE_ROUTES),
   },
   {
     path: 'admin',

@@ -86,3 +86,4 @@ export function parseHttpApiError(error: unknown): ParsedHttpApiError {
 export function apiErrorSummary(error: unknown): string {
   return parseHttpApiError(error).summary;
 }
+

@@ -15,7 +15,6 @@ import { NotificationService } from '../../../core/services/notification.service
 import { apiErrorSummary } from '../../../core/http/parse-http-api-error';
 
 const ROLES = ['Agent', 'Buyer', 'Seller'] as const;
-const PASSWORD_VALIDATORS = [Validators.required, Validators.minLength(6)];
 
 @Component({
   selector: 'app-admin-add-agency-user-page',
@@ -44,7 +43,6 @@ export class AdminAddAgencyUserPageComponent {
 
   readonly roles           = ROLES;
   readonly submitting      = signal(false);
-  readonly showPassword    = signal(false);
   readonly loadingUser     = signal(false);
   readonly agencies        = signal<AgencyListItem[]>([]);
   readonly agenciesLoading = signal(false);
@@ -58,7 +56,6 @@ export class AdminAddAgencyUserPageComponent {
     lastName:    ['', [Validators.required, Validators.maxLength(60)]],
     email:       ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
     phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{10,15}$/)]],
-    password:    ['', PASSWORD_VALIDATORS],
     roleName:    ['Agent'],
   });
 
@@ -90,15 +87,11 @@ export class AdminAddAgencyUserPageComponent {
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
-  togglePassword(): void {
-    this.showPassword.update((v) => !v);
-  }
-
   submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
 
     const editMode = this.isEditMode();
-    const { agencyId, firstName, lastName, email, phoneNumber, password, roleName } =
+    const { agencyId, firstName, lastName, email, phoneNumber, roleName } =
       this.form.getRawValue();
 
     const request$: Observable<AgencyUserItem> = editMode
@@ -114,7 +107,6 @@ export class AdminAddAgencyUserPageComponent {
           lastName:    lastName.trim(),
           email:       email.trim(),
           phoneNumber: phoneNumber.trim(),
-          password,
           roleName:    roleName || 'Agent',
         });
 
@@ -122,7 +114,9 @@ export class AdminAddAgencyUserPageComponent {
     request$.pipe(take(1)).subscribe({
       next: () => {
         this.submitting.set(false);
-        this.notifications.success(editMode ? 'User updated successfully' : 'User created successfully');
+        this.notifications.success(
+          editMode ? 'User updated successfully.' : 'User created and invite sent.',
+        );
         void this.router.navigate(['/admin/users']);
       },
       error: (err: unknown) => {
@@ -137,11 +131,6 @@ export class AdminAddAgencyUserPageComponent {
   private resetForm(): void {
     this.form.reset({ roleName: 'Agent' }, { emitEvent: false });
     this.form.controls.agencyId.enable({ emitEvent: false });
-
-    const passwordCtrl = this.form.controls.password;
-    // Password is hidden in edit mode — clear validators so form stays valid
-    passwordCtrl.setValidators(this.isEditMode() ? null : PASSWORD_VALIDATORS);
-    passwordCtrl.updateValueAndValidity({ emitEvent: false });
 
     if (this.isEditMode()) {
       this.loadUserForEdit();
@@ -159,11 +148,11 @@ export class AdminAddAgencyUserPageComponent {
         next: (result) => {
           this.agencies.set(result.agencies);
           this.agenciesLoading.set(false);
-          this.tryPreselectAgency(); // agencies just loaded — try preselecting now
+          this.tryPreselectAgency();
         },
         error: () => {
           this.agenciesLoading.set(false);
-          this.notifications.error('Could not load agencies');
+          this.notifications.error('Could not load agencies.');
         },
       });
   }
@@ -183,6 +172,7 @@ export class AdminAddAgencyUserPageComponent {
     this.userService.getUserById(this.editUserId).pipe(take(1)).subscribe({
       next: (user) => {
         this.form.patchValue({
+          agencyId:    user.agency?._id ?? '',
           firstName:   user.firstName,
           lastName:    user.lastName,
           email:       user.email,

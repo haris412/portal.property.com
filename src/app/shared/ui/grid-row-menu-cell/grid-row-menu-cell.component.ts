@@ -16,6 +16,8 @@ export interface GridRowMenuItem {
   icon: string;
   /** Receives row id from `data.id` or `data._id`, and optional full row for context (e.g. labels in dialogs). */
   action: (rowId: string, rowData?: unknown) => void;
+  /** When provided, the item is hidden from the menu if this returns true. */
+  hidden?: (rowData: unknown) => boolean;
 }
 
 /**
@@ -75,7 +77,7 @@ export function gridActionsColumnDef<TData = unknown>(
     </button>
 
     <mat-menu #menu="matMenu">
-      @for (item of menuItems; track $index) {
+      @for (item of visibleMenuItems; track $index) {
         <button mat-menu-item type="button" (click)="run(item)">
           <mat-icon>{{ item.icon }}</mat-icon>
           <span>{{ item.label }}</span>
@@ -106,6 +108,11 @@ export class GridRowMenuCellRendererComponent implements ICellRendererAngularCom
   get menuItems(): GridRowMenuItem[] {
     const ctx = this.params?.context as GridRowMenuContext | undefined;
     return ctx?.menuItems ?? [];
+  }
+
+  get visibleMenuItems(): GridRowMenuItem[] {
+    const rowData = this.params?.data as unknown;
+    return this.menuItems.filter((item) => !item.hidden?.(rowData));
   }
 
   run(item: GridRowMenuItem): void {
