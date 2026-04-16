@@ -14,8 +14,6 @@ import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { apiErrorSummary } from '../../../core/http/parse-http-api-error';
 
-const ROLES = ['Agent', 'Buyer', 'Seller'] as const;
-
 @Component({
   selector: 'app-admin-add-agency-user-page',
   standalone: true,
@@ -41,7 +39,6 @@ export class AdminAddAgencyUserPageComponent {
   private readonly userService   = inject(UserService);
   private readonly notifications = inject(NotificationService);
 
-  readonly roles           = ROLES;
   readonly submitting      = signal(false);
   readonly loadingUser     = signal(false);
   readonly agencies        = signal<AgencyListItem[]>([]);
@@ -56,7 +53,6 @@ export class AdminAddAgencyUserPageComponent {
     lastName:    ['', [Validators.required, Validators.maxLength(60)]],
     email:       ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
     phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{10,15}$/)]],
-    roleName:    ['Agent'],
   });
 
   constructor() {
@@ -91,7 +87,7 @@ export class AdminAddAgencyUserPageComponent {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
 
     const editMode = this.isEditMode();
-    const { agencyId, firstName, lastName, email, phoneNumber, roleName } =
+    const { agencyId, firstName, lastName, email, phoneNumber } =
       this.form.getRawValue();
 
     const request$: Observable<AgencyUserItem> = editMode
@@ -100,14 +96,13 @@ export class AdminAddAgencyUserPageComponent {
           lastName:    lastName.trim()    || undefined,
           email:       email.trim()       || undefined,
           phoneNumber: phoneNumber.trim() || undefined,
-          roleName:    roleName           || undefined,
         })
       : this.adminAgency.createAgencyUser(agencyId, {
           firstName:   firstName.trim(),
           lastName:    lastName.trim(),
           email:       email.trim(),
           phoneNumber: phoneNumber.trim(),
-          roleName:    roleName || 'Agent',
+          roleName:    'Agent',
         });
 
     this.submitting.set(true);
@@ -129,7 +124,7 @@ export class AdminAddAgencyUserPageComponent {
   // ── Private ────────────────────────────────────────────────────────────────
 
   private resetForm(): void {
-    this.form.reset({ roleName: 'Agent' }, { emitEvent: false });
+    this.form.reset({}, { emitEvent: false });
     this.form.controls.agencyId.enable({ emitEvent: false });
 
     if (this.isEditMode()) {
@@ -177,7 +172,6 @@ export class AdminAddAgencyUserPageComponent {
           lastName:    user.lastName,
           email:       user.email,
           phoneNumber: user.phoneNumber ?? '',
-          roleName:    user.role?.name ?? 'Agent',
         });
         this.form.controls.agencyId.disable({ emitEvent: false });
         this.loadingUser.set(false);

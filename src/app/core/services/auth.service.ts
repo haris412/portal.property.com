@@ -267,6 +267,15 @@ export class AuthService {
 
   // ── Invite flow ────────────────────────────────────────────────────────────
 
+  /** POST /api/auth/verify-invite-token — checks if the invite token is valid before showing the form. */
+  verifyInviteToken(token: string): Observable<void> {
+    return this.postVoid(
+      `${environment.apiUrl}/api/auth/verify-invite-token`,
+      { token },
+      'This invite link is invalid or has expired.',
+    );
+  }
+
   /** POST /api/auth/invite-set-password — activates account using the token from the invite link. */
   inviteSetPassword(token: string, password: string): Observable<void> {
     return this.postVoid(
