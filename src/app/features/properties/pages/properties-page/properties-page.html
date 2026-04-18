@@ -1,21 +1,21 @@
 <div class="properties-page container-fluid py-4">
   <app-page-header
-    title="Properties"
-    subtitle="View and manage your property listings (GET /api/properties)."
+    [title]="'properties.title' | translate"
+    [subtitle]="'properties.subtitle' | translate"
     [actions]="headerActions"
     (actionClicked)="onHeaderAction($event)"
   />
 
   <app-section-card
-    title="Listings"
-    description="Shows properties you own (filter uses listedBy query → userId in DB). Bearer token is sent as usual."
+    [title]="'properties.listings.title' | translate"
+    [description]="'properties.listings.description' | translate"
   >
     @if (loadError(); as err) {
       <app-info-banner class="d-block mb-3" icon="error_outline" [text]="err" />
     }
 
     @if (loading()) {
-      <p class="text-muted mb-3">Loading listings…</p>
+      <p class="text-muted mb-3">{{ 'properties.loading' | translate }}</p>
     }
 
     <app-data-grid
@@ -24,6 +24,7 @@
       [gridOptionsInput]="gridOptions"
       [heightPx]="520"
       [pagination]="false"
+      (gridReady)="onGridReady($event)"
     />
 
     <div class="properties-page__pager d-flex flex-wrap align-items-center gap-3 mt-3">
@@ -33,10 +34,11 @@
         [disabled]="loading() || page() <= 1"
         (click)="goPrev()"
       >
-        Previous
+        {{ 'pagination.previous' | translate }}
       </button>
       <span class="text-muted small">
-        Page {{ page() }} of {{ totalPages() || 1 }} · {{ total() }} total
+        {{ 'pagination.page' | translate: { current: page(), total: totalPages() || 1 } }}
+        · {{ 'pagination.total' | translate: { count: total() } }}
       </span>
       <button
         type="button"
@@ -44,7 +46,7 @@
         [disabled]="loading() || totalPages() === 0 || page() >= totalPages()"
         (click)="goNext()"
       >
-        Next
+        {{ 'pagination.next' | translate }}
       </button>
     </div>
   </app-section-card>

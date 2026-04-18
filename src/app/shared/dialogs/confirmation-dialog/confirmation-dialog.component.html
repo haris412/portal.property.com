@@ -11,7 +11,7 @@
 
 <mat-dialog-actions align="end" class="confirmation-dialog__actions">
   <button mat-stroked-button type="button" [mat-dialog-close]="false">
-    {{ data.cancelLabel ?? 'Cancel' }}
+    {{ data.cancelLabel ?? ('base.cancel' | translate) }}
   </button>
   <button
     mat-flat-button

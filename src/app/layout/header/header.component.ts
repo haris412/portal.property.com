@@ -10,11 +10,13 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-header',
-  imports: [RouterLink, MatIconModule],
+  imports: [RouterLink, MatIconModule, TranslateModule, LanguageSwitcherComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

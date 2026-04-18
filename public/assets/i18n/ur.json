@@ -1,0 +1,251 @@
+{
+  "base": {
+    "save": "محفوظ کریں",
+    "cancel": "منسوخ کریں",
+    "delete": "حذف کریں",
+    "edit": "ترمیم",
+    "create": "بنائیں",
+    "search": "تلاش کریں",
+    "refresh": "تازہ کریں",
+    "status": "حیثیت",
+    "email": "ای میل",
+    "phone": "فون",
+    "firstName": "پہلا نام",
+    "lastName": "آخری نام",
+    "name": "نام",
+    "role": "کردار",
+    "agency": "ایجنسی",
+    "actions": "اعمال",
+    "noData": "کوئی ڈیٹا دستیاب نہیں۔",
+    "loading": "لوڈ ہو رہا ہے...",
+    "close": "بند کریں",
+    "back": "واپس",
+    "next": "اگلا",
+    "previous": "پچھلا",
+    "confirm": "تصدیق کریں",
+    "createdAt": "بنایا گیا",
+    "validations": {
+      "required": "یہ فیلڈ ضروری ہے۔",
+      "email": "براہ کرم ایک درست ای میل درج کریں۔",
+      "passwordMatch": "پاس ورڈ مماثل نہیں ہیں۔",
+      "minLength": "کم از کم {{min}} حروف ہونے چاہئیں۔",
+      "maxLength": "زیادہ سے زیادہ {{max}} حروف ہو سکتے ہیں۔",
+      "phonePattern": "درست فون نمبر درج کریں (10-15 ہندسے)۔"
+    },
+    "modals": {
+      "delete": {
+        "title": "کیا آپ واقعی یہ حذف کرنا چاہتے ہیں؟",
+        "body": "آپ \"{{entityName}}\" کو حذف کرنے والے ہیں۔ یہ عمل واپس نہیں کیا جا سکتا۔"
+      }
+    }
+  },
+  "sidebar": {
+    "collapse": "سکیڑیں",
+    "close": "بند کریں",
+    "nav": {
+      "dashboard": "ڈیش بورڈ",
+      "properties": "پراپرٹیز",
+      "addListing": "لسٹنگ شامل کریں",
+      "users": "صارفین",
+      "appointments": "اپوائنٹمنٹس",
+      "inbox": "ان باکس",
+      "analytics": "تجزیات",
+      "settings": "ترتیبات",
+      "profile": "پروفائل"
+    }
+  },
+  "adminSidebar": {
+    "nav": {
+      "dashboard": "ڈیش بورڈ",
+      "agencies": "ایجنسیاں",
+      "users": "ایجنسی صارفین"
+    }
+  },
+  "header": {
+    "searchPlaceholder": "تلاش کریں...",
+    "notifications": "اطلاعات",
+    "userMenu": {
+      "settings": "ترتیبات",
+      "userPortal": "صارف پورٹل",
+      "logout": "لاگ آؤٹ"
+    }
+  },
+  "agencies": {
+    "singular": "ایجنسی",
+    "plural": "ایجنسیاں",
+    "title": "ایجنسیاں",
+    "create": "ایجنسی شامل کریں",
+    "edit": "ایجنسی میں ترمیم کریں",
+    "subtitle": "پلیٹ فارم پر رجسٹرڈ ایجنسیاں منظم کریں۔",
+    "noData": "کوئی ایجنسی نہیں ملی۔",
+    "noDataCopy": "آپ کے فلٹرز سے کوئی ایجنسی مطابقت نہیں رکھتی۔",
+    "filters": {
+      "search": "تلاش",
+      "searchPlaceholder": "نام، مقام، رابطہ...",
+      "status": "حیثیت",
+      "all": "سب",
+      "active": "فعال",
+      "inactive": "غیر فعال",
+      "sortBy": "ترتیب دیں",
+      "order": "ترتیب",
+      "perPage": "فی صفحہ",
+      "sortOptions": {
+        "createdAt": "بنانے کی تاریخ",
+        "updatedAt": "تازہ کاری",
+        "name": "نام"
+      }
+    },
+    "tc": {
+      "name": "ایجنسی",
+      "location": "مقام",
+      "contact": "رابطہ",
+      "status": "حیثیت",
+      "createdAt": "بنایا گیا"
+    },
+    "form": {
+      "name": "ایجنسی کا نام",
+      "location": "مقام",
+      "logoUrl": "لوگو URL",
+      "contactName": "رابطہ کا نام",
+      "contactEmail": "رابطہ ای میل",
+      "contactPhone": "رابطہ فون"
+    },
+    "actions": {
+      "copyId": "ایجنسی ID کاپی کریں",
+      "edit": "ایجنسی میں ترمیم کریں",
+      "delete": "ایجنسی حذف کریں"
+    },
+    "messages": {
+      "created": "ایجنسی کامیابی سے بنائی گئی۔",
+      "updated": "ایجنسی کامیابی سے اپڈیٹ ہوئی۔",
+      "deleted": "ایجنسی کامیابی سے حذف ہوئی۔",
+      "idCopied": "ایجنسی ID کلپ بورڈ میں کاپی ہو گئی۔"
+    }
+  },
+  "users": {
+    "singular": "صارف",
+    "plural": "صارفین",
+    "title": "ایجنسی صارفین",
+    "subtitle": "پلیٹ فارم پر رجسٹرڈ ایجنسی صارفین منظم کریں۔",
+    "create": "صارف شامل کریں",
+    "edit": "صارف میں ترمیم کریں",
+    "noData": "کوئی صارف نہیں ملا",
+    "noDataCopy": "آپ کے فلٹرز سے کوئی صارف مطابقت نہیں رکھتا۔",
+    "filters": {
+      "search": "تلاش",
+      "searchPlaceholder": "نام، ای میل، فون...",
+      "role": "کردار",
+      "allRoles": "تمام کردار",
+      "status": "حیثیت",
+      "all": "سب",
+      "active": "فعال",
+      "inactive": "غیر فعال",
+      "sortBy": "ترتیب دیں",
+      "order": "ترتیب",
+      "perPage": "فی صفحہ",
+      "sortOptions": {
+        "createdAt": "بنانے کی تاریخ",
+        "updatedAt": "تازہ کاری",
+        "firstName": "پہلا نام",
+        "lastName": "آخری نام"
+      }
+    },
+    "tc": {
+      "user": "صارف",
+      "phone": "فون",
+      "agency": "ایجنسی",
+      "role": "کردار",
+      "status": "حیثیت",
+      "email": "ای میل",
+      "createdAt": "بنایا گیا"
+    },
+    "statuses": {
+      "0": "غیر فعال",
+      "1": "فعال",
+      "true": "فعال",
+      "false": "غیر فعال",
+      "active": "فعال",
+      "inactive": "غیر فعال"
+    },
+    "emailStatuses": {
+      "verified": "تصدیق شدہ",
+      "unverified": "غیر تصدیق شدہ"
+    },
+    "form": {
+      "personalInfo": "ذاتی معلومات",
+      "personalInfoSubtitle": "نئے صارف کی بنیادی شناختی تفصیلات۔",
+      "agencySection": "ایجنسی",
+      "agencySectionSubtitle": "صارف کو ایجنسی سے منسلک کریں۔",
+      "firstName": "پہلا نام",
+      "lastName": "آخری نام",
+      "email": "ای میل پتہ",
+      "phone": "فون نمبر",
+      "phonePlaceholder": "+923001234567",
+      "agency": "ایجنسی",
+      "inviteBanner": "دعوت نامہ ای میل بھیجی جائے گی",
+      "inviteBannerCopy": "صارف کو اپنا پاس ورڈ سیٹ کرنے اور اکاؤنٹ فعال کرنے کے لیے ای میل ملے گی۔",
+      "editSubtitle": "صارف کی تفصیلات میں ترمیم کریں۔",
+      "createSubtitle": "نیا ایجنسی صارف بنائیں — دعوت نامہ ای میل خود بخود بھیجی جائے گی۔"
+    },
+    "actions": {
+      "copyId": "صارف ID کاپی کریں",
+      "edit": "صارف میں ترمیم کریں",
+      "resendInvite": "دعوت نامہ دوبارہ بھیجیں",
+      "delete": "صارف حذف کریں"
+    },
+    "messages": {
+      "created": "صارف بنایا گیا اور دعوت نامہ بھیجا گیا۔",
+      "updated": "صارف کامیابی سے اپڈیٹ ہوا۔",
+      "deleted": "صارف کامیابی سے حذف ہوا۔",
+      "inviteResent": "دعوت نامہ کامیابی سے دوبارہ بھیجا گیا۔",
+      "idCopied": "صارف ID کلپ بورڈ میں کاپی ہو گئی۔"
+    }
+  },
+  "properties": {
+    "singular": "پراپرٹی",
+    "plural": "پراپرٹیاں",
+    "title": "پراپرٹیاں",
+    "subtitle": "اپنی پراپرٹی لسٹنگز دیکھیں اور منظم کریں۔",
+    "listings": {
+      "title": "لسٹنگز",
+      "description": "آپ کی فعال پراپرٹی لسٹنگز۔"
+    },
+    "loading": "لسٹنگز لوڈ ہو رہی ہیں...",
+    "tc": {
+      "title": "عنوان",
+      "city": "شہر",
+      "area": "علاقہ",
+      "purpose": "مقصد",
+      "price": "قیمت",
+      "status": "حیثیت",
+      "listedBy": "درج کردہ از"
+    },
+    "actions": {
+      "addListing": "لسٹنگ شامل کریں",
+      "edit": "ترمیم"
+    },
+    "messages": {
+      "loadError": "پراپرٹیاں لوڈ نہیں ہو سکیں۔"
+    }
+  },
+  "dashboard": {
+    "title": "ڈیش بورڈ",
+    "welcome": "خوش آمدید، {{name}}"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "ڈیش بورڈ"
+    },
+    "accessDenied": {
+      "title": "رسائی سے انکار",
+      "message": "آپ کو اس صفحے کو دیکھنے کی اجازت نہیں ہے۔",
+      "cta": "ڈیش بورڈ پر جائیں"
+    }
+  },
+  "pagination": {
+    "page": "صفحہ {{current}} از {{total}}",
+    "total": "{{count}} کل",
+    "previous": "پچھلا",
+    "next": "اگلا"
+  }
+}

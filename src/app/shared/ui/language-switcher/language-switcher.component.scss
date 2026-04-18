@@ -1,0 +1,31 @@
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 3px;
+
+  &__btn {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.55;
+    transition: background 150ms, opacity 150ms;
+
+    &:hover {
+      opacity: 0.85;
+    }
+
+    &--active {
+      background: #fff;
+      opacity: 1;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+  }
+}

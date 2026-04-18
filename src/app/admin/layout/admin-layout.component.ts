@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AdminSidebarComponent } from './admin-sidebar.component';
+import { SidebarComponent, SidebarNavItem } from '../../layout/sidebar/sidebar.component';
 import { AdminHeaderComponent } from './admin-header.component';
 import { NotificationContainerComponent } from '../../shared/ui/notification-container/notification-container.component';
 
@@ -9,7 +9,7 @@ import { NotificationContainerComponent } from '../../shared/ui/notification-con
   standalone: true,
   imports: [
     RouterOutlet,
-    AdminSidebarComponent,
+    SidebarComponent,
     AdminHeaderComponent,
     NotificationContainerComponent,
   ],
@@ -18,8 +18,14 @@ import { NotificationContainerComponent } from '../../shared/ui/notification-con
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminLayoutComponent {
-  readonly sidebarCollapsed = signal(false);
+  readonly sidebarCollapsed  = signal(false);
   readonly mobileSidebarOpen = signal(false);
+
+  readonly navItems: readonly SidebarNavItem[] = [
+    { label: 'adminSidebar.nav.dashboard', route: '/admin/dashboard', icon: 'dashboard', exact: true },
+    { label: 'adminSidebar.nav.agencies',  route: '/admin/agencies',  icon: 'apartment', exact: true },
+    { label: 'adminSidebar.nav.users',     route: '/admin/users',     icon: 'people',    exact: true },
+  ];
 
   toggleSidebar(): void {
     if (window.innerWidth <= 991.98) {

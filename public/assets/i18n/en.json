@@ -1,0 +1,314 @@
+{
+  "base": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "refresh": "Refresh",
+    "status": "Status",
+    "email": "Email",
+    "phone": "Phone",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "name": "Name",
+    "role": "Role",
+    "agency": "Agency",
+    "actions": "Actions",
+    "noData": "No data available.",
+    "loading": "Loading...",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm",
+    "createdAt": "Created",
+    "validations": {
+      "required": "This field is required.",
+      "email": "Please enter a valid email address.",
+      "passwordMatch": "Passwords do not match.",
+      "minLength": "Must be at least {{min}} characters.",
+      "maxLength": "Must be no more than {{max}} characters.",
+      "phonePattern": "Enter a valid phone number (10–15 digits)."
+    },
+    "modals": {
+      "delete": {
+        "title": "Are you sure?",
+        "body": "You're about to delete \"{{entityName}}\". This action cannot be undone."
+      }
+    }
+  },
+  "public": {
+    "signIn": {
+      "title": "Welcome back!",
+      "subtitle": "Sign in to continue to your account.",
+      "email": "Email address",
+      "password": "Password",
+      "cta": "Sign In",
+      "ctaLoading": "Signing in...",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "signUp": {
+      "title": "Create an Account",
+      "subtitle": "Sign up to get started.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email address",
+      "password": "Password",
+      "phone": "Phone number",
+      "cta": "Sign Up",
+      "ctaLoading": "Creating account...",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email to receive a reset code.",
+      "email": "Email address",
+      "cta": "Send Reset Code",
+      "ctaLoading": "Sending...",
+      "backToSignIn": "Back to sign in"
+    },
+    "verifyOtp": {
+      "title": "Check your email",
+      "subtitle": "Enter the code we sent to {{email}}.",
+      "cta": "Verify Code",
+      "ctaLoading": "Verifying...",
+      "resend": "Resend code",
+      "backToSignIn": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Choose a new password for your account.",
+      "password": "New password",
+      "confirmPassword": "Confirm password",
+      "cta": "Reset Password",
+      "ctaLoading": "Resetting...",
+      "backToSignIn": "Back to sign in"
+    },
+    "invitation": {
+      "verifying": "Verifying invite link...",
+      "setPassword": {
+        "title": "Set your password",
+        "subtitle": "Choose a strong password to activate your account.",
+        "password": "New password",
+        "confirmPassword": "Confirm password",
+        "cta": "Activate account",
+        "ctaLoading": "Activating account...",
+        "backToSignIn": "Back to sign in"
+      }
+    }
+  },
+  "sidebar": {
+    "collapse": "Collapse",
+    "close": "Close",
+    "nav": {
+      "dashboard": "Dashboard",
+      "properties": "Properties",
+      "addListing": "Add Listing",
+      "users": "Users",
+      "appointments": "Appointments",
+      "inbox": "Inbox",
+      "analytics": "Analytics",
+      "settings": "Settings",
+      "profile": "Profile"
+    }
+  },
+  "adminSidebar": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "agencies": "Agencies",
+      "users": "Agency Users"
+    }
+  },
+  "header": {
+    "searchPlaceholder": "Search...",
+    "notifications": "Notifications",
+    "userMenu": {
+      "settings": "Settings",
+      "userPortal": "User portal",
+      "logout": "Logout"
+    }
+  },
+  "agencies": {
+    "singular": "Agency",
+    "plural": "Agencies",
+    "title": "{{agencies.plural}}",
+    "create": "Add Agency",
+    "edit": "Edit {{agencies.singular}}",
+    "subtitle": "Manage registered agencies on the platform.",
+    "noData": "No agencies found.",
+    "noDataCopy": "No agencies match your filters, or none have been added yet.",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Name, location, contact...",
+      "status": "Status",
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "sortBy": "Sort by",
+      "order": "Order",
+      "perPage": "Per page",
+      "sortOptions": {
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "name": "Name"
+      }
+    },
+    "tc": {
+      "name": "Agency",
+      "location": "Location",
+      "contact": "Contact",
+      "status": "{{base.status}}",
+      "createdAt": "{{base.createdAt}}"
+    },
+    "form": {
+      "name": "Agency name",
+      "location": "Location",
+      "logoUrl": "Logo URL",
+      "contactName": "Contact name",
+      "contactEmail": "Contact email",
+      "contactPhone": "Contact phone"
+    },
+    "actions": {
+      "copyId": "Copy agency ID",
+      "edit": "Edit agency",
+      "delete": "Delete agency"
+    },
+    "messages": {
+      "created": "Agency created successfully.",
+      "updated": "Agency updated successfully.",
+      "deleted": "Agency deleted successfully.",
+      "idCopied": "Agency ID copied to clipboard."
+    }
+  },
+  "users": {
+    "singular": "User",
+    "plural": "Users",
+    "title": "Agency Users",
+    "subtitle": "Manage registered agency users on the platform.",
+    "create": "Add User",
+    "edit": "Edit {{users.singular}}",
+    "noData": "No users found",
+    "noDataCopy": "No agency users match your filters, or none have been added yet.",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Name, email, phone...",
+      "role": "Role",
+      "allRoles": "All roles",
+      "status": "Status",
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "sortBy": "Sort by",
+      "order": "Order",
+      "perPage": "Per page",
+      "sortOptions": {
+        "createdAt": "Created",
+        "updatedAt": "Updated",
+        "firstName": "First name",
+        "lastName": "Last name"
+      }
+    },
+    "tc": {
+      "user": "User",
+      "phone": "Phone",
+      "agency": "{{base.agency}}",
+      "role": "{{base.role}}",
+      "status": "{{base.status}}",
+      "email": "Email",
+      "createdAt": "{{base.createdAt}}"
+    },
+    "statuses": {
+      "0": "Inactive",
+      "1": "Active",
+      "true": "Active",
+      "false": "Inactive",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "emailStatuses": {
+      "verified": "Verified",
+      "unverified": "Unverified"
+    },
+    "form": {
+      "personalInfo": "Personal Information",
+      "personalInfoSubtitle": "Basic identity details for the new user.",
+      "agencySection": "Agency",
+      "agencySectionSubtitle": "Assign the user to an agency.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email address",
+      "phone": "Phone number",
+      "phonePlaceholder": "+923001234567",
+      "agency": "Agency",
+      "inviteBanner": "Invite email will be sent",
+      "inviteBannerCopy": "The user will receive an email to set their password and activate their account.",
+      "editSubtitle": "Edit user details.",
+      "createSubtitle": "Create a new agency user — an invite email will be sent automatically."
+    },
+    "actions": {
+      "copyId": "Copy user ID",
+      "edit": "Edit user",
+      "resendInvite": "Resend invite",
+      "delete": "Delete user"
+    },
+    "messages": {
+      "created": "User created and invite sent.",
+      "updated": "User updated successfully.",
+      "deleted": "User deleted successfully.",
+      "inviteResent": "Invite resent successfully.",
+      "idCopied": "User ID copied to clipboard."
+    }
+  },
+  "properties": {
+    "singular": "Property",
+    "plural": "Properties",
+    "title": "Properties",
+    "subtitle": "View and manage your property listings.",
+    "listings": {
+      "title": "Listings",
+      "description": "Your active property listings."
+    },
+    "loading": "Loading listings...",
+    "tc": {
+      "title": "Title",
+      "city": "City",
+      "area": "Area",
+      "purpose": "Purpose",
+      "price": "Price",
+      "status": "{{base.status}}",
+      "listedBy": "Listed by"
+    },
+    "actions": {
+      "addListing": "Add Listing",
+      "edit": "{{base.edit}}"
+    },
+    "messages": {
+      "loadError": "Could not load properties."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back, {{name}}"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Dashboard"
+    },
+    "accessDenied": {
+      "title": "Access Denied",
+      "message": "You do not have permission to view this page.",
+      "cta": "Go to Dashboard"
+    }
+  },
+  "pagination": {
+    "page": "Page {{current}} of {{total}}",
+    "total": "{{count}} total",
+    "previous": "{{base.previous}}",
+    "next": "{{base.next}}"
+  }
+}

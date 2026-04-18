@@ -10,12 +10,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
+import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-admin-header',
   standalone: true,
-  imports: [RouterLink, MatIconModule],
+  imports: [RouterLink, MatIconModule, TranslateModule, LanguageSwitcherComponent],
   templateUrl: './admin-header.component.html',
   styleUrl: '../../layout/header/header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
