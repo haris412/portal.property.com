@@ -21,6 +21,11 @@ export const routes: Routes = [
       import('./features/auth/forgot-password.routes').then((m) => m.FORGOT_PASSWORD_ROUTES),
   },
   {
+    path: 'accept-invite',
+    loadChildren: () =>
+      import('./features/auth/invite.routes').then((m) => m.INVITE_ROUTES),
+  },
+  {
     path: 'admin',
     loadChildren: () => import('./admin/admin.routes').then((m) => m.ADMIN_ROUTES),
   },
@@ -32,7 +37,7 @@ export const routes: Routes = [
   {
     path: '',
     component: LayoutComponent,
-    // canActivate: [authGuard],
+    canActivate: [authGuard],
     children: [
       {
         path: '',
@@ -97,6 +102,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'dashboard',
+    redirectTo: 'auth',
   },
 ];

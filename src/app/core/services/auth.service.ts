@@ -2,21 +2,25 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, of, switchMap, map, shareReplay, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  tap,
+  throwError,
+} from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+// ── Storage keys ──────────────────────────────────────────────────────────────
+
 const REFRESH_KEY = 'refreshToken';
-const USER_KEY = 'user';
+const USER_KEY    = 'user';
 
-interface RolesApiResponse {
-  success?: boolean;
-  data?: { roles?: string[] };
-}
-
-interface UserApiResponse {
-  success?: boolean;
-  data?: { user?: Record<string, unknown> };
-}
+// ── Interfaces ────────────────────────────────────────────────────────────────
 
 export interface User {
   _id: string;
@@ -37,39 +41,6 @@ interface StoredSession {
   role?: string;
   firstName?: string;
   lastName?: string;
-}
-
-/** Maps full API user payload to in-memory User (login response or GET /api/users/:id). */
-export function fromApiUser(raw: Record<string, unknown>): User {
-  const id = ((raw['_id'] ?? raw['id']) as string) || '';
-  const email = (raw['email'] as string | undefined) ?? '';
-  const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
-  const lastName = (raw['lastName'] as string | undefined)?.trim() || undefined;
-  const name = [firstName, lastName].filter(Boolean).join(' ') || undefined;
-  const phoneNumber = (raw['phoneNumber'] as string | undefined)?.trim() || undefined;
-  const profileImageUrl = (raw['profileImageUrl'] as string | undefined) || undefined;
-  const location = (raw['location'] as string | undefined)?.trim() || undefined;
-  const r = raw['role'];
-  const role = typeof r === 'object' && r && 'name' in r
-    ? (r as { name: string }).name
-    : (r as string | undefined);
-  const agency = raw['agency'];
-  const agencyName = typeof agency === 'object' && agency && 'name' in agency
-    ? (agency as { name: string }).name || undefined
-    : undefined;
-  return { _id: id, email, firstName, lastName, name, phoneNumber, profileImageUrl, location, role, agencyName };
-}
-
-/** Extracts session data to persist in localStorage — names only, no email/phone. */
-function toStoredSession(raw: Record<string, unknown>): StoredSession {
-  const id = ((raw['_id'] ?? raw['id']) as string) || '';
-  const r = raw['role'];
-  const role = typeof r === 'object' && r && 'name' in r
-    ? (r as { name: string }).name
-    : (r as string | undefined);
-  const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
-  const lastName = (raw['lastName'] as string | undefined)?.trim() || undefined;
-  return { _id: id, role, firstName, lastName };
 }
 
 export interface LoginPayload {
@@ -93,139 +64,119 @@ interface AuthApiResponse {
   refreshToken: string;
 }
 
-interface VerifyEmailRequestBody {
-  token: string;
-  email?: string;
-}
-
-interface VerifyEmailResponse {
-  success?: boolean;
-}
-
-interface ForgotPasswordResponse {
+interface SimpleApiResponse {
   success?: boolean;
   message?: string;
 }
 
-interface VerifyPasswordResetOtpResponse {
-  success?: boolean;
-  message?: string;
+interface VerifyPasswordResetOtpResponse extends SimpleApiResponse {
   data?: { resetToken?: string };
   resetToken?: string;
 }
 
-interface ResetPasswordResponse {
-  success?: boolean;
-  message?: string;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function extractRole(raw: Record<string, unknown>): string | undefined {
+  const r = raw['role'];
+  return typeof r === 'object' && r != null && 'name' in r
+    ? (r as { name: string }).name
+    : (r as string | undefined);
 }
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-  private http = inject(HttpClient);
-  private router = inject(Router);
-  private platformId = inject(PLATFORM_ID);
+/** Maps full API user payload to in-memory User. */
+export function fromApiUser(raw: Record<string, unknown>): User {
+  const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
+  const lastName  = (raw['lastName']  as string | undefined)?.trim() || undefined;
+  const agency    = raw['agency'];
+  return {
+    _id:             ((raw['_id'] ?? raw['id']) as string) || '',
+    email:           (raw['email'] as string | undefined) ?? '',
+    firstName,
+    lastName,
+    name:            [firstName, lastName].filter(Boolean).join(' ') || undefined,
+    phoneNumber:     (raw['phoneNumber']     as string | undefined)?.trim() || undefined,
+    profileImageUrl: (raw['profileImageUrl'] as string | undefined)        || undefined,
+    location:        (raw['location']        as string | undefined)?.trim() || undefined,
+    role:            extractRole(raw),
+    agencyName:      typeof agency === 'object' && agency != null && 'name' in agency
+                       ? (agency as { name: string }).name || undefined
+                       : undefined,
+  };
+}
 
-  private accessToken: string | null = null;
-  private userSubject = new BehaviorSubject<User | null>(null);
+function toStoredSession(raw: Record<string, unknown>): StoredSession {
+  return {
+    _id:       ((raw['_id'] ?? raw['id']) as string) || '',
+    role:      extractRole(raw),
+    firstName: (raw['firstName'] as string | undefined)?.trim() || undefined,
+    lastName:  (raw['lastName']  as string | undefined)?.trim() || undefined,
+  };
+}
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http       = inject(HttpClient);
+  private readonly router     = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
+
+  private accessToken:     string | null = null;
   private redirectMessage: string | null = null;
 
-  currentUser$ = this.userSubject.asObservable();
+  private readonly userSubject = new BehaviorSubject<User | null>(null);
+  readonly currentUser$ = this.userSubject.asObservable();
 
-  getCurrentUser(): User | null {
-    return this.userSubject.getValue();
+  private get storage(): Storage | null {
+    return isPlatformBrowser(this.platformId) ? localStorage : null;
   }
 
-  getUserId(): string | null {
-    return this.getCurrentUser()?._id ?? null;
+  /** Roles list is fetched once and cached for the lifetime of the app. */
+  private readonly roles$ = this.http
+    .get<{ success?: boolean; data?: { roles?: string[] } }>(`${environment.apiUrl}/api/auth/roles`)
+    .pipe(
+      map((res) => res.data?.roles ?? []),
+      catchError(() => of([] as string[])),
+      shareReplay(1),
+    );
+
+  constructor() {
+    if (this.storage?.getItem(REFRESH_KEY)) this.loadStoredSession();
   }
 
-  setRedirectMessage(message: string): void {
-    this.redirectMessage = message;
-  }
+  // ── Getters ────────────────────────────────────────────────────────────────
 
+  getCurrentUser(): User | null  { return this.userSubject.getValue(); }
+  getUserId():      string | null { return this.getCurrentUser()?._id ?? null; }
+  isLoggedIn():     boolean       { return !!this.accessToken; }
+  getAccessToken(): string | null { return this.accessToken; }
+  peekRefreshToken(): string | null { return this.storage?.getItem(REFRESH_KEY) ?? null; }
+
+  getRoles(): Observable<string[]> { return this.roles$; }
+
+  setRedirectMessage(message: string): void { this.redirectMessage = message; }
   getAndClearRedirectMessage(): string | null {
     const msg = this.redirectMessage;
     this.redirectMessage = null;
     return msg;
   }
 
-  private get storage(): Storage | null {
-    return isPlatformBrowser(this.platformId) ? localStorage : null;
-  }
-
-  private roles$ = this.http.get<RolesApiResponse>(`${environment.apiUrl}/api/auth/roles`).pipe(
-    map((response) => response.data?.roles ?? []),
-    catchError(() => of([])),
-    shareReplay(1)
-  );
-
-  getRoles(): Observable<string[]> {
-    return this.roles$;
-  }
-
-  constructor() {
-    if (this.storage?.getItem(REFRESH_KEY)) {
-      this.loadStoredSession();
-    }
-  }
-
-  /** Seeds in-memory user from localStorage — names available immediately, no API call. */
-  private loadStoredSession(): void {
-    const session = this.getStoredSession();
-    if (session?._id) {
-      const name = [session.firstName, session.lastName].filter(Boolean).join(' ') || undefined;
-      this.userSubject.next({
-        _id: session._id,
-        email: '',
-        role: session.role,
-        firstName: session.firstName,
-        lastName: session.lastName,
-        name,
-      });
-    }
-  }
-
-  private getStoredSession(): StoredSession | null {
-    const raw = this.storage?.getItem(USER_KEY);
-    if (!raw) return null;
-    try { return JSON.parse(raw) as StoredSession; } catch { return null; }
-  }
-
-  private storeAuthData(data: AuthApiResponse): void {
-    if (!this.storage || !data.accessToken || !data.refreshToken || !data.user) return;
-    this.accessToken = data.accessToken;
-    // Full user lives in memory only
-    this.userSubject.next(fromApiUser(data.user));
-    // Only minimal session stored in localStorage — no PII
-    this.storage.setItem(REFRESH_KEY, data.refreshToken);
-    this.storage.setItem(USER_KEY, JSON.stringify(toStoredSession(data.user)));
-  }
-
-
-  getAccessToken(): string | null {
-    return this.accessToken;
-  }
+  // ── Auth ───────────────────────────────────────────────────────────────────
 
   login(payload: LoginPayload): Observable<{ user: User }> {
     const fallback = 'Login failed. Please try again.';
     return this.http
-      .post<{ success?: boolean; data?: AuthApiResponse; reason?: string; message?: string } & AuthApiResponse>(
-        `${environment.apiUrl}/api/auth/login`, payload
+      .post<{ success?: boolean; data?: AuthApiResponse; message?: string } & AuthApiResponse>(
+        `${environment.apiUrl}/api/auth/login`, payload,
       )
       .pipe(
-        switchMap((response) => {
-          if (response.success === false) {
-            return throwError(() => ({ message: response.message ?? fallback }));
-          }
-          const data = (response.data ?? response) as AuthApiResponse;
+        switchMap((res) => {
+          if (res.success === false) return throwError(() => ({ message: res.message ?? fallback }));
+          const data = (res.data ?? res) as AuthApiResponse;
           this.storeAuthData(data);
           return of({ user: fromApiUser(data.user) });
         }),
-        catchError((err: unknown) =>
-          throwError(() => ({ message: this.getAuthMessage(err, fallback) }))
-        )
+        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
       );
   }
 
@@ -233,7 +184,7 @@ export class AuthService {
     const fallback = 'Registration failed. Please try again.';
     return this.http
       .post<{ success?: boolean; message?: string; data?: AuthApiResponse } & AuthApiResponse>(
-        `${environment.apiUrl}/api/auth/register`, payload
+        `${environment.apiUrl}/api/auth/register`, payload,
       )
       .pipe(
         switchMap((res) => {
@@ -241,72 +192,51 @@ export class AuthService {
           const user = fromApiUser(((res.data ?? res).user ?? {}) as Record<string, unknown>);
           return of({ user, message: res.message });
         }),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) })))
+        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
       );
   }
 
   logout(): void {
-    const token = this.getAccessToken();
-    if (token) {
-      this.http.post(`${environment.apiUrl}/api/auth/logout`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).subscribe({ error: () => {} });
+    if (this.accessToken) {
+      this.http
+        .post(`${environment.apiUrl}/api/auth/logout`, {}, { headers: { Authorization: `Bearer ${this.accessToken}` } })
+        .subscribe({ error: () => {} });
     }
-    this.accessToken = null;
-    this.userSubject.next(null);
-    this.storage?.removeItem(REFRESH_KEY);
-    this.storage?.removeItem(USER_KEY);
-    this.router.navigate(['/auth']);
+    this.clearSession();
+    void this.router.navigate(['/auth']);
   }
 
   refreshAccessToken(): Observable<string> {
     const refresh = this.storage?.getItem(REFRESH_KEY);
-    if (!refresh) return of('').pipe(tap(() => this.clearAndRedirect()));
+    if (!refresh) { this.clearAndRedirect(); return of(''); }
 
-    return this.http.post<{ data?: { accessToken?: string }; accessToken?: string }>(
-      `${environment.apiUrl}/api/auth/refresh-token`,
-      { refreshToken: refresh }
-    ).pipe(
-      tap((response) => {
-        const at = response.data?.accessToken ?? response.accessToken;
-        if (at) this.accessToken = at;
-      }),
-      switchMap((response) => {
-        const at = response.data?.accessToken ?? response.accessToken;
-        if (at) return of(at);
-        this.clearAndRedirect();
-        return of('');
-      }),
-      catchError(() => {
-        this.clearAndRedirect();
-        return of('');
-      })
-    );
+    return this.http
+      .post<{ data?: { accessToken?: string }; accessToken?: string }>(
+        `${environment.apiUrl}/api/auth/refresh-token`,
+        { refreshToken: refresh },
+      )
+      .pipe(
+        map((res) => res.data?.accessToken ?? res.accessToken ?? ''),
+        tap((at) => at ? (this.accessToken = at) : this.clearAndRedirect()),
+        catchError(() => { this.clearAndRedirect(); return of(''); }),
+      );
   }
 
-  private clearAndRedirect(): void {
-    this.accessToken = null;
-    this.userSubject.next(null);
-    this.storage?.removeItem(REFRESH_KEY);
-    this.storage?.removeItem(USER_KEY);
-    this.router.navigate(['/auth']);
+  tryRestoreSession(): Promise<void> {
+    if (this.accessToken || !this.storage?.getItem(REFRESH_KEY)) return Promise.resolve();
+    return new Promise((resolve) => {
+      this.refreshAccessToken().subscribe({ next: () => resolve(), error: () => resolve() });
+    });
   }
 
-  peekRefreshToken(): string | null {
-    return this.storage?.getItem(REFRESH_KEY) ?? null;
-  }
+  // ── Password reset ─────────────────────────────────────────────────────────
 
   forgotPassword(email: string): Observable<void> {
-    const fallback = 'Could not send reset email. Please try again.';
-    return this.http
-      .post<ForgotPasswordResponse>(`${environment.apiUrl}/api/auth/forgot-password`, { email: email.trim() })
-      .pipe(
-        switchMap((res) => {
-          if (res.success === false) return throwError(() => ({ message: res.message ?? fallback }));
-          return of(undefined);
-        }),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) })))
-      );
+    return this.postVoid(
+      `${environment.apiUrl}/api/auth/forgot-password`,
+      { email: email.trim() },
+      'Could not send reset email. Please try again.',
+    );
   }
 
   verifyPasswordResetOtp(email: string, otp: string): Observable<{ resetToken: string }> {
@@ -314,7 +244,7 @@ export class AuthService {
     return this.http
       .post<VerifyPasswordResetOtpResponse>(
         `${environment.apiUrl}/api/auth/verify-password-reset-otp`,
-        { email: email.trim(), otp: otp.trim() }
+        { email: email.trim(), otp: otp.trim() },
       )
       .pipe(
         switchMap((res) => {
@@ -323,59 +253,117 @@ export class AuthService {
           if (!token) return throwError(() => ({ message: fallback }));
           return of({ resetToken: token });
         }),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) })))
+        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
       );
   }
 
   resetPassword(resetToken: string, password: string): Observable<void> {
-    const fallback = 'Could not reset password. Please start again.';
-    return this.http
-      .post<ResetPasswordResponse>(`${environment.apiUrl}/api/auth/reset-password`, { resetToken, password })
-      .pipe(
-        switchMap((res) => {
-          if (res.success === false) return throwError(() => ({ message: res.message ?? fallback }));
-          return of(undefined);
-        }),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) })))
-      );
+    return this.postVoid(
+      `${environment.apiUrl}/api/auth/reset-password`,
+      { resetToken, password },
+      'Could not reset password. Please start again.',
+    );
   }
+
+  // ── Invite flow ────────────────────────────────────────────────────────────
+
+  /** POST /api/auth/verify-invite-token — checks if the invite token is valid before showing the form. */
+  verifyInviteToken(token: string): Observable<void> {
+    return this.postVoid(
+      `${environment.apiUrl}/api/auth/verify-invite-token`,
+      { token },
+      'This invite link is invalid or has expired.',
+    );
+  }
+
+  /** POST /api/auth/invite-set-password — activates account using the token from the invite link. */
+  inviteSetPassword(token: string, password: string): Observable<void> {
+    return this.postVoid(
+      `${environment.apiUrl}/api/auth/invite-set-password`,
+      { token, password },
+      'Could not set password. Please try again.',
+    );
+  }
+
+  // ── Email verification ─────────────────────────────────────────────────────
 
   verifyEmail(token: string, email?: string | null): Observable<{ success: boolean }> {
     const fallback = 'This link is invalid or has expired. Please request a new verification email.';
-    const body: VerifyEmailRequestBody = email?.trim() ? { token, email: email.trim() } : { token };
+    const body     = email?.trim() ? { token, email: email.trim() } : { token };
     return this.http
-      .post<VerifyEmailResponse>(`${environment.apiUrl}/api/auth/verify-email`, body)
+      .post<SimpleApiResponse>(`${environment.apiUrl}/api/auth/verify-email`, body)
       .pipe(
         map((res) => ({ success: res.success ?? true })),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) })))
+        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
       );
   }
 
-  isLoggedIn(): boolean {
-    return !!this.accessToken;
-  }
+  // ── Profile ────────────────────────────────────────────────────────────────
 
-  tryRestoreSession(): Promise<void> {
-    if (this.accessToken) return Promise.resolve();
-    const refresh = this.storage?.getItem(REFRESH_KEY);
-    if (!refresh) return Promise.resolve();
-
-    return new Promise((resolve) => {
-      this.refreshAccessToken().subscribe({ next: () => resolve(), error: () => resolve() });
-    });
-  }
-
-  /** Call this when full profile data is needed (e.g. profile page). */
   fetchUserProfile(id: string): Observable<void> {
     return this.http
-      .get<UserApiResponse>(`${environment.apiUrl}/api/users/${encodeURIComponent(id)}`)
+      .get<{ success?: boolean; data?: { user?: Record<string, unknown> } }>(
+        `${environment.apiUrl}/api/users/${encodeURIComponent(id)}`,
+      )
       .pipe(
-        map((res) => {
-          const raw = res.data?.user;
-          if (raw) this.userSubject.next(fromApiUser(raw));
-        }),
-        catchError(() => of(undefined))
+        map((res) => { if (res.data?.user) this.userSubject.next(fromApiUser(res.data.user)); }),
+        catchError(() => of(undefined)),
       );
+  }
+
+  // ── Private ────────────────────────────────────────────────────────────────
+
+  /**
+   * Shared helper for fire-and-forget POST endpoints that only return
+   * `{ success, message }` — avoids repeating the same switchMap+catchError pipe.
+   */
+  private postVoid(url: string, body: unknown, fallback: string): Observable<void> {
+    return this.http.post<SimpleApiResponse>(url, body).pipe(
+      switchMap((res) =>
+        res.success === false
+          ? throwError(() => ({ message: res.message ?? fallback }))
+          : of(undefined),
+      ),
+      catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
+    );
+  }
+
+  /** Seeds in-memory user from localStorage — names available immediately, no API call. */
+  private loadStoredSession(): void {
+    const raw = this.storage?.getItem(USER_KEY);
+    if (!raw) return;
+    try {
+      const s = JSON.parse(raw) as StoredSession;
+      if (!s._id) return;
+      this.userSubject.next({
+        _id:       s._id,
+        email:     '',
+        role:      s.role,
+        firstName: s.firstName,
+        lastName:  s.lastName,
+        name:      [s.firstName, s.lastName].filter(Boolean).join(' ') || undefined,
+      });
+    } catch { /* ignore corrupt data */ }
+  }
+
+  private storeAuthData(data: AuthApiResponse): void {
+    if (!this.storage || !data.accessToken || !data.refreshToken || !data.user) return;
+    this.accessToken = data.accessToken;
+    this.userSubject.next(fromApiUser(data.user));
+    this.storage.setItem(REFRESH_KEY, data.refreshToken);
+    this.storage.setItem(USER_KEY, JSON.stringify(toStoredSession(data.user)));
+  }
+
+  private clearSession(): void {
+    this.accessToken = null;
+    this.userSubject.next(null);
+    this.storage?.removeItem(REFRESH_KEY);
+    this.storage?.removeItem(USER_KEY);
+  }
+
+  private clearAndRedirect(): void {
+    this.clearSession();
+    void this.router.navigate(['/auth']);
   }
 
   private getAuthMessage(err: unknown, fallback: string): string {
