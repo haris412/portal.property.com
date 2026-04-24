@@ -1,8 +1,8 @@
 <section class="section-card auth-card h-100" aria-labelledby="login-title">
   <div class="card-inner">
-    <h2 id="login-title" class="auth-card-title">Log in</h2>
+    <h2 id="login-title" class="auth-card-title">{{ 'public.signIn.heading' | translate }}</h2>
     <p class="auth-card-copy text-muted-auth">
-      Access saved searches, viewed homes, updated listings and property videos.
+      {{ 'public.signIn.description' | translate }}
     </p>
 
     @if (error()) {
@@ -13,14 +13,14 @@
 
     @if (isAdmin && otpStep()) {
       <p class="text-muted-auth mb-3" role="status">
-        We sent a 5-digit code to <strong>{{ form.controls.identifier.value }}</strong>. Enter it below to finish signing in.
+        {{ 'public.signIn.admin.otpSent' | translate: { email: form.controls.identifier.value } }}
       </p>
     }
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="row g-3">
         <div class="col-12">
-          <label class="form-label-auth" for="login-identifier">Email</label>
+          <label class="form-label-auth" for="login-identifier">{{ 'public.signIn.email' | translate }}</label>
           <mat-form-field appearance="outline">
             <input
               id="login-identifier"
@@ -31,11 +31,11 @@
               [readonly]="isAdmin && otpStep()"
             />
           </mat-form-field>
-          <app-form-field-error [control]="form.controls.identifier" label="Email" />
+          <app-form-field-error [control]="form.controls.identifier" [label]="'public.signIn.email' | translate" />
         </div>
 
         <div class="col-12">
-          <label class="form-label-auth" for="login-password">Password</label>
+          <label class="form-label-auth" for="login-password">{{ 'public.signIn.password' | translate }}</label>
           <mat-form-field appearance="outline">
             <input
               id="login-password"
@@ -57,12 +57,12 @@
               </button>
             }
           </mat-form-field>
-          <app-form-field-error [control]="form.controls.password" label="Password" />
+          <app-form-field-error [control]="form.controls.password" [label]="'public.signIn.password' | translate" />
         </div>
 
         @if (isAdmin && otpStep()) {
           <div class="col-12">
-            <label class="form-label-auth" for="login-otp">Verification code</label>
+            <label class="form-label-auth" for="login-otp">{{ 'public.signIn.admin.otpLabel' | translate }}</label>
             <mat-form-field appearance="outline">
               <input
                 id="login-otp"
@@ -74,15 +74,15 @@
                 placeholder="00000"
               />
             </mat-form-field>
-            <app-form-field-error [control]="form.controls.otp" label="Code" />
+            <app-form-field-error [control]="form.controls.otp" [label]="'public.signIn.admin.otpLabel' | translate" />
           </div>
         }
 
         @if (!(isAdmin && otpStep())) {
           <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <mat-checkbox formControlName="rememberMe">Remember me</mat-checkbox>
+            <mat-checkbox formControlName="rememberMe">{{ 'public.signIn.rememberMe' | translate }}</mat-checkbox>
             @if (!isAdmin) {
-              <a routerLink="/forgot-password" class="auth-link">Forgot password?</a>
+              <a routerLink="/forgot-password" class="auth-link">{{ 'public.signIn.forgotPassword' | translate }}</a>
             }
           </div>
         }
@@ -98,7 +98,7 @@
           </button>
           @if (isAdmin && otpStep()) {
             <button type="button" mat-button class="w-100" (click)="backToCredentials()">
-              Use a different account
+              {{ 'public.signIn.admin.differentAccount' | translate }}
             </button>
           }
         </div>
@@ -107,16 +107,16 @@
 
     @if (!isAdmin) {
       <div class="mt-3 d-grid gap-3">
-        @for (feature of features(); track feature.title) {
+        @for (feature of features(); track feature.titleKey) {
           <app-feature-card
             [icon]="feature.icon"
-            [title]="feature.title"
-            [description]="feature.description"
+            [title]="feature.titleKey | translate"
+            [description]="feature.descriptionKey | translate"
           />
         }
       </div>
 
-      <div class="visually-divider my-3">Quick access</div>
+      <div class="visually-divider my-3">{{ 'public.signIn.quickAccess' | translate }}</div>
 
       <div class="row g-3">
         <div class="col-12 col-sm-6">

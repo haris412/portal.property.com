@@ -20,24 +20,22 @@
                   aria-hidden="true">
           key
         </mat-icon>
-        <span>Secure access for buyers, sellers and renters</span>
+        <span>{{ 'public.hero.chip' | translate }}</span>
       </div>
 
       <h1 class="hero-title">
-        One portal to discover, list and rent premium properties.
+        {{ 'public.hero.title' | translate }}
       </h1>
 
       <p class="hero-description">
-        Create your account to save homes, upload listings, manage tours and
-        connect with trusted agents. Already have an account? Log in from the
-        right panel and continue where you left off.
+        {{ 'public.hero.description' | translate }}
       </p>
 
       <div class="row g-3 mt-1">
-        @for (item of stats(); track item.label) {
+        @for (item of stats(); track item.labelKey) {
         <div class="col-12 col-sm-4">
           <app-stat-card [value]="item.value"
-                         [label]="item.label" />
+                         [label]="item.labelKey | translate" />
         </div>
         }
       </div>

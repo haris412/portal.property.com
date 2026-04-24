@@ -1,6 +1,6 @@
 <app-section-card
-  title="Property Media"
-  description="Upload high-quality visuals to improve visibility and conversions."
+  [title]="'addListing.media.title' | translate"
+  [description]="'addListing.media.description' | translate"
 >
   <div class="row g-4">
     @for (block of mediaBlocks(); track block.id) {
@@ -17,17 +17,14 @@
         />
 
         @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS && selectedImagePreviews().length) {
-          <p class="selection-meta">Selected {{ selectedImagePreviews().length }} image(s)</p>
+          <p class="selection-meta">
+            {{ 'addListing.media.selectedImages' | translate: { count: selectedImagePreviews().length } }}
+          </p>
           <div class="preview-grid">
             @for (image of selectedImagePreviews(); track image.url; let i = $index) {
               <div class="preview-card">
                 <span class="preview-card__index">{{ i + 1 }}</span>
-                <button
-                  type="button"
-                  class="preview-card__remove"
-                  (click)="removeSelectedImage(i)"
-                  aria-label="Remove selected image"
-                >
+                <button type="button" class="preview-card__remove" (click)="removeSelectedImage(i)" aria-label="Remove selected image">
                   <mat-icon fontIcon="close" aria-hidden="true"></mat-icon>
                 </button>
                 <img [src]="image.url" [alt]="image.name" class="preview-card__image" />
@@ -37,7 +34,9 @@
           </div>
         }
         @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.VIDEO && selectedVideoName()) {
-          <p class="selection-meta">Selected: {{ selectedVideoName() }}</p>
+          <p class="selection-meta">
+            {{ 'addListing.media.selectedVideo' | translate: { name: selectedVideoName() } }}
+          </p>
         }
       </div>
     }

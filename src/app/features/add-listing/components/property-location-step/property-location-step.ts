@@ -8,7 +8,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, finalize, merge } from 'rxjs';
 import {
@@ -23,6 +23,7 @@ import { LocationMapPickerComponent } from '../location-map-picker/location-map-
 import { LocationCatalogService } from '../../../../core/services/location-catalog.service';
 import type { GeoNamePlace } from '../../../../core/models/geonames.models';
 import type { OsmLocationPickItem, OsmPickKind } from '../../../../core/models/overpass.models';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 /** Default listing country for GeoNames populated-place catalog (ISO alpha-2). */
 const LISTING_COUNTRY_CODE = 'PK';
@@ -30,6 +31,7 @@ const LISTING_COUNTRY_CODE = 'PK';
 @Component({
   selector: 'app-property-location-step',
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -48,9 +50,11 @@ export class PropertyLocationStepComponent implements OnInit {
   private readonly catalog = inject(LocationCatalogService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
-  readonly locationBanner = signal(
-    'Start broad with city and neighborhood, then add the full address and map reference for more accurate discovery.'
+  readonly locationBanner = toSignal(
+    this.translate.stream('addListing.location.banner'),
+    { initialValue: '' }
   );
 
   readonly allPlaces = signal<GeoNamePlace[]>([]);

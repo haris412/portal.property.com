@@ -21,7 +21,7 @@
         </h1>
 
         <p class="profile-shell__subtitle">
-          {{ profile().title || 'Profile Settings' }}
+          {{ profile().title || ('profile.defaultTitle' | translate) }}
           @if (profile().company) {
             <span>· {{ profile().company }}</span>
           }

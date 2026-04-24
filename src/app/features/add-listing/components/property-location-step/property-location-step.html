@@ -1,35 +1,20 @@
-<app-step-card
-  [step]="1"
-  title="Property Location"
-  
->
+<app-step-card [step]="1" [title]="'addListing.location.title' | translate">
   <div class="d-grid gap-1" [formGroup]="form">
-    <app-info-banner
-      icon="info"
-      [text]="locationBanner()"
-    />
+    <app-info-banner icon="info" [text]="locationBanner()" />
 
     <div>
-      <label class="field-label">City / Location</label>
+      <label class="field-label">{{ 'addListing.location.city.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          formControlName="city"
-          placeholder="Search or select city"
-          [matAutocomplete]="cityAuto"
-          (blur)="markLocationControlTouched('city')"
-        />
+        <input matInput formControlName="city"
+          [placeholder]="'addListing.location.city.placeholder' | translate"
+          [matAutocomplete]="cityAuto" (blur)="markLocationControlTouched('city')" />
         @if (citiesLoading()) {
-          <mat-hint>Loading cities…</mat-hint>
+          <mat-hint>{{ 'addListing.location.city.loading' | translate }}</mat-hint>
         } @else if (citiesError(); as err) {
           <mat-hint>{{ err }}</mat-hint>
         }
-        <mat-autocomplete
-          #cityAuto="matAutocomplete"
-          autoActiveFirstOption
-          [displayWith]="displayCityPlace"
-          (optionSelected)="onCitySelected($event)"
-        >
+        <mat-autocomplete #cityAuto="matAutocomplete" autoActiveFirstOption
+          [displayWith]="displayCityPlace" (optionSelected)="onCitySelected($event)">
           @for (place of filteredPlaces(); track place.geonameId) {
             <mat-option [value]="place">
               {{ place.name }}
@@ -43,33 +28,25 @@
           @if (form.get('city')?.hasError('server')) {
             {{ form.get('city')?.getError('server') }}
           } @else {
-            City is required
+            {{ 'addListing.location.city.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
     <div>
-      <label class="field-label">Area / Neighborhood</label>
+      <label class="field-label">{{ 'addListing.location.neighborhood.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          formControlName="neighborhood"
-          placeholder="Search or select area"
-          [matAutocomplete]="neighborhoodAuto"
-          (blur)="markLocationControlTouched('neighborhood')"
-        />
+        <input matInput formControlName="neighborhood"
+          [placeholder]="'addListing.location.neighborhood.placeholder' | translate"
+          [matAutocomplete]="neighborhoodAuto" (blur)="markLocationControlTouched('neighborhood')" />
         @if (neighborhoodsLoading()) {
-          <mat-hint>Loading areas around this city…</mat-hint>
+          <mat-hint>{{ 'addListing.location.neighborhood.loading' | translate }}</mat-hint>
         } @else if (neighborhoodsError(); as nErr) {
           <mat-hint>{{ nErr }}</mat-hint>
         }
-        <mat-autocomplete
-          #neighborhoodAuto="matAutocomplete"
-          autoActiveFirstOption
-          [displayWith]="displayNeighborhood"
-          (optionSelected)="onNeighborhoodSelected($event)"
-        >
+        <mat-autocomplete #neighborhoodAuto="matAutocomplete" autoActiveFirstOption
+          [displayWith]="displayNeighborhood" (optionSelected)="onNeighborhoodSelected($event)">
           @for (item of filteredNeighborhoods(); track pickTrackKey(item)) {
             <mat-option [value]="item">
               {{ item.name }}
@@ -81,39 +58,33 @@
           @if (form.get('neighborhood')?.hasError('server')) {
             {{ form.get('neighborhood')?.getError('server') }}
           } @else {
-            Neighborhood is required
+            {{ 'addListing.location.neighborhood.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
     <div>
-      <label class="field-label">Full Property Address</label>
+      <label class="field-label">{{ 'addListing.location.address.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          formControlName="fullAddress"
-          placeholder="Enter complete address"
-          (blur)="markLocationControlTouched('fullAddress')"
-        />
+        <input matInput formControlName="fullAddress"
+          [placeholder]="'addListing.location.address.placeholder' | translate"
+          (blur)="markLocationControlTouched('fullAddress')" />
         <mat-error>
           @if (form.get('fullAddress')?.hasError('server')) {
             {{ form.get('fullAddress')?.getError('server') }}
           } @else {
-            Full property address is required
+            {{ 'addListing.location.address.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
     <div>
-      <label class="field-label">Pin Location / Map Link</label>
+      <label class="field-label">{{ 'addListing.location.mapLink.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          formControlName="mapLink"
-          placeholder="Paste Google Maps pin or coordinates"
-        />
+        <input matInput formControlName="mapLink"
+          [placeholder]="'addListing.location.mapLink.placeholder' | translate" />
         <mat-error>
           @if (form.get('mapLink')?.hasError('server')) {
             {{ form.get('mapLink')?.getError('server') }}
@@ -123,8 +94,7 @@
     </div>
 
     <div class="location-preview">
-      <h3 class="location-preview__title">Location Preview</h3>
-
+      <h3 class="location-preview__title">{{ 'addListing.location.preview' | translate }}</h3>
       <div class="location-preview__map">
         <app-location-map-picker [form]="form" />
       </div>

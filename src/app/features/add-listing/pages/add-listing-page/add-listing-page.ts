@@ -48,6 +48,7 @@ import {
   ADD_LISTING_PRICING_API_MAP,
 } from '../../constants/add-listing-api-field-maps';
 import { firstValueFrom } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 import {
   FEATURE_SLUG_TO_AMENITY_KEY,
   normalizeFeatureSlug,
@@ -82,6 +83,7 @@ function locationCityFormValueToString(city: unknown): string {
 @Component({
   selector: 'app-add-listing-page',
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     PageHeaderComponent,
     InfoBannerComponent,

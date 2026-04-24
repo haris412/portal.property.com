@@ -16,10 +16,12 @@ import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-bann
 import { SelectableChipItem } from '../../../../core/models/ui.models';
 import { PropertyFeature } from '../../../../core/models/property-features.model';
 import { AddListingService } from '../../../../core/services/add-listing.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-features-amenities-section',
   imports: [
+    TranslateModule,
     SectionCardComponent,
     SelectableChipGridComponent,
     InfoBannerComponent,

@@ -1,17 +1,14 @@
 <app-section-card
-  title="Features & Amenities"
-  description="Select all amenities and features available with this property."
+  [title]="'addListing.features.title' | translate"
+  [description]="'addListing.features.description' | translate"
 >
   @if (featuresError()) {
-    <app-info-banner
-      icon="error_outline"
-      text="Features could not be loaded. Check your connection and try again."
-    />
+    <app-info-banner icon="error_outline" [text]="'addListing.features.error' | translate" />
     <button type="button" mat-stroked-button class="mt-2" (click)="retryLoadFeatures()">
-      Retry
+      {{ 'addListing.retry' | translate }}
     </button>
   } @else if (featuresLoading()) {
-    <p class="text-muted mb-0">Loading features…</p>
+    <p class="text-muted mb-0">{{ 'addListing.features.loading' | translate }}</p>
   } @else {
     <app-selectable-chip-grid [items]="chipItems()" (toggled)="toggleAmenity($event)" />
   }

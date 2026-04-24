@@ -1,73 +1,52 @@
 <app-section-card
-  [title]="'Pricing & Details'"
-  description="Set the pricing, size, and property breakdown for buyers or renters."
+  [title]="'addListing.pricing.title' | translate"
+  [description]="'addListing.pricing.description' | translate"
 >
   <div class="row" [formGroup]="form">
     <div class="col-12 col-md-6">
       <label class="field-label">
-        Price
-        <span class="field-hint">(Total)</span>
+        {{ 'addListing.pricing.price.label' | translate }}
+        <span class="field-hint">{{ 'addListing.pricing.price.hint' | translate }}</span>
       </label>
-
       <mat-form-field appearance="outline" class="w-100">
         <span matTextPrefix>Rs&nbsp;</span>
-        <input
-          matInput
-          type="number"
-          formControlName="price"
-          placeholder="75000"
-          min="0"
-          step="1"
-          (keydown)="blockMinusOnNonNegativeNumberInput($event)"
-        />
+        <input matInput type="number" formControlName="price" placeholder="75000" min="0" step="1"
+          (keydown)="blockMinusOnNonNegativeNumberInput($event)" />
         <mat-error>
           @if (form.get('price')?.hasError('server')) {
             {{ form.get('price')?.getError('server') }}
           } @else if (form.get('price')?.hasError('required')) {
-            Price is required
+            {{ 'addListing.pricing.price.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
     <div class="col-12 col-md-6">
-      <label class="field-label">Area Size</label>
-
+      <label class="field-label">{{ 'addListing.pricing.areaSize.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          type="number"
-          formControlName="areaSize"
-          placeholder="1200"
-          min="0"
-          step="1"
-          (keydown)="blockMinusOnNonNegativeNumberInput($event)"
-        />
+        <input matInput type="number" formControlName="areaSize" placeholder="1200" min="0" step="1"
+          (keydown)="blockMinusOnNonNegativeNumberInput($event)" />
         <span matTextSuffix>{{ form.get('areaUnit')?.value }}</span>
         <mat-error>
           @if (form.get('areaSize')?.hasError('server')) {
             {{ form.get('areaSize')?.getError('server') }}
           } @else if (form.get('areaSize')?.hasError('required')) {
-            Area size is required
+            {{ 'addListing.pricing.areaSize.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
     <div class="col-12 col-md-6">
-      <label class="field-label">Area Unit</label>
-
+      <label class="field-label">{{ 'addListing.pricing.areaUnit.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          formControlName="areaUnit"
-          placeholder="sqft"
-        />
+        <input matInput formControlName="areaUnit" placeholder="sqft" />
         <mat-error>
           @if (form.get('areaUnit')?.hasError('server')) {
             {{ form.get('areaUnit')?.getError('server') }}
           } @else if (form.get('areaUnit')?.hasError('required')) {
-            Area unit is required
+            {{ 'addListing.pricing.areaUnit.required' | translate }}
           }
         </mat-error>
       </mat-form-field>

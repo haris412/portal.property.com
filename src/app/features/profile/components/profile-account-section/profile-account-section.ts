@@ -19,16 +19,18 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
 import { ActionButtonComponent } from "../../../../shared/ui/action-button/action-button";
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-profile-account-section',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    ActionButtonComponent
+    ActionButtonComponent,
 ],
   templateUrl: './profile-account-section.html',
   styleUrl: './profile-account-section.scss',

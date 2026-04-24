@@ -1,89 +1,64 @@
-<app-step-card
-  [step]="2"
-  title="Contact Information"
-  
->
+<app-step-card [step]="2" [title]="'addListing.contact.title' | translate">
   <div class="d-grid gap-1" [formGroup]="form">
-    <app-info-banner
-      icon="call"
-      [text]="contactBanner()"
-    />
+    <app-info-banner icon="call" [text]="contactBanner()" />
 
     <div>
-      <label class="field-label">Contact Name</label>
+      <label class="field-label">{{ 'addListing.contact.name.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          type="text"
-          formControlName="contactName"
-          placeholder="Enter full name"
-          (blur)="markContactTouched('contactName')"
-        />
+        <input matInput type="text" formControlName="contactName"
+          [placeholder]="'addListing.contact.name.placeholder' | translate"
+          (blur)="markContactTouched('contactName')" />
         <mat-error>
           @if (form.get('contactName')?.hasError('server')) {
             {{ form.get('contactName')?.getError('server') }}
           } @else {
-            Contact name is required
+            {{ 'addListing.contact.name.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
     <div>
-      <label class="field-label">Contact Email</label>
+      <label class="field-label">{{ 'addListing.contact.email.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          type="email"
-          formControlName="contactEmail"
-          placeholder="Enter email address"
-          autocomplete="email"
-          (blur)="markContactTouched('contactEmail')"
-        />
+        <input matInput type="email" formControlName="contactEmail"
+          [placeholder]="'addListing.contact.email.placeholder' | translate"
+          autocomplete="email" (blur)="markContactTouched('contactEmail')" />
         <mat-error>
           @if (form.get('contactEmail')?.hasError('server')) {
             {{ form.get('contactEmail')?.getError('server') }}
           } @else if (form.get('contactEmail')?.hasError('required')) {
-            Email is required
+            {{ 'addListing.contact.email.required' | translate }}
           } @else if (form.get('contactEmail')?.hasError('email')) {
-            Enter a valid email address
+            {{ 'addListing.contact.email.invalid' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
     <div>
-      <label class="field-label">Contact Phone Number</label>
+      <label class="field-label">{{ 'addListing.contact.phone.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          type="tel"
-          formControlName="contactPhoneNumber"
-          placeholder="Enter mobile or WhatsApp number"
-          autocomplete="tel"
-          (blur)="markContactTouched('contactPhoneNumber')"
-        />
+        <input matInput type="tel" formControlName="contactPhoneNumber"
+          [placeholder]="'addListing.contact.phone.placeholder' | translate"
+          autocomplete="tel" (blur)="markContactTouched('contactPhoneNumber')" />
         <mat-error>
           @if (form.get('contactPhoneNumber')?.hasError('server')) {
             {{ form.get('contactPhoneNumber')?.getError('server') }}
           } @else if (form.get('contactPhoneNumber')?.hasError('required')) {
-            Phone number is required
+            {{ 'addListing.contact.phone.required' | translate }}
           } @else if (form.get('contactPhoneNumber')?.hasError('phoneFormat')) {
-            Enter a valid phone number (10–15 digits)
+            {{ 'addListing.contact.phone.invalid' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
     <div>
-      <label class="field-label">Contact Location</label>
+      <label class="field-label">{{ 'addListing.contact.location.label' | translate }}</label>
       <mat-form-field appearance="outline" class="w-100">
-        <input
-          matInput
-          type="text"
-          formControlName="contactLocation"
-          placeholder="Enter office, branch or contact location"
-        />
+        <input matInput type="text" formControlName="contactLocation"
+          [placeholder]="'addListing.contact.location.placeholder' | translate" />
       </mat-form-field>
     </div>
   </div>

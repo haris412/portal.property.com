@@ -40,65 +40,104 @@
     }
   },
   "public": {
+    "hero": {
+      "chip":        "Secure access for buyers, sellers and renters",
+      "title":       "One portal to discover, list and rent premium properties.",
+      "description": "Create your account to save homes, upload listings, manage tours and connect with trusted agents. Already have an account? Log in from the right panel and continue where you left off.",
+      "stats": {
+        "properties":   "Active properties",
+        "agents":       "Verified agents",
+        "satisfaction": "Client satisfaction"
+      }
+    },
     "signIn": {
-      "title": "Welcome back!",
-      "subtitle": "Sign in to continue to your account.",
-      "email": "Email address",
-      "password": "Password",
-      "cta": "Sign In",
-      "ctaLoading": "Signing in...",
+      "heading":     "Log in",
+      "description": "Access saved searches, viewed homes, updated listings and property videos.",
+      "email":       "Email",
+      "password":    "Password",
+      "rememberMe":  "Remember me",
       "forgotPassword": "Forgot password?",
-      "noAccount": "Don't have an account?",
-      "signUp": "Sign up"
+      "cta":         "Log in",
+      "ctaLoading":  "Signing in…",
+      "quickAccess": "Quick access",
+      "features": {
+        "savedProperties":  { "title": "Saved properties",  "description": "Return to your shortlisted homes and rental picks instantly." },
+        "videoTours":       { "title": "Video tours",       "description": "Resume property walkthroughs and media uploads from the dashboard." },
+        "manageListings":   { "title": "Manage listings",   "description": "Track buyer inquiries, schedule visits and update listing details." }
+      },
+      "admin": {
+        "eyebrow":          "Administrator",
+        "title":            "LocateHome Admin",
+        "subtitle":         "Sign in with an existing admin account. This area is separate from the public property portal.",
+        "notAdmin":         "Not an admin? Open the user portal",
+        "otpSent":          "We sent a 5-digit code to {{email}}. Enter it below to finish signing in.",
+        "otpLabel":         "Verification code",
+        "verifyBtn":        "Verify & sign in",
+        "verifying":        "Verifying…",
+        "sendingCode":      "Sending code…",
+        "differentAccount": "Use a different account"
+      }
     },
     "signUp": {
-      "title": "Create an Account",
-      "subtitle": "Sign up to get started.",
-      "firstName": "First name",
-      "lastName": "Last name",
-      "email": "Email address",
-      "password": "Password",
-      "phone": "Phone number",
-      "cta": "Sign Up",
-      "ctaLoading": "Creating account...",
-      "haveAccount": "Already have an account?",
-      "signIn": "Sign in"
+      "heading":      "Create an account",
+      "description":  "Join EstatePortal to save properties, contact agents and manage your activity in one place.",
+      "firstName":    "First name",
+      "lastName":     "Last name",
+      "email":        "Email address",
+      "mobile":       "Mobile number",
+      "phoneCode":    "Code",
+      "location":     "Location",
+      "userType":     "User type",
+      "loadingOptions": "Loading options…",
+      "password":     "Password",
+      "agreePrefix":  "I agree to the",
+      "terms":        "Terms",
+      "and":          "and",
+      "privacy":      "Privacy Policy",
+      "cta":          "Create account",
+      "ctaLoading":   "Creating account…",
+      "orContinueWith": "Or continue with"
     },
     "forgotPassword": {
-      "title": "Forgot Password",
-      "subtitle": "Enter your email to receive a reset code.",
-      "email": "Email address",
-      "cta": "Send Reset Code",
-      "ctaLoading": "Sending...",
+      "heading":     "Forgot password",
+      "description": "Enter the email for your account. We will send a 6-digit code valid for 5 minutes.",
+      "email":       "Email",
+      "cta":         "Send code",
+      "ctaLoading":  "Sending…",
       "backToSignIn": "Back to sign in"
     },
     "verifyOtp": {
-      "title": "Check your email",
-      "subtitle": "Enter the code we sent to {{email}}.",
-      "cta": "Verify Code",
-      "ctaLoading": "Verifying...",
-      "resend": "Resend code",
+      "heading":    "Enter code",
+      "sentCodeTo": "We sent a 6-digit code to",
+      "expiresIn":  ". It expires in 5 minutes.",
+      "otpLabel":   "Verification code",
+      "cta":        "Continue",
+      "verifying":  "Verifying…",
+      "resend":     "Resend code",
+      "resending":  "Sending…",
       "backToSignIn": "Back to sign in"
     },
     "resetPassword": {
-      "title": "Reset Password",
-      "subtitle": "Choose a new password for your account.",
-      "password": "New password",
+      "heading":         "New password",
+      "description":     "Choose a strong password you have not used here before. You will sign in on the next screen.",
+      "password":        "New password",
       "confirmPassword": "Confirm password",
-      "cta": "Reset Password",
-      "ctaLoading": "Resetting...",
-      "backToSignIn": "Back to sign in"
+      "mismatch":        "Passwords do not match.",
+      "cta":             "Reset password",
+      "ctaLoading":      "Updating…",
+      "backToSignIn":    "Back to sign in"
     },
     "invitation": {
-      "verifying": "Verifying invite link...",
+      "verifying": "Verifying invite link…",
       "setPassword": {
-        "title": "Set your password",
-        "subtitle": "Choose a strong password to activate your account.",
-        "password": "New password",
+        "heading":         "Set your password",
+        "description":     "Choose a strong password to activate your account.",
+        "password":        "New password",
         "confirmPassword": "Confirm password",
-        "cta": "Activate account",
-        "ctaLoading": "Activating account...",
-        "backToSignIn": "Back to sign in"
+        "mismatch":        "Passwords do not match.",
+        "cta":             "Activate account",
+        "ctaLoading":      "Activating account…",
+        "backToSignIn":    "Back to sign in"
       }
     }
   },
@@ -140,8 +179,11 @@
     "create": "Add Agency",
     "edit": "Edit {{agencies.singular}}",
     "subtitle": "Manage registered agencies on the platform.",
-    "noData": "No agencies found.",
-    "noDataCopy": "No agencies match your filters, or none have been added yet.",
+    "loading":     "Loading agencies…",
+    "noData":      "No agencies found.",
+    "noDataTitle": "No agencies yet",
+    "noDataCopy":  "No agencies match your filters, or none have been added yet.",
+    "statuses": { "active": "Active", "inactive": "Inactive" },
     "filters": {
       "search": "Search",
       "searchPlaceholder": "Name, location, contact...",
@@ -155,13 +197,16 @@
       "sortOptions": {
         "createdAt": "Created",
         "updatedAt": "Updated",
-        "name": "Name"
+        "name": "Name",
+        "desc": "Desc",
+        "asc": "Asc"
       }
     },
     "tc": {
       "name": "Agency",
       "location": "Location",
       "contact": "Contact",
+      "contacts": "Contacts",
       "status": "{{base.status}}",
       "createdAt": "{{base.createdAt}}"
     },
@@ -176,13 +221,51 @@
     "actions": {
       "copyId": "Copy agency ID",
       "edit": "Edit agency",
+      "addUser": "Add user",
       "delete": "Delete agency"
     },
     "messages": {
-      "created": "Agency created successfully.",
-      "updated": "Agency updated successfully.",
-      "deleted": "Agency deleted successfully.",
-      "idCopied": "Agency ID copied to clipboard."
+      "created":        "Agency created successfully.",
+      "updated":        "Agency updated successfully.",
+      "deleted":        "Agency deleted.",
+      "idCopied":       "Agency ID copied to clipboard.",
+      "clipboardError": "Could not copy to clipboard.",
+      "notSignedIn":    "You must be signed in as an admin."
+    },
+    "confirm": {
+      "deleteTitle":   "Delete agency?",
+      "deleteMessage": "Delete \"{{name}}\"? This action cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel":  "Cancel"
+    },
+    "addPage": {
+      "newAgency":      "New agency",
+      "editSubtitle":   "Edit agency details and contacts.",
+      "createSubtitle": "Create a new agency and add contact information.",
+      "detailsTitle":   "Agency details",
+      "detailsSubtitle":"Upload a logo image and add agency information with contact details.",
+      "agencyName": { "label": "Agency name", "required": "Name is required" },
+      "location":   "Location",
+      "logo": {
+        "label":      "Agency logo",
+        "dropTitle":  "Click to upload or drag & drop",
+        "dropSubtitle": "SVG, PNG, JPG (max. 10MB)",
+        "selected":   "Selected: {{name}}"
+      },
+      "contacts": {
+        "title":         "Contacts",
+        "subtitle":      "Add one or more contacts. Mark one as primary.",
+        "addBtn":        "Add contact",
+        "primary":       "Primary Contact",
+        "contact":       "Contact",
+        "makePrimary":   "Make primary",
+        "removeTooltip": "Remove contact",
+        "name":  { "label": "Contact Name",    "placeholder": "Enter contact name",      "required": "Contact name is required", "tooLong": "Name is too long" },
+        "email": { "label": "Email Address",   "required": "Email is required",           "invalid": "Please enter a valid email","tooLong": "Email is too long" },
+        "phone": { "label": "Phone Number",    "required": "Phone number is required",    "tooLong": "Phone number is too long" }
+      },
+      "saveChanges":  "Save Changes",
+      "createAgency": "Create agency"
     }
   },
   "users": {
@@ -210,7 +293,9 @@
         "createdAt": "Created",
         "updatedAt": "Updated",
         "firstName": "First name",
-        "lastName": "Last name"
+        "lastName": "Last name",
+        "desc": "Desc",
+        "asc": "Asc"
       }
     },
     "tc": {
@@ -248,8 +333,21 @@
       "inviteBanner": "Invite email will be sent",
       "inviteBannerCopy": "The user will receive an email to set their password and activate their account.",
       "editSubtitle": "Edit user details.",
-      "createSubtitle": "Create a new agency user — an invite email will be sent automatically."
+      "createSubtitle": "Create a new agency user — an invite email will be sent automatically.",
+      "newUser": "New user",
+      "firstNameRequired": "First name is required",
+      "lastNameRequired":  "Last name is required",
+      "emailRequired":     "Email is required",
+      "emailInvalid":      "Enter a valid email address",
+      "phoneRequired":     "Phone number is required",
+      "phoneInvalid":      "Enter a valid phone number (10–15 digits)",
+      "agencyLoading":     "Loading agencies…",
+      "agencyNone":        "No active agencies found",
+      "agencyRequired":    "Please select an agency",
+      "saveChanges":       "Save Changes",
+      "createUser":        "Create user"
     },
+    "loading": "Loading users…",
     "actions": {
       "copyId": "Copy user ID",
       "edit": "Edit user",
@@ -261,7 +359,91 @@
       "updated": "User updated successfully.",
       "deleted": "User deleted successfully.",
       "inviteResent": "Invite resent successfully.",
-      "idCopied": "User ID copied to clipboard."
+      "idCopied": "User ID copied to clipboard.",
+      "clipboardError": "Could not copy to clipboard.",
+      "noAgency": "Cannot resend invite: agency not found for this user.",
+      "notSignedIn": "You must be signed in as an admin."
+    },
+    "confirm": {
+      "deleteTitle":   "Delete user?",
+      "deleteMessage": "This will permanently delete the user. This action cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel":  "Cancel"
+    }
+  },
+  "addListing": {
+    "title": "Add New Property",
+    "titleEdit": "Edit Property",
+    "subtitle": "Fill in the details below to list your property on the market.",
+    "loading": "Loading property...",
+    "retry": "Retry",
+    "basicInfo": {
+      "title": "Basic Information",
+      "purpose": { "label": "Purpose", "required": "Purpose is required" },
+      "category": {
+        "label": "Category",
+        "placeholder": "Select category",
+        "noCategories": "No categories listed for this property type.",
+        "required": "Category is required"
+      },
+      "propertyType": {
+        "label": "Property type",
+        "placeholder": "Select property type",
+        "required": "Property type is required"
+      },
+      "listingTitle": {
+        "label": "Listing Title",
+        "placeholder": "2 Bed Apartment in DHA",
+        "required": "Listing title is required",
+        "maxLength": "Use at most 120 characters"
+      },
+      "catalogError": "Property categories could not be loaded. Check your connection and try again.",
+      "aiHeadlineBanner": "AI can create a polished headline based on purpose, property type, category, bedrooms, location and amenities, then place it directly into the title field."
+    },
+    "pricing": {
+      "title": "Pricing & Details",
+      "description": "Set the pricing, size, and property breakdown for buyers or renters.",
+      "price": { "label": "Price", "hint": "(Total)", "required": "Price is required" },
+      "areaSize": { "label": "Area Size", "required": "Area size is required" },
+      "areaUnit": { "label": "Area Unit", "required": "Area unit is required" }
+    },
+    "contact": {
+      "title": "Contact Information",
+      "name":     { "label": "Contact Name",         "placeholder": "Enter full name",                             "required": "Contact name is required" },
+      "email":    { "label": "Contact Email",        "placeholder": "Enter email address",                        "required": "Email is required",       "invalid": "Enter a valid email address" },
+      "phone":    { "label": "Contact Phone Number", "placeholder": "Enter mobile or WhatsApp number",            "required": "Phone number is required", "invalid": "Enter a valid phone number (10–15 digits)" },
+      "location": { "label": "Contact Location",     "placeholder": "Enter office, branch or contact location" },
+      "banner": "These contact details will be shown to buyers and renters, so keeping them together improves flow and completion."
+    },
+    "features": {
+      "title": "Features & Amenities",
+      "description": "Select all amenities and features available with this property.",
+      "loading": "Loading features...",
+      "error": "Features could not be loaded. Check your connection and try again."
+    },
+    "description": {
+      "title": "Description",
+      "label": "Property description",
+      "placeholder": "Nice apartment...",
+      "required": "Description is required",
+      "tooShort": "Description is too short",
+      "banner": "Fill basic info, pricing, location, and pick at least one amenity to enable AI. You can always type the description yourself.",
+      "aiBanner": "The AI assistant can draft a complete description and auto-fill this field so the user does not need to write everything manually."
+    },
+    "location": {
+      "title": "Property Location",
+      "city":         { "label": "City / Location",          "placeholder": "Search or select city",                         "loading": "Loading cities...",                    "required": "City is required" },
+      "neighborhood": { "label": "Area / Neighborhood",       "placeholder": "Search or select area",                         "loading": "Loading areas around this city...",    "required": "Neighborhood is required" },
+      "address":      { "label": "Full Property Address",     "placeholder": "Enter complete address",                        "required": "Full property address is required" },
+      "mapLink":      { "label": "Pin Location / Map Link",   "placeholder": "Paste Google Maps pin or coordinates" },
+      "preview": "Location Preview",
+      "banner": "Start broad with city and neighborhood, then add the full address and map reference for more accurate discovery."
+    },
+    "media": {
+      "title": "Property Media",
+      "description": "Upload high-quality visuals to improve visibility and conversions.",
+      "selectedImages": "Selected {{count}} image(s)",
+      "selectedVideo": "Selected: {{name}}"
     }
   },
   "properties": {
@@ -310,5 +492,25 @@
     "total": "{{count}} total",
     "previous": "{{base.previous}}",
     "next": "{{base.next}}"
+  },
+  "profile": {
+    "defaultTitle": "Profile Settings",
+    "nav": {
+      "account":      "Account Settings",
+      "security":     "Password & Security",
+      "availability": "Availability"
+    },
+    "accountSettings": {
+      "title": "Account Settings",
+      "subtitle": "Manage your profile details and public information.",
+      "firstName":  { "label": "First name",     "required": "First name is required",           "tooLong": "Too long" },
+      "lastName":   { "label": "Last name",      "required": "Last name is required",            "tooLong": "Too long" },
+      "email":      { "label": "Email address" },
+      "phone":      { "label": "Phone number",   "required": "Phone number is required",         "invalid": "Enter a valid phone number (10–15 digits)" },
+      "company":    { "label": "Company" },
+      "location":   { "label": "Location",       "placeholder": "e.g. Karachi, Pakistan",        "tooLong": "Too long" },
+      "save":   "Save Changes",
+      "saving": "Saving…"
+    }
   }
 }

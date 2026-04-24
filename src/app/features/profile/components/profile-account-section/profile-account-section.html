@@ -1,7 +1,7 @@
 <section class="profile-section-card">
   <div class="profile-section-card__header">
-    <h2>Account Settings</h2>
-    <p>Manage your profile details and public information.</p>
+    <h2>{{ 'profile.accountSettings.title' | translate }}</h2>
+    <p>{{ 'profile.accountSettings.subtitle' | translate }}</p>
   </div>
 
   <form class="profile-form" [formGroup]="form" (ngSubmit)="save()">
@@ -10,13 +10,13 @@
       <!-- Editable: First name -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>First name</mat-label>
+          <mat-label>{{ 'profile.accountSettings.firstName.label' | translate }}</mat-label>
           <input matInput formControlName="firstName" autocomplete="given-name" />
           @if (form.controls.firstName.hasError('required') && form.controls.firstName.touched) {
-            <mat-error>First name is required</mat-error>
+            <mat-error>{{ 'profile.accountSettings.firstName.required' | translate }}</mat-error>
           }
           @if (form.controls.firstName.hasError('maxlength')) {
-            <mat-error>Too long</mat-error>
+            <mat-error>{{ 'profile.accountSettings.firstName.tooLong' | translate }}</mat-error>
           }
         </mat-form-field>
       </div>
@@ -24,13 +24,13 @@
       <!-- Editable: Last name -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Last name</mat-label>
+          <mat-label>{{ 'profile.accountSettings.lastName.label' | translate }}</mat-label>
           <input matInput formControlName="lastName" autocomplete="family-name" />
           @if (form.controls.lastName.hasError('required') && form.controls.lastName.touched) {
-            <mat-error>Last name is required</mat-error>
+            <mat-error>{{ 'profile.accountSettings.lastName.required' | translate }}</mat-error>
           }
           @if (form.controls.lastName.hasError('maxlength')) {
-            <mat-error>Too long</mat-error>
+            <mat-error>{{ 'profile.accountSettings.lastName.tooLong' | translate }}</mat-error>
           }
         </mat-form-field>
       </div>
@@ -38,7 +38,7 @@
       <!-- Readonly: Email -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Email address</mat-label>
+          <mat-label>{{ 'profile.accountSettings.email.label' | translate }}</mat-label>
           <input matInput [value]="profile().email" readonly disabled />
         </mat-form-field>
       </div>
@@ -46,13 +46,13 @@
       <!-- Editable: Phone number -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Phone number</mat-label>
+          <mat-label>{{ 'profile.accountSettings.phone.label' | translate }}</mat-label>
           <input matInput formControlName="phoneNumber" autocomplete="tel" placeholder="+923001234567" />
           @if (form.controls.phoneNumber.hasError('required') && form.controls.phoneNumber.touched) {
-            <mat-error>Phone number is required</mat-error>
+            <mat-error>{{ 'profile.accountSettings.phone.required' | translate }}</mat-error>
           }
           @if (form.controls.phoneNumber.hasError('pattern')) {
-            <mat-error>Enter a valid phone number (10–15 digits)</mat-error>
+            <mat-error>{{ 'profile.accountSettings.phone.invalid' | translate }}</mat-error>
           }
         </mat-form-field>
       </div>
@@ -60,7 +60,7 @@
       <!-- Readonly: Company / Agency -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Company</mat-label>
+          <mat-label>{{ 'profile.accountSettings.company.label' | translate }}</mat-label>
           <input matInput [value]="profile().company ?? ''" readonly disabled />
         </mat-form-field>
       </div>
@@ -68,10 +68,10 @@
       <!-- Editable: Location -->
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Location</mat-label>
-          <input matInput formControlName="location" placeholder="e.g. Karachi, Pakistan" />
+          <mat-label>{{ 'profile.accountSettings.location.label' | translate }}</mat-label>
+          <input matInput formControlName="location" [placeholder]="'profile.accountSettings.location.placeholder' | translate" />
           @if (form.controls.location.hasError('maxlength')) {
-            <mat-error>Too long</mat-error>
+            <mat-error>{{ 'profile.accountSettings.location.tooLong' | translate }}</mat-error>
           }
         </mat-form-field>
       </div>
@@ -80,7 +80,7 @@
 
     <div class="profile-form__actions">
       <app-action-button
-        [label]="saving() ? 'Saving…' : 'Save Changes'"
+        [label]="saving() ? ('profile.accountSettings.saving' | translate) : ('profile.accountSettings.save' | translate)"
         [icon]="''"
         variant="filled"
         (clicked)="save()"

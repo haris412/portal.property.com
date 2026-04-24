@@ -25,12 +25,14 @@ import {
   PropertyCatalogSubtype
 } from '../../../../core/models/property-catalog.model';
 import { AddListingService } from '../../../../core/services/add-listing.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 type ListingPurpose = 'sale' | 'rent';
 
 @Component({
   selector: 'app-basic-information-section',
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,

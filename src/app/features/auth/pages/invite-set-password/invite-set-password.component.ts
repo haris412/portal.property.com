@@ -19,11 +19,13 @@ import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/
 import { AuthService } from '../../../../core/services/auth.service';
 import { passwordMatchValidator } from '../../../../shared/validators/password-match.validator';
 import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-invite-set-password',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
