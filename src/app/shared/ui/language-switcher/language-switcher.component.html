@@ -1,0 +1,14 @@
+<div class="lang-switcher">
+  @for (lang of langs; track lang) {
+    <button
+      type="button"
+      class="lang-switcher__btn"
+      [class.lang-switcher__btn--active]="isActive(lang)"
+      (click)="setLang(lang)"
+      [attr.aria-pressed]="isActive(lang)"
+      [attr.aria-label]="'Switch to ' + langLabels[lang]"
+    >
+      {{ langLabels[lang] }}
+    </button>
+  }
+</div>

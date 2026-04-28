@@ -5,11 +5,12 @@ import {
   ProfileSectionKey,
   ProfileSidebarItem
 } from '../../../../core/models/profile.models';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-profile-sidebar-nav',
   standalone: true,
-  imports: [MatIconModule],
+  imports: [TranslateModule, MatIconModule],
   templateUrl: './profile-sidebar-nav.html',
   styleUrl: './profile-sidebar-nav.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

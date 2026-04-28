@@ -13,11 +13,13 @@ import { AdminAgencyService, AgencyListItem, AgencyUserItem } from '../../../cor
 import { UserService } from '../../../core/services/user.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { apiErrorSummary } from '../../../core/http/parse-http-api-error';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-admin-add-agency-user-page',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
@@ -38,6 +40,7 @@ export class AdminAddAgencyUserPageComponent {
   private readonly adminAgency   = inject(AdminAgencyService);
   private readonly userService   = inject(UserService);
   private readonly notifications = inject(NotificationService);
+  private readonly translate     = inject(TranslateService);
 
   readonly submitting      = signal(false);
   readonly loadingUser     = signal(false);
@@ -78,7 +81,7 @@ export class AdminAddAgencyUserPageComponent {
   get fullName(): string {
     const f = this.form.controls.firstName.value?.trim();
     const l = this.form.controls.lastName.value?.trim();
-    return [f, l].filter(Boolean).join(' ') || 'New user';
+    return [f, l].filter(Boolean).join(' ') || this.translate.instant('users.form.newUser');
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────

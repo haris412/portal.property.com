@@ -11,9 +11,14 @@
     ></button>
   }
 
-  <app-admin-sidebar
+  <app-sidebar
     [collapsed]="sidebarCollapsed()"
     [mobileOpen]="mobileSidebarOpen()"
+    [navItems]="navItems"
+    brandLabel="Admin Portal"
+    brandLink="/admin/dashboard"
+    brandAriaLabel="Admin home"
+    navAriaLabel="Admin navigation"
     (collapsedChange)="setSidebarCollapsed($event)"
     (mobileClose)="closeMobileSidebar()"
   />

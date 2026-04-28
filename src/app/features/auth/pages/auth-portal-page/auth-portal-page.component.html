@@ -14,10 +14,10 @@
             @if (isAdminMode) {
               <!-- ── Admin mode: heading + login card with OTP ── -->
               <div class="admin-header">
-                <p class="admin-header__eyebrow">Administrator</p>
-                <h1 class="admin-header__title">LocateHome Admin</h1>
+                <p class="admin-header__eyebrow">{{ 'public.signIn.admin.eyebrow' | translate }}</p>
+                <h1 class="admin-header__title">{{ 'public.signIn.admin.title' | translate }}</h1>
                 <p class="admin-header__sub">
-                  Sign in with an existing admin account. This area is separate from the public property portal.
+                  {{ 'public.signIn.admin.subtitle' | translate }}
                 </p>
               </div>
 
@@ -28,7 +28,7 @@
               </div>
 
               <p class="admin-portal-link mt-4 mb-0">
-                <a routerLink="/auth" class="admin-portal-link__anchor">Not an admin? Open the user portal</a>
+                <a routerLink="/auth" class="admin-portal-link__anchor">{{ 'public.signIn.admin.notAdmin' | translate }}</a>
               </p>
 
             } @else {

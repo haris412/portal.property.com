@@ -18,14 +18,17 @@ import { MatButtonModule } from '@angular/material/button';
 import { FeatureCardComponent } from '../../../../shared/ui/feature-card/feature-card.component';
 import { SocialButtonComponent } from '../../../../shared/ui/social-button/social-button.component';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
-import { FeatureItem } from '../../../../core/models/auth.models';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AdminAuthService } from '../../../../core/services/admin-auth.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+
+interface LoginFeatureItem { icon: string; titleKey: string; descriptionKey: string; }
 
 @Component({
   selector: 'app-login-card',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
@@ -49,6 +52,7 @@ export class LoginCardComponent {
   private readonly auth      = inject(AuthService);
   private readonly adminAuth = inject(AdminAuthService);
   private readonly router    = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   readonly hidePassword = signal(true);
   readonly error        = signal<string | null>(null);
@@ -60,10 +64,10 @@ export class LoginCardComponent {
   private readonly bothFieldsFilled = signal(false);
   private readonly otpReady         = signal(false);
 
-  readonly features = signal<FeatureItem[]>([
-    { icon: 'favorite_border', title: 'Saved properties',  description: 'Return to your shortlisted homes and rental picks instantly.' },
-    { icon: 'videocam',        title: 'Video tours',       description: 'Resume property walkthroughs and media uploads from the dashboard.' },
-    { icon: 'apartment',       title: 'Manage listings',   description: 'Track buyer inquiries, schedule visits and update listing details.' },
+  readonly features = signal<LoginFeatureItem[]>([
+    { icon: 'favorite_border', titleKey: 'public.signIn.features.savedProperties.title',  descriptionKey: 'public.signIn.features.savedProperties.description' },
+    { icon: 'videocam',        titleKey: 'public.signIn.features.videoTours.title',       descriptionKey: 'public.signIn.features.videoTours.description' },
+    { icon: 'apartment',       titleKey: 'public.signIn.features.manageListings.title',   descriptionKey: 'public.signIn.features.manageListings.description' },
   ]);
 
   readonly form = this.fb.nonNullable.group({
@@ -90,9 +94,10 @@ export class LoginCardComponent {
   });
 
   readonly primaryActionLabel = computed(() => {
-    if (!this.isAdmin) return this.loading() ? 'Signing in…' : 'Log in';
-    if (this.loading()) return this.otpStep() ? 'Verifying…' : 'Sending code…';
-    return this.otpStep() ? 'Verify & sign in' : 'Log in';
+    const t = (k: string) => this.translate.instant(k);
+    if (!this.isAdmin) return this.loading() ? t('public.signIn.ctaLoading') : t('public.signIn.cta');
+    if (this.loading()) return this.otpStep() ? t('public.signIn.admin.verifying') : t('public.signIn.admin.sendingCode');
+    return this.otpStep() ? t('public.signIn.admin.verifyBtn') : t('public.signIn.cta');
   });
 
   submit(): void {

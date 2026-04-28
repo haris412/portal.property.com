@@ -5,7 +5,7 @@
     <nav class="add-user-page__breadcrumb" aria-label="Breadcrumb">
       <a routerLink="/admin/users" class="add-user-page__breadcrumb-link">
         <mat-icon fontIcon="arrow_back" aria-hidden="true" />
-        Agency Users
+        {{ 'users.title' | translate }}
       </a>
     </nav>
 
@@ -18,7 +18,7 @@
         <div>
           <h1 class="add-user-page__title">{{ fullName }}</h1>
           <p class="add-user-page__subtitle">
-            {{ isEditMode() ? 'Edit user details and role.' : 'Create a new agency user — an invite email will be sent automatically.' }}
+            {{ (isEditMode() ? 'users.form.editSubtitle' : 'users.form.createSubtitle') | translate }}
           </p>
         </div>
       </div>
@@ -37,62 +37,61 @@
                 <mat-icon>person</mat-icon>
               </div>
               <div>
-                <h2>Personal Information</h2>
-                <p>Basic identity details for the new user.</p>
+                <h2>{{ 'users.form.personalInfo' | translate }}</h2>
+                <p>{{ 'users.form.personalInfoSubtitle' | translate }}</p>
               </div>
             </div>
 
             <div class="row g-3">
               <div class="col-12 col-md-6">
                 <mat-form-field appearance="outline" class="w-100">
-                  <mat-label>First name</mat-label>
+                  <mat-label>{{ 'users.form.firstName' | translate }}</mat-label>
                   <input matInput formControlName="firstName" autocomplete="given-name" />
                   @if (form.controls.firstName.hasError('required') && form.controls.firstName.touched) {
-                    <mat-error>First name is required</mat-error>
+                    <mat-error>{{ 'users.form.firstNameRequired' | translate }}</mat-error>
                   }
                 </mat-form-field>
               </div>
 
               <div class="col-12 col-md-6">
                 <mat-form-field appearance="outline" class="w-100">
-                  <mat-label>Last name</mat-label>
+                  <mat-label>{{ 'users.form.lastName' | translate }}</mat-label>
                   <input matInput formControlName="lastName" autocomplete="family-name" />
                   @if (form.controls.lastName.hasError('required') && form.controls.lastName.touched) {
-                    <mat-error>Last name is required</mat-error>
+                    <mat-error>{{ 'users.form.lastNameRequired' | translate }}</mat-error>
                   }
                 </mat-form-field>
               </div>
 
               <div class="col-12">
                 <mat-form-field appearance="outline" class="w-100">
-                  <mat-label>Email address</mat-label>
+                  <mat-label>{{ 'users.form.email' | translate }}</mat-label>
                   <mat-icon matPrefix>mail_outline</mat-icon>
                   <input matInput formControlName="email" type="email" autocomplete="email" />
                   @if (form.controls.email.hasError('required') && form.controls.email.touched) {
-                    <mat-error>Email is required</mat-error>
+                    <mat-error>{{ 'users.form.emailRequired' | translate }}</mat-error>
                   }
                   @if (form.controls.email.hasError('email')) {
-                    <mat-error>Enter a valid email address</mat-error>
+                    <mat-error>{{ 'users.form.emailInvalid' | translate }}</mat-error>
                   }
                 </mat-form-field>
               </div>
 
               <div class="col-12">
                 <mat-form-field appearance="outline" class="w-100">
-                  <mat-label>Phone number</mat-label>
+                  <mat-label>{{ 'users.form.phone' | translate }}</mat-label>
                   <mat-icon matPrefix>phone</mat-icon>
-                  <input matInput formControlName="phoneNumber" placeholder="+923001234567" />
+                  <input matInput formControlName="phoneNumber" [placeholder]="'users.form.phonePlaceholder' | translate" />
                   @if (form.controls.phoneNumber.hasError('required') && form.controls.phoneNumber.touched) {
-                    <mat-error>Phone number is required</mat-error>
+                    <mat-error>{{ 'users.form.phoneRequired' | translate }}</mat-error>
                   }
                   @if (form.controls.phoneNumber.hasError('pattern')) {
-                    <mat-error>Enter a valid phone number (10–15 digits)</mat-error>
+                    <mat-error>{{ 'users.form.phoneInvalid' | translate }}</mat-error>
                   }
                 </mat-form-field>
               </div>
             </div>
           </div>
-
 
         </div>
 
@@ -106,21 +105,21 @@
                 <mat-icon>apartment</mat-icon>
               </div>
               <div>
-                <h2>Agency</h2>
-                <p>Assign the user to an agency.</p>
+                <h2>{{ 'users.form.agencySection' | translate }}</h2>
+                <p>{{ 'users.form.agencySectionSubtitle' | translate }}</p>
               </div>
             </div>
 
             <div class="row g-3">
               <div class="col-12">
                 <mat-form-field appearance="outline" class="w-100">
-                  <mat-label>Agency</mat-label>
+                  <mat-label>{{ 'users.form.agency' | translate }}</mat-label>
                   <mat-icon matPrefix>business</mat-icon>
                   <mat-select formControlName="agencyId">
                     @if (agenciesLoading()) {
-                      <mat-option disabled>Loading agencies…</mat-option>
+                      <mat-option disabled>{{ 'users.form.agencyLoading' | translate }}</mat-option>
                     } @else if (agencies().length === 0) {
-                      <mat-option disabled>No active agencies found</mat-option>
+                      <mat-option disabled>{{ 'users.form.agencyNone' | translate }}</mat-option>
                     } @else {
                       @for (agency of agencies(); track agency._id) {
                         <mat-option [value]="agency._id">{{ agency.name }}</mat-option>
@@ -128,12 +127,10 @@
                     }
                   </mat-select>
                   @if (form.controls.agencyId.hasError('required') && form.controls.agencyId.touched) {
-                    <mat-error>Please select an agency</mat-error>
+                    <mat-error>{{ 'users.form.agencyRequired' | translate }}</mat-error>
                   }
                 </mat-form-field>
               </div>
-
-
             </div>
           </div>
 
@@ -142,8 +139,8 @@
             <div class="add-user-page__info-banner">
               <mat-icon class="add-user-page__info-icon">mail_outline</mat-icon>
               <div class="add-user-page__info-text">
-                <strong>Invite email will be sent</strong>
-                <span>The user will receive an email to set their password and activate their account.</span>
+                <strong>{{ 'users.form.inviteBanner' | translate }}</strong>
+                <span>{{ 'users.form.inviteBannerCopy' | translate }}</span>
               </div>
             </div>
           }
@@ -153,12 +150,12 @@
 
       <!-- Actions -->
       <div class="add-user-page__actions">
-        <a mat-stroked-button type="button" routerLink="/admin/users">Cancel</a>
+        <a mat-stroked-button type="button" routerLink="/admin/users">{{ 'base.cancel' | translate }}</a>
         <button mat-flat-button type="submit" class="add-user-page__submit" [disabled]="submitting() || loadingUser()">
           @if (submitting()) {
             <mat-progress-spinner diameter="20" mode="indeterminate" />
           } @else {
-            {{ isEditMode() ? 'Save Changes' : 'Create user' }}
+            {{ (isEditMode() ? 'users.form.saveChanges' : 'users.form.createUser') | translate }}
           }
         </button>
       </div>

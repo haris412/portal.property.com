@@ -15,6 +15,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { apiErrorSummary } from '../../../core/http/parse-http-api-error';
 import { UploadDropzoneComponent } from '../../../shared/ui/upload-dropzone/upload-dropzone';
 import { AgencyContactFormComponent } from '../../components/agency-contact-form/agency-contact-form.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 const LOGO_MAX_BYTES = 10 * 1024 * 1024;
 
@@ -22,6 +23,7 @@ const LOGO_MAX_BYTES = 10 * 1024 * 1024;
   selector: 'app-admin-add-agency-page',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,

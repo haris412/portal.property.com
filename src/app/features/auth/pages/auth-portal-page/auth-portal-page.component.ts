@@ -5,11 +5,13 @@ import { AuthHeroPanelComponent } from '../../components/auth-hero-panel/auth-he
 import { SignupCardComponent } from '../../components/signup-card/signup-card.component';
 import { LoginCardComponent } from '../../components/login-card/login-card.component';
 import { SegmentedTabsComponent, SegmentedTabItem } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-auth-portal-page',
   standalone: true,
   imports: [
+    TranslateModule,
     RouterLink,
     AuthHeroPanelComponent,
     SignupCardComponent,

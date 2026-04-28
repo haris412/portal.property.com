@@ -19,8 +19,8 @@
         <input
           type="text"
           class="header__search-input"
-          placeholder="Search..."
-          aria-label="Search"
+          [placeholder]="'header.searchPlaceholder' | translate"
+          [attr.aria-label]="'header.searchPlaceholder' | translate"
         />
       </div>
 
@@ -28,6 +28,8 @@
         <mat-icon fontIcon="notifications_none" aria-hidden="true"></mat-icon>
         <span class="header__badge">3</span>
       </button>
+
+      <app-language-switcher />
 
       <div class="header__user-menu">
         <button
@@ -46,7 +48,7 @@
           <div class="header__dropdown">
             <a routerLink="/dashboard" class="header__dropdown-item" (click)="closeUserMenu()">
               <mat-icon fontIcon="home" aria-hidden="true"></mat-icon>
-              <span>User portal</span>
+              <span>{{ 'header.userMenu.userPortal' | translate }}</span>
             </a>
 
             <div class="header__dropdown-divider"></div>
@@ -57,7 +59,7 @@
               (click)="logout()"
             >
               <mat-icon fontIcon="logout" aria-hidden="true"></mat-icon>
-              <span>Logout</span>
+              <span>{{ 'header.userMenu.logout' | translate }}</span>
             </button>
           </div>
         }

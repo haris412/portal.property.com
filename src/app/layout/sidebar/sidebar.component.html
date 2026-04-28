@@ -3,38 +3,38 @@
   [class.sidebar--collapsed]="collapsed()"
   [class.sidebar--mobile-open]="mobileOpen()"
 >
+  <!-- Brand -->
   <div class="sidebar__brand">
-    <a routerLink="/" class="sidebar__brand-link" aria-label="Portal home">
+    <a [routerLink]="brandLink()" class="sidebar__brand-link" [attr.aria-label]="brandAriaLabel()">
       <span class="sidebar__brand-icon">
         <img src="/images/logo.png" alt="EstatePortal Logo" />
       </span>
 
-      <span class="sidebar__brand-name">EstatePortal</span>
+      @if (!collapsed() || mobileOpen()) {
+        <span class="sidebar__brand-name">{{ brandLabel() }}</span>
+      }
     </a>
   </div>
 
-  <nav class="sidebar__nav" aria-label="Primary navigation">
+  <!-- Nav -->
+  <nav class="sidebar__nav" [attr.aria-label]="navAriaLabel()">
     <ul class="sidebar__nav-list">
-      @for (item of navItems; track item.label) {
+      @for (item of navItems(); track item.route) {
         <li class="sidebar__nav-item">
           <a
             [routerLink]="item.route"
             routerLinkActive="sidebar__nav-link--active"
-            [routerLinkActiveOptions]="{
-              exact: item.route === '/dashboard' || item.route === '/properties'
-            }"
+            [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
             class="sidebar__nav-link"
-            [attr.title]="collapsed() && !mobileOpen() ? item.label : null"
+            [attr.title]="collapsed() && !mobileOpen() ? (item.label | translate) : null"
           >
             <span class="sidebar__nav-link-indicator"></span>
 
-            <mat-icon
-              class="sidebar__nav-icon"
-              [fontIcon]="item.icon"
-              aria-hidden="true"
-            ></mat-icon>
+            <mat-icon class="sidebar__nav-icon" [fontIcon]="item.icon" aria-hidden="true" />
 
-            <span class="sidebar__nav-label">{{ item.label }}</span>
+            @if (!collapsed() || mobileOpen()) {
+              <span class="sidebar__nav-label">{{ item.label | translate }}</span>
+            }
 
             @if (item.badge) {
               <span class="sidebar__nav-badge">{{ item.badge }}</span>
@@ -45,6 +45,7 @@
     </ul>
   </nav>
 
+  <!-- Footer -->
   <div class="sidebar__footer">
     <button
       type="button"
@@ -55,11 +56,13 @@
       <mat-icon
         [fontIcon]="mobileOpen() ? 'close' : (collapsed() ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left')"
         aria-hidden="true"
-      ></mat-icon>
+      />
 
-      <span class="sidebar__collapse-label">
-        {{ mobileOpen() ? 'Close' : 'Collapse' }}
-      </span>
+      @if (!collapsed() || mobileOpen()) {
+        <span class="sidebar__collapse-label">
+          {{ (mobileOpen() ? 'sidebar.close' : 'sidebar.collapse') | translate }}
+        </span>
+      }
     </button>
   </div>
 </aside>

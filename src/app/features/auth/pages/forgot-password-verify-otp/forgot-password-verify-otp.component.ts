@@ -16,11 +16,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PasswordResetFlowService } from '../../../../core/services/password-reset-flow.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-forgot-password-verify-otp',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,

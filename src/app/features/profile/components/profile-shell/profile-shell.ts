@@ -9,11 +9,13 @@ import { ProfileSidebarNav } from '../profile-sidebar-nav/profile-sidebar-nav';
 import { ProfileAccountSection } from '../profile-account-section/profile-account-section';
 import { ProfileSecuritySection } from '../profile-security-section/profile-security-section';
 import { ProfileAvailabilitySection } from '../profile-availability-section/profile-availability-section';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-profile-shell',
   standalone: true,
   imports: [
+    TranslateModule,
     ProfileSidebarNav,
     ProfileAccountSection,
     ProfileSecuritySection,
@@ -40,9 +42,9 @@ export class ProfileShellComponent {
   readonly activeSection = signal<ProfileSectionKey>('account');
 
   readonly sidebarItems = signal<ProfileSidebarItem[]>([
-    { id: 'account', label: 'Account Settings', icon: 'person' },
-    { id: 'security', label: 'Password & Security', icon: 'lock' },
-    { id: 'availability', label: 'Availability', icon: 'schedule' }
+    { id: 'account',      label: 'profile.nav.account',      icon: 'person' },
+    { id: 'security',     label: 'profile.nav.security',     icon: 'lock' },
+    { id: 'availability', label: 'profile.nav.availability', icon: 'schedule' }
   ]);
 
   setActiveSection(section: ProfileSectionKey): void {

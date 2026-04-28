@@ -5,6 +5,7 @@ import { SectionCardComponent } from '../../../../shared/ui/section-card/section
 import { UploadDropzoneComponent } from '../../../../shared/ui/upload-dropzone/upload-dropzone';
 import { UploadDropzoneData } from '../../../../core/models/ui.models';
 import { PROPERTY_MEDIA_BLOCK_IDS } from '../../constants/add-listing.constants';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface MediaBlock extends UploadDropzoneData {
   id: string;
@@ -19,7 +20,7 @@ interface SelectedImagePreview {
 
 @Component({
   selector: 'app-property-media-section',
-  imports: [SectionCardComponent, UploadDropzoneComponent, MatIconModule],
+  imports: [TranslateModule, SectionCardComponent, UploadDropzoneComponent, MatIconModule],
   templateUrl: './property-media-section.html',
   styleUrl: './property-media-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

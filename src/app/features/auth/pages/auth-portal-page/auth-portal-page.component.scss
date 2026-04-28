@@ -54,6 +54,13 @@
   }
 }
 
+// ── RTL: keep hero always on the left, form on the right ─────────────────────
+// In RTL flex, first DOM child goes to the RIGHT. Setting order:1 on hero pushes
+// it to the left so the layout stays the same regardless of document direction.
+:host-context([dir="rtl"]) .hero-column {
+  order: 1;
+}
+
 // ── Admin header (shown instead of tabs when mode === 'admin') ────────────────
 .admin-header {
   margin-bottom: 1rem;

@@ -5,11 +5,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-agency-contact-form',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,

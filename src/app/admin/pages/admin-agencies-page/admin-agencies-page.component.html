@@ -1,9 +1,9 @@
 <div class="admin-agencies-page">
   <div class="container-fluid admin-agencies-page__container">
     <app-page-header
-      title="Agencies"
-      subtitle="Agencies created under your admin account."
-      [actions]="headerActions"
+      [title]="'agencies.plural' | translate"
+      [subtitle]="'agencies.subtitle' | translate"
+      [actions]="headerActions()"
       (actionClicked)="onHeaderAction($event)"
     />
 
@@ -18,47 +18,47 @@
     >
       <div class="row g-3 align-items-end">
         <div class="col-12 col-md-4 col-lg-3">
-          <label class="admin-agencies-page__filter-label" for="ag-search">Search</label>
+          <label class="admin-agencies-page__filter-label" for="ag-search">{{ 'agencies.filters.search' | translate }}</label>
           <mat-form-field appearance="outline" class="w-100">
             <input
               id="ag-search"
               matInput
-              placeholder="Name, location, contact…"
+              [placeholder]="'agencies.filters.searchPlaceholder' | translate"
               formControlName="search"
             />
           </mat-form-field>
         </div>
         <div class="col-6 col-md-3 col-lg-2">
-          <label class="admin-agencies-page__filter-label" for="ag-active">Status</label>
+          <label class="admin-agencies-page__filter-label" for="ag-active">{{ 'agencies.filters.status' | translate }}</label>
           <mat-form-field appearance="outline" class="w-100">
             <mat-select id="ag-active" formControlName="isActive">
-              <mat-option value="all">All</mat-option>
-              <mat-option value="true">Active</mat-option>
-              <mat-option value="false">Inactive</mat-option>
+              <mat-option value="all">{{ 'agencies.filters.all' | translate }}</mat-option>
+              <mat-option value="true">{{ 'agencies.filters.active' | translate }}</mat-option>
+              <mat-option value="false">{{ 'agencies.filters.inactive' | translate }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
         <div class="col-6 col-md-3 col-lg-2">
-          <label class="admin-agencies-page__filter-label" for="ag-sort">Sort by</label>
+          <label class="admin-agencies-page__filter-label" for="ag-sort">{{ 'agencies.filters.sortBy' | translate }}</label>
           <mat-form-field appearance="outline" class="w-100">
             <mat-select id="ag-sort" formControlName="sortBy">
-              <mat-option value="createdAt">Created</mat-option>
-              <mat-option value="updatedAt">Updated</mat-option>
-              <mat-option value="name">Name</mat-option>
+              <mat-option value="createdAt">{{ 'agencies.filters.sortOptions.createdAt' | translate }}</mat-option>
+              <mat-option value="updatedAt">{{ 'agencies.filters.sortOptions.updatedAt' | translate }}</mat-option>
+              <mat-option value="name">{{ 'agencies.filters.sortOptions.name' | translate }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
         <div class="col-6 col-md-2 col-lg-1">
-          <label class="admin-agencies-page__filter-label" for="ag-order">Order</label>
+          <label class="admin-agencies-page__filter-label" for="ag-order">{{ 'agencies.filters.order' | translate }}</label>
           <mat-form-field appearance="outline" class="w-100">
             <mat-select id="ag-order" formControlName="sortOrder">
-              <mat-option value="desc">Desc</mat-option>
-              <mat-option value="asc">Asc</mat-option>
+              <mat-option value="desc">{{ 'agencies.filters.sortOptions.desc' | translate }}</mat-option>
+              <mat-option value="asc">{{ 'agencies.filters.sortOptions.asc' | translate }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
         <div class="col-6 col-md-2 col-lg-2">
-          <label class="admin-agencies-page__filter-label" for="ag-limit">Per page</label>
+          <label class="admin-agencies-page__filter-label" for="ag-limit">{{ 'agencies.filters.perPage' | translate }}</label>
           <mat-form-field appearance="outline" class="w-100">
             <mat-select id="ag-limit" formControlName="limit">
               <mat-option [value]="10">10</mat-option>
@@ -75,15 +75,13 @@
       @if (loading()) {
         <div class="admin-agencies-page__loading">
           <mat-progress-spinner mode="indeterminate" diameter="40" />
-          <span>Loading agencies…</span>
+          <span>{{ 'agencies.loading' | translate }}</span>
         </div>
       } @else if (agencies().length === 0) {
         <div class="admin-agencies-page__empty">
           <mat-icon fontIcon="domain" aria-hidden="true" />
-          <p class="admin-agencies-page__empty-title">No agencies yet</p>
-          <p class="admin-agencies-page__empty-copy">
-            No agencies match your filters yet, or none have been onboarded for your account.
-          </p>
+          <p class="admin-agencies-page__empty-title">{{ 'agencies.noDataTitle' | translate }}</p>
+          <p class="admin-agencies-page__empty-copy">{{ 'agencies.noDataCopy' | translate }}</p>
         </div>
       } @else {
         <div class="admin-agencies-page__grid">
@@ -94,12 +92,13 @@
             [gridOptionsInput]="agencyGridOptions"
             [pagination]="false"
             [heightPx]="520"
+            (gridReady)="onGridReady($event)"
           />
         </div>
 
         <footer class="admin-agencies-page__pager">
           <span class="admin-agencies-page__pager-meta">
-            Page {{ page() }} of {{ totalPages() }} · {{ total() }} total
+            {{ 'pagination.page' | translate: { current: page(), total: totalPages() } }} · {{ 'pagination.total' | translate: { count: total() } }}
           </span>
           <div class="admin-agencies-page__pager-btns">
             <button
@@ -109,7 +108,7 @@
               (click)="goPrev()"
             >
               <mat-icon fontIcon="chevron_left" aria-hidden="true" />
-              Previous
+              {{ 'base.previous' | translate }}
             </button>
             <button
               type="button"
@@ -117,7 +116,7 @@
               [disabled]="page() >= totalPages() || loading()"
               (click)="goNext()"
             >
-              Next
+              {{ 'base.next' | translate }}
               <mat-icon fontIcon="chevron_right" aria-hidden="true" />
             </button>
           </div>

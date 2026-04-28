@@ -8,6 +8,7 @@ import {
   MatDialogTitle,
 } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 import type { ConfirmationDialogData } from './confirmation-dialog.models';
 
 @Component({
@@ -20,6 +21,7 @@ import type { ConfirmationDialogData } from './confirmation-dialog.models';
     MatDialogActions,
     MatDialogClose,
     MatIconModule,
+    TranslateModule,
   ],
   templateUrl: './confirmation-dialog.component.html',
   styleUrl: './confirmation-dialog.component.scss',

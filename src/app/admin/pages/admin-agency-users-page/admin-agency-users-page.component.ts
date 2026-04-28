@@ -1,25 +1,33 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, filter, merge, switchMap, take } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, merge, startWith, switchMap, take } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import type { ColDef, GridOptions, ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import type {
+  ColDef,
+  GridApi,
+  GridOptions,
+  ICellRendererParams,
+  ValueFormatterParams,
+} from 'ag-grid-community';
 
 import { PageHeaderComponent, PageHeaderAction } from '../../../shared/ui/page-header/page-header';
 import { InfoBannerComponent } from '../../../shared/ui/info-banner/info-banner';
 import { DataGridComponent } from '../../../shared/ui/data-grid/data-grid.component';
-import { gridActionsColumnDef } from '../../../shared/ui/grid-row-menu-cell/grid-row-menu-cell.component';
+import { gridActionsColumnDef, GridRowMenuItem, GridRowMenuContext } from '../../../shared/ui/grid-row-menu-cell/grid-row-menu-cell.component';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
 import { AdminAgencyService } from '../../../core/services/admin-agency.service';
 import { UserService, UserListItem } from '../../../core/services/user.service';
@@ -33,8 +41,10 @@ const PILL =
   'display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;';
 
 function statusCellRenderer(p: ICellRendererParams<UserListItem>): HTMLElement {
+  const translate = p.context?.translate as TranslateService | undefined;
+  const t = (k: string) => translate?.instant(k) ?? k;
   const el = document.createElement('span');
-  el.textContent = p.data?.isActive ? 'Active' : 'Inactive';
+  el.textContent = p.data?.isActive ? t('users.statuses.active') : t('users.statuses.inactive');
   el.style.cssText = p.data?.isActive
     ? PILL + 'background:rgba(34,197,94,0.15);color:#15803d;'
     : PILL + 'background:rgba(148,163,184,0.25);color:#475569;';
@@ -42,8 +52,12 @@ function statusCellRenderer(p: ICellRendererParams<UserListItem>): HTMLElement {
 }
 
 function verifiedCellRenderer(p: ICellRendererParams<UserListItem>): HTMLElement {
+  const translate = p.context?.translate as TranslateService | undefined;
+  const t = (k: string) => translate?.instant(k) ?? k;
   const el = document.createElement('span');
-  el.textContent = p.data?.isEmailVerified ? 'Verified' : 'Unverified';
+  el.textContent = p.data?.isEmailVerified
+    ? t('users.emailStatuses.verified')
+    : t('users.emailStatuses.unverified');
   el.style.cssText = p.data?.isEmailVerified
     ? PILL + 'background:rgba(59,130,246,0.12);color:#1d4ed8;'
     : PILL + 'background:rgba(251,191,36,0.15);color:#92400e;';
@@ -56,6 +70,7 @@ function verifiedCellRenderer(p: ICellRendererParams<UserListItem>): HTMLElement
   selector: 'app-admin-agency-users-page',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -79,6 +94,14 @@ export class AdminAgencyUsersPageComponent {
   private readonly userService   = inject(UserService);
   private readonly notifications = inject(NotificationService);
   private readonly confirmDialog = inject(ConfirmationDialogService);
+  private readonly translate     = inject(TranslateService);
+
+  private gridApi: GridApi<UserListItem> | null = null;
+
+  private readonly langChange$ = toSignal(
+    this.translate.onLangChange.pipe(startWith(null)),
+    { initialValue: null }
+  );
 
   // ── State ──────────────────────────────────────────────────────────────────
   readonly loading    = signal(false);
@@ -89,10 +112,14 @@ export class AdminAgencyUsersPageComponent {
   readonly totalPages = signal(1);
 
   // ── Header ─────────────────────────────────────────────────────────────────
-  readonly headerActions: readonly PageHeaderAction[] = [
-    { id: 'add-user', label: 'Add User', variant: 'flat',    icon: 'person_add' },
-    { id: 'refresh',  label: 'Refresh',  variant: 'stroked', icon: 'refresh' },
-  ];
+  readonly headerActions = computed<PageHeaderAction[]>(() => {
+    void this.langChange$();
+    const t = (k: string) => this.translate.instant(k);
+    return [
+      { id: 'add-user', label: t('users.create'),  variant: 'flat',    icon: 'person_add' },
+      { id: 'refresh',  label: t('base.refresh'),   variant: 'stroked', icon: 'refresh' },
+    ];
+  });
 
   // ── Filters ────────────────────────────────────────────────────────────────
   readonly filterForm = this.fb.nonNullable.group({
@@ -112,7 +139,7 @@ export class AdminAgencyUsersPageComponent {
   readonly columnDefs: ColDef<UserListItem>[] = [
     {
       colId: 'user',
-      headerName: 'User',
+      headerValueGetter: () => this.translate.instant('users.tc.user'),
       flex: 2,
       minWidth: 180,
       valueGetter: (p) => p.data ? `${p.data.firstName} ${p.data.lastName}\n${p.data.email}` : '',
@@ -120,7 +147,7 @@ export class AdminAgencyUsersPageComponent {
     },
     {
       field: 'phoneNumber',
-      headerName: 'Phone',
+      headerValueGetter: () => this.translate.instant('users.tc.phone'),
       flex: 1.2,
       minWidth: 140,
       valueFormatter: (p: ValueFormatterParams<UserListItem>) =>
@@ -128,35 +155,35 @@ export class AdminAgencyUsersPageComponent {
     },
     {
       colId: 'agency',
-      headerName: 'Agency',
+      headerValueGetter: () => this.translate.instant('users.tc.agency'),
       flex: 1.5,
       minWidth: 140,
       valueGetter: (p) => p.data?.agency?.name?.trim() || '—',
     },
     {
       colId: 'role',
-      headerName: 'Role',
+      headerValueGetter: () => this.translate.instant('users.tc.role'),
       flex: 1,
       minWidth: 100,
       valueGetter: (p) => p.data?.role?.name?.trim() || '—',
     },
     {
       colId: 'status',
-      headerName: 'Status',
+      headerValueGetter: () => this.translate.instant('users.tc.status'),
       width: 110,
       flex: 0,
       cellRenderer: statusCellRenderer,
     },
     {
       colId: 'verified',
-      headerName: 'Email',
+      headerValueGetter: () => this.translate.instant('users.tc.email'),
       width: 110,
       flex: 0,
       cellRenderer: verifiedCellRenderer,
     },
     {
       field: 'createdAt',
-      headerName: 'Created',
+      headerValueGetter: () => this.translate.instant('users.tc.createdAt'),
       width: 180,
       flex: 0,
       valueFormatter: (p: ValueFormatterParams<UserListItem, string | undefined>) => {
@@ -170,41 +197,8 @@ export class AdminAgencyUsersPageComponent {
 
   readonly gridOptions: GridOptions<UserListItem> = {
     context: {
-      menuItems: [
-        {
-          label: 'Copy user ID',
-          icon: 'content_copy',
-          action: async (id: string) => {
-            try {
-              await navigator.clipboard.writeText(id);
-              this.notifications.success('User ID copied to clipboard.');
-            } catch {
-              this.notifications.warning('Could not copy to clipboard.');
-            }
-          },
-        },
-        {
-          label: 'Edit user',
-          icon: 'edit',
-          action: (id: string, rowData?: unknown) => {
-            const agencyId = (rowData as UserListItem | undefined)?.agency?._id;
-            void this.router.navigate(['/admin/add-user'], {
-              queryParams: { userId: id, ...(agencyId ? { agencyId } : {}) },
-            });
-          },
-        },
-        {
-          label: 'Resend invite',
-          icon: 'forward_to_inbox',
-          hidden: (rowData: unknown) => (rowData as UserListItem | undefined)?.isActive === true,
-          action: (id: string, rowData?: unknown) => this.resendInvite(id, rowData as UserListItem),
-        },
-        {
-          label: 'Delete user',
-          icon: 'delete_outline',
-          action: (id: string) => this.deleteUser(id),
-        },
-      ],
+      translate: this.translate,
+      menuItems: this.buildMenuItems(),
     },
   };
 
@@ -225,9 +219,21 @@ export class AdminAgencyUsersPageComponent {
     )
       .pipe(takeUntilDestroyed())
       .subscribe(() => { this.page.set(1); this.fetchUsers(); });
+
+    this.translate.onLangChange
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        (this.gridOptions.context as GridRowMenuContext).menuItems = this.buildMenuItems();
+        this.gridApi?.refreshHeader();
+        this.gridApi?.refreshCells({ force: true, columns: ['status', 'verified'] });
+      });
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
+  onGridReady(api: GridApi<UserListItem>): void {
+    this.gridApi = api;
+  }
+
   onHeaderAction(id: string): void {
     if (id === 'add-user') void this.router.navigate(['/admin/add-user']);
     if (id === 'refresh')  this.fetchUsers();
@@ -246,25 +252,66 @@ export class AdminAgencyUsersPageComponent {
   }
 
   // ── Private ────────────────────────────────────────────────────────────────
+  private buildMenuItems(): GridRowMenuItem[] {
+    const t = (k: string) => this.translate.instant(k);
+    return [
+      {
+        label: t('users.actions.copyId'),
+        icon: 'content_copy',
+        action: async (id: string) => {
+          try {
+            await navigator.clipboard.writeText(id);
+            this.notifications.success(t('users.messages.idCopied'));
+          } catch {
+            this.notifications.warning(t('users.messages.clipboardError'));
+          }
+        },
+      },
+      {
+        label: t('users.actions.edit'),
+        icon: 'edit',
+        action: (id: string, rowData?: unknown) => {
+          const agencyId = (rowData as UserListItem | undefined)?.agency?._id;
+          void this.router.navigate(['/admin/add-user'], {
+            queryParams: { userId: id, ...(agencyId ? { agencyId } : {}) },
+          });
+        },
+      },
+      {
+        label: t('users.actions.resendInvite'),
+        icon: 'forward_to_inbox',
+        hidden: (rowData: unknown) => (rowData as UserListItem | undefined)?.isActive === true,
+        action: (id: string, rowData?: unknown) => this.resendInvite(id, rowData as UserListItem),
+      },
+      {
+        label: t('users.actions.delete'),
+        icon: 'delete_outline',
+        action: (id: string) => this.deleteUser(id),
+      },
+    ];
+  }
+
   private resendInvite(userId: string, user: UserListItem): void {
     const agencyId = user?.agency?._id;
     if (!agencyId) {
-      this.notifications.error('Cannot resend invite: agency not found for this user.');
+      this.notifications.error(this.translate.instant('users.messages.noAgency'));
       return;
     }
 
     this.adminAgency.resendInvite(agencyId, userId).pipe(take(1)).subscribe({
-      next: () => this.notifications.success('Invite resent successfully.'),
+      next: () => this.notifications.success(this.translate.instant('users.messages.inviteResent')),
       error: (err: unknown) => this.notifications.error(apiErrorSummary(err)),
     });
   }
 
   private deleteUser(id: string): void {
+    const t = (k: string) => this.translate.instant(k);
     this.confirmDialog
       .confirm({
-        title: 'Delete User',
-        message: 'This will permanently delete the user. This action cannot be undone.',
-        confirmLabel: 'Delete',
+        title: t('users.confirm.deleteTitle'),
+        message: t('users.confirm.deleteMessage'),
+        confirmLabel: t('users.confirm.deleteConfirm'),
+        cancelLabel: t('users.confirm.deleteCancel'),
         tone: 'warn',
         icon: 'delete_outline',
       })
@@ -275,7 +322,7 @@ export class AdminAgencyUsersPageComponent {
       )
       .subscribe({
         next: () => {
-          this.notifications.success('User deleted successfully.');
+          this.notifications.success(t('users.messages.deleted'));
           this.fetchUsers();
         },
         error: (err: unknown) => this.notifications.error(apiErrorSummary(err)),
@@ -285,7 +332,7 @@ export class AdminAgencyUsersPageComponent {
   private fetchUsers(): void {
     const adminId = this.adminAuth.getCurrentAdminUser()?._id;
     if (!adminId) {
-      this.loadError.set('You must be signed in as an admin.');
+      this.loadError.set(this.translate.instant('users.messages.notSignedIn'));
       return;
     }
 

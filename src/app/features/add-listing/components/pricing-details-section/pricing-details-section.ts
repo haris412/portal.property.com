@@ -15,6 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { CounterFieldComponent } from '../../../../shared/ui/counter-field/counter-field';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface PricingField {
   id: string;
@@ -34,6 +35,7 @@ interface CounterItem {
 @Component({
   selector: 'app-pricing-details-section',
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,

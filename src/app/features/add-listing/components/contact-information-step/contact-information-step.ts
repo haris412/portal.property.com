@@ -6,19 +6,20 @@ import {
   Input,
   OnInit,
   inject,
-  signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { merge } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { StepCardComponent } from '../../../../shared/ui/step-card/step-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-contact-information-step',
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -34,9 +35,11 @@ export class ContactInformationStepComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
-  readonly contactBanner = signal(
-    'These contact details will be shown to buyers and renters, so keeping them together improves flow and completion.'
+  readonly contactBanner = toSignal(
+    this.translate.stream('addListing.contact.banner'),
+    { initialValue: '' }
   );
 
   ngOnInit(): void {

@@ -9,7 +9,7 @@ import {
   OnInit,
   output,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { merge } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,10 +18,12 @@ import { StepCardComponent } from '../../../../shared/ui/step-card/step-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
 import { ActionChipData } from '../../../../core/models/ui.models';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-property-description-step',
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -36,14 +38,16 @@ import { ActionChipData } from '../../../../core/models/ui.models';
 export class PropertyDescriptionStepComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   readonly form = input.required<FormGroup>();
   readonly aiDescriptionEnabled = input(false);
   readonly aiDescriptionLoading = input(false);
   readonly generateDescription = output<void>();
 
-  readonly descriptionBanner = input(
-    'Fill basic info, pricing, location, and pick at least one amenity to enable AI. You can always type the description yourself.'
+  readonly descriptionBanner = toSignal(
+    this.translate.stream('addListing.description.banner'),
+    { initialValue: '' }
   );
 
   readonly descriptionActions = computed<readonly ActionChipData[]>(() => {

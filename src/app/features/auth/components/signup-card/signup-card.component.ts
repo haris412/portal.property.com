@@ -47,6 +47,7 @@ import {
 } from '../../../../core/models/auth.models';
 import { AuthService, RegisterPayload } from '../../../../core/services/auth.service';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 const DEFAULT_PHONE_COUNTRY_CODE = 'US';
 const REGISTER_ERROR_FALLBACK = 'Registration failed. Please try again.';
@@ -79,6 +80,7 @@ interface SignupFormControls {
   selector: 'app-signup-card',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,

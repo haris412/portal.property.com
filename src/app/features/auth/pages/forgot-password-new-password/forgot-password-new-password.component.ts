@@ -24,6 +24,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PasswordResetFlowService } from '../../../../core/services/password-reset-flow.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 function passwordsMatchValidator(): ValidatorFn {
   return (group: AbstractControl): ValidationErrors | null => {
@@ -38,6 +39,7 @@ function passwordsMatchValidator(): ValidatorFn {
   selector: 'app-forgot-password-new-password',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,

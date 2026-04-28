@@ -2,32 +2,35 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   DestroyRef,
   inject,
   OnInit,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import type {
   ColDef,
+  GridApi,
   GridOptions,
   ICellRendererParams,
   ValueFormatterParams,
   ValueGetterParams,
 } from 'ag-grid-community';
-import { debounceTime, distinctUntilChanged, filter, merge, switchMap, take } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, merge, startWith, switchMap, take } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PageHeaderComponent, PageHeaderAction } from '../../../shared/ui/page-header/page-header';
 import { InfoBannerComponent } from '../../../shared/ui/info-banner/info-banner';
 import { DataGridComponent } from '../../../shared/ui/data-grid/data-grid.component';
-import { gridActionsColumnDef } from '../../../shared/ui/grid-row-menu-cell/grid-row-menu-cell.component';
+import { gridActionsColumnDef, GridRowMenuItem, GridRowMenuContext } from '../../../shared/ui/grid-row-menu-cell/grid-row-menu-cell.component';
 import { ConfirmationDialogService } from '../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AdminAuthService } from '../../../core/services/admin-auth.service';
@@ -47,12 +50,14 @@ const AGENCY_STATUS_PILL_BASE =
 
 function agencyStatusCellRenderer(p: ICellRendererParams<AgencyListItem>): HTMLElement {
   const d = p.data;
+  const translate = p.context?.translate as TranslateService | undefined;
+  const t = (key: string) => translate?.instant(key) ?? key;
   const el = document.createElement('span');
   if (d?.isActive === true) {
-    el.textContent = 'Active';
+    el.textContent = t('agencies.statuses.active');
     el.style.cssText = AGENCY_STATUS_PILL_BASE + 'background:rgba(34,197,94,0.15);color:#15803d;';
   } else if (d?.isActive === false) {
-    el.textContent = 'Inactive';
+    el.textContent = t('agencies.statuses.inactive');
     el.style.cssText = AGENCY_STATUS_PILL_BASE + 'background:rgba(148,163,184,0.25);color:#475569;';
   } else {
     el.textContent = '—';
@@ -101,6 +106,7 @@ function agencyLogoCellRenderer(p: ICellRendererParams<AgencyListItem>): HTMLEle
   selector: 'app-admin-agencies-page',
   standalone: true,
   imports: [
+    TranslateModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -126,6 +132,15 @@ export class AdminAgenciesPageComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly notifications = inject(NotificationService);
   private readonly confirmation = inject(ConfirmationDialogService);
+  private readonly translate = inject(TranslateService);
+
+  private gridApi: GridApi<AgencyListItem> | null = null;
+
+  // Reactive lang-change trigger for computed signals
+  private readonly langChange$ = toSignal(
+    this.translate.onLangChange.pipe(startWith(null)),
+    { initialValue: null }
+  );
 
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
@@ -134,10 +149,14 @@ export class AdminAgenciesPageComponent implements OnInit {
   readonly page = signal(1);
   readonly totalPages = signal(1);
 
-  readonly headerActions: readonly PageHeaderAction[] = [
-    { id: 'add-agency', label: 'Add Agency', variant: 'flat', icon: 'add' },
-    { id: 'refresh', label: 'Refresh', variant: 'stroked', icon: 'refresh' },
-  ];
+  readonly headerActions = computed<PageHeaderAction[]>(() => {
+    void this.langChange$();
+    const t = (k: string) => this.translate.instant(k);
+    return [
+      { id: 'add-agency', label: t('agencies.create'),   variant: 'flat',    icon: 'add' },
+      { id: 'refresh',    label: t('base.refresh'),       variant: 'stroked', icon: 'refresh' },
+    ];
+  });
 
   readonly filterForm = this.fb.nonNullable.group({
     search: [''],
@@ -168,7 +187,7 @@ export class AdminAgenciesPageComponent implements OnInit {
     },
     {
       colId: 'agency',
-      headerName: 'Agency',
+      headerValueGetter: () => this.translate.instant('agencies.tc.name'),
       flex: 2,
       minWidth: 160,
       wrapText: true,
@@ -183,7 +202,7 @@ export class AdminAgenciesPageComponent implements OnInit {
     },
     {
       field: 'location',
-      headerName: 'Location',
+      headerValueGetter: () => this.translate.instant('agencies.tc.location'),
       flex: 1.2,
       minWidth: 120,
       valueFormatter: (p: ValueFormatterParams<AgencyListItem>) => {
@@ -193,7 +212,7 @@ export class AdminAgenciesPageComponent implements OnInit {
     },
     {
       colId: 'contact',
-      headerName: 'Contacts',
+      headerValueGetter: () => this.translate.instant('agencies.tc.contacts'),
       flex: 2,
       minWidth: 200,
       wrapText: true,
@@ -258,7 +277,7 @@ export class AdminAgenciesPageComponent implements OnInit {
     },
     {
       colId: 'status',
-      headerName: 'Status',
+      headerValueGetter: () => this.translate.instant('base.status'),
       width: 118,
       maxWidth: 130,
       flex: 0,
@@ -266,7 +285,7 @@ export class AdminAgenciesPageComponent implements OnInit {
     },
     {
       field: 'createdAt',
-      headerName: 'Created',
+      headerValueGetter: () => this.translate.instant('base.createdAt'),
       width: 200,
       flex: 0,
       valueFormatter: (p: ValueFormatterParams<AgencyListItem, string | undefined>) => {
@@ -281,39 +300,8 @@ export class AdminAgenciesPageComponent implements OnInit {
 
   readonly agencyGridOptions: GridOptions<AgencyListItem> = {
     context: {
-      menuItems: [
-        {
-          label: 'Edit agency',
-          icon: 'edit',
-          action: (id: string) => {
-            void this.router.navigate(['/admin/add-agency'], { queryParams: { agencyId: id } });
-          },
-        },
-        {
-          label: 'Add user',
-          icon: 'person_add',
-          action: (id: string) => {
-            void this.router.navigate(['/admin/add-user'], { queryParams: { agencyId: id } });
-          },
-        },
-        {
-          label: 'Copy agency ID',
-          icon: 'content_copy',
-          action: async (id: string) => {
-            try {
-              await navigator.clipboard.writeText(id);
-              this.notifications.success('Agency ID copied to clipboard.');
-            } catch {
-              this.notifications.warning('Could not copy to clipboard.');
-            }
-          },
-        },
-        {
-          label: 'Delete agency',
-          icon: 'delete_outline',
-          action: (id: string, row?: unknown) => this.confirmDeleteAgency(id, row),
-        },
-      ],
+      translate: this.translate,
+      menuItems: this.buildMenuItems(),
     },
   };
 
@@ -343,18 +331,69 @@ export class AdminAgenciesPageComponent implements OnInit {
         this.page.set(1);
         this.fetchList();
       });
+
+    this.translate.onLangChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        // Rebuild menu item labels and refresh column headers
+        (this.agencyGridOptions.context as GridRowMenuContext).menuItems = this.buildMenuItems();
+        this.gridApi?.refreshHeader();
+        this.gridApi?.refreshCells({ force: true, columns: ['status'] });
+      });
+  }
+
+  onGridReady(api: GridApi<AgencyListItem>): void {
+    this.gridApi = api;
+  }
+
+  private buildMenuItems(): GridRowMenuItem[] {
+    const t = (k: string) => this.translate.instant(k);
+    return [
+      {
+        label: t('agencies.actions.edit'),
+        icon: 'edit',
+        action: (id: string) => {
+          void this.router.navigate(['/admin/add-agency'], { queryParams: { agencyId: id } });
+        },
+      },
+      {
+        label: t('agencies.actions.addUser'),
+        icon: 'person_add',
+        action: (id: string) => {
+          void this.router.navigate(['/admin/add-user'], { queryParams: { agencyId: id } });
+        },
+      },
+      {
+        label: t('agencies.actions.copyId'),
+        icon: 'content_copy',
+        action: async (id: string) => {
+          try {
+            await navigator.clipboard.writeText(id);
+            this.notifications.success(t('agencies.messages.idCopied'));
+          } catch {
+            this.notifications.warning(t('agencies.messages.clipboardError'));
+          }
+        },
+      },
+      {
+        label: t('agencies.actions.delete'),
+        icon: 'delete_outline',
+        action: (id: string, row?: unknown) => this.confirmDeleteAgency(id, row),
+      },
+    ];
   }
 
   private confirmDeleteAgency(rowId: string, rowData?: unknown): void {
+    const t = (k: string) => this.translate.instant(k);
     const row = rowData as AgencyListItem | undefined;
-    const name = row?.name?.trim() || 'this agency';
+    const name = row?.name?.trim() || t('agencies.singular').toLowerCase();
 
     this.confirmation
       .confirm({
-        title: 'Delete agency?',
-        message: `Delete "${name}"? This action cannot be undone.`,
-        confirmLabel: 'Delete',
-        cancelLabel: 'Cancel',
+        title: t('agencies.confirm.deleteTitle'),
+        message: this.translate.instant('agencies.confirm.deleteMessage', { name }),
+        confirmLabel: t('agencies.confirm.deleteConfirm'),
+        cancelLabel: t('agencies.confirm.deleteCancel'),
         tone: 'warn',
         icon: 'warning',
       })
@@ -366,7 +405,7 @@ export class AdminAgenciesPageComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.notifications.success('Agency deleted');
+          this.notifications.success(t('agencies.messages.deleted'));
           this.fetchList();
         },
         error: (err: unknown) => {
@@ -434,7 +473,7 @@ export class AdminAgenciesPageComponent implements OnInit {
   private fetchList(): void {
     const user = this.adminAuth.getCurrentAdminUser();
     if (!user?._id) {
-      this.loadError.set('You must be signed in as an admin.');
+      this.loadError.set(this.translate.instant('agencies.messages.notSignedIn'));
       this.agencies.set([]);
       this.cdr.markForCheck();
       return;
