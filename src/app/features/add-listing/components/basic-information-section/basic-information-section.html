@@ -23,6 +23,28 @@
       } @else {
         <div class="row">
           <div class="col-6">
+            <label class="field-label">{{ 'addListing.basicInfo.propertyType.label' | translate }}</label>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-select
+                formControlName="propertyCategoryName"
+                [placeholder]="'addListing.basicInfo.propertyType.placeholder' | translate"
+                [disabled]="catalogLoading()"
+                (openedChange)="onPropertyTypePanelToggle($event)"
+              >
+                @for (cat of categories(); track cat._id) {
+                  <mat-option [value]="cat.name">{{ cat.name }}</mat-option>
+                }
+              </mat-select>
+              <mat-error>
+                @if (form.get('propertyCategoryName')?.hasError('server')) {
+                  {{ form.get('propertyCategoryName')?.getError('server') }}
+                } @else {
+                  {{ 'addListing.basicInfo.propertyType.required' | translate }}
+                }
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <div class="col-6">
             <label class="field-label d-block">{{ 'addListing.basicInfo.category.label' | translate }}</label>
             <mat-form-field appearance="outline" class="w-100">
               <mat-select
@@ -43,28 +65,6 @@
                   {{ form.get('propertySubtypeName')?.getError('server') }}
                 } @else {
                   {{ 'addListing.basicInfo.category.required' | translate }}
-                }
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div class="col-6">
-            <label class="field-label">{{ 'addListing.basicInfo.propertyType.label' | translate }}</label>
-            <mat-form-field appearance="outline" class="w-100">
-              <mat-select
-                formControlName="propertyCategoryName"
-                [placeholder]="'addListing.basicInfo.propertyType.placeholder' | translate"
-                [disabled]="catalogLoading()"
-                (openedChange)="onPropertyTypePanelToggle($event)"
-              >
-                @for (cat of categories(); track cat._id) {
-                  <mat-option [value]="cat.name">{{ cat.name }}</mat-option>
-                }
-              </mat-select>
-              <mat-error>
-                @if (form.get('propertyCategoryName')?.hasError('server')) {
-                  {{ form.get('propertyCategoryName')?.getError('server') }}
-                } @else {
-                  {{ 'addListing.basicInfo.propertyType.required' | translate }}
                 }
               </mat-error>
             </mat-form-field>

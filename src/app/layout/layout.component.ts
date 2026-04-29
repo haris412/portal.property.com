@@ -22,6 +22,7 @@ export class LayoutComponent {
     { label: 'sidebar.nav.addListing',   route: '/add-listing',  icon: 'add_business'               },
     { label: 'sidebar.nav.inbox',        route: '/inbox',        icon: 'inbox'                      },
     { label: 'sidebar.nav.appointments', route: '/appointments', icon: 'event'                      },
+    { label: 'My Alerts',                  route: '/alerts',       icon: 'notifications'              },
     { label: 'sidebar.nav.settings',     route: '/settings',     icon: 'settings'                   },
     { label: 'sidebar.nav.profile',      route: '/profile',      icon: 'person'                     },
   ];
