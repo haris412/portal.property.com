@@ -42,66 +42,74 @@ import { StatCard } from '../../models/stats.model';
     </div>
   `,
   styles: [`
-    .stats-card {
-      background: #ffffff;
-      border-radius: 1rem;
-      padding: 1.25rem;
-      border: 1px solid #e2e8f0;
-      transition: box-shadow 0.2s, transform 0.2s;
-      &:hover {
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        transform: translateY(-2px);
-      }
-    }
-    .card-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-    .card-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .icon-indigo  { background: #eef2ff; color: #6366f1; }
-    .icon-emerald { background: #ecfdf5; color: #10b981; }
-    .icon-amber   { background: #fffbeb; color: #f59e0b; }
-    .icon-rose    { background: #fff1f2; color: #f43f5e; }
+  .stats-card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 1.25rem;
+    border: 1px solid var(--border-soft);
+    transition: box-shadow 0.2s, transform 0.2s;
 
-    .card-title {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #64748b;
-      margin: 0;
-      padding-top: 0.2rem;
+    &:hover {
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
     }
-    .card-value {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin: 0 0 0.5rem;
-      line-height: 1.2;
-    }
-    .card-change {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: #94a3b8;
-      &.positive { color: #10b981; }
-      &.negative { color: #ef4444; }
-    }
-    .change-label {
-      font-weight: 400;
-      color: #94a3b8;
-    }
-  `],
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-field);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .icon-indigo  { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); color: var(--primary); }
+  .icon-emerald { background: color-mix(in srgb, var(--success) 10%, var(--surface)); color: var(--success); }
+  .icon-amber   { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); color: var(--warning); }
+  .icon-rose    { background: color-mix(in srgb, var(--error) 8%, var(--surface)); color: var(--error); }
+
+  .card-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--font-secondary);
+    margin: 0;
+    padding-top: 0.2rem;
+  }
+
+  .card-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--font-main);
+    margin: 0 0 0.5rem;
+    line-height: 1.2;
+  }
+
+  .card-change {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--font-secondary);
+
+    &.positive { color: var(--success); }
+    &.negative { color: var(--error); }
+  }
+
+  .change-label {
+    font-weight: 400;
+    color: var(--font-secondary);
+  }
+`],
 })
 export class StatsCardComponent {
   @Input({ required: true }) card!: StatCard;

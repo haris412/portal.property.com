@@ -4,8 +4,13 @@
   &__container {
     padding: 1rem;
 
-    @media (min-width: 768px) { padding: 1.5rem; }
-    @media (min-width: 1200px) { padding: 2rem; }
+    @media (min-width: 768px) {
+      padding: 1.5rem;
+    }
+
+    @media (min-width: 1200px) {
+      padding: 2rem;
+    }
   }
 
   // ── Breadcrumb ──────────────────────────────────────────────
@@ -27,7 +32,9 @@
       height: 1.1rem;
     }
 
-    &:hover { text-decoration: underline; }
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   // ── Identity header ─────────────────────────────────────────
@@ -51,8 +58,12 @@
     width: 4.5rem;
     height: 4.5rem;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
-    color: #fff;
+    background: linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--badge-accent-purple) 100%
+    );
+    color: var(--surface);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -141,13 +152,19 @@
     }
 
     &--security {
-      background: color-mix(in srgb, #f59e0b 12%, transparent);
-      mat-icon { color: #f59e0b; }
+      background: color-mix(in srgb, var(--warning) 12%, transparent);
+
+      mat-icon {
+        color: var(--warning);
+      }
     }
 
     &--agency {
-      background: color-mix(in srgb, #10b981 12%, transparent);
-      mat-icon { color: #10b981; }
+      background: color-mix(in srgb, var(--success) 12%, transparent);
+
+      mat-icon {
+        color: var(--success);
+      }
     }
   }
 
@@ -158,12 +175,12 @@
     gap: 0.75rem;
     padding: 1rem 1.1rem;
     border-radius: var(--radius-xl);
-    border: 1px solid color-mix(in srgb, #6366f1 25%, transparent);
-    background: color-mix(in srgb, #6366f1 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--badge-accent-purple) 25%, transparent);
+    background: color-mix(in srgb, var(--badge-accent-purple) 6%, transparent);
   }
 
   &__info-icon {
-    color: #6366f1;
+    color: var(--badge-accent-purple);
     flex-shrink: 0;
     font-size: 1.2rem;
     margin-top: 1px;
@@ -196,9 +213,10 @@
 
   &__submit {
     --mdc-filled-button-container-color: var(--primary);
-    --mdc-filled-button-label-text-color: #fff;
+    --mdc-filled-button-label-text-color: var(--surface);
+
     min-height: 46px;
-    border-radius: 12px;
+    border-radius: var(--radius-field);
     font-weight: 700;
     min-width: 10rem;
 

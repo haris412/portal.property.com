@@ -26,7 +26,7 @@ import { ChartData } from '../../models/stats.model';
         <svg #chartSvg class="chart-svg" viewBox="0 0 700 200" preserveAspectRatio="none">
           <!-- Grid lines -->
           <line *ngFor="let y of gridLines" [attr.x1]="40" [attr.y1]="y" [attr.x2]="690" [attr.y2]="y"
-            stroke="#f1f5f9" stroke-width="1"/>
+            stroke="var(--border-field)" stroke-width="1"/>
 
           <!-- Bars -->
           <g *ngFor="let label of data.labels; let i = index">
@@ -49,7 +49,7 @@ import { ChartData } from '../../models/stats.model';
             y="198"
             text-anchor="middle"
             font-size="10"
-            fill="#94a3b8"
+            fill="var(--font-secondary)"
           >{{ label }}</text>
         </svg>
       </div>
@@ -57,10 +57,10 @@ import { ChartData } from '../../models/stats.model';
   `,
   styles: [`
     .chart-widget {
-      background: #ffffff;
+      background: var(--surface);
       border-radius: 1rem;
       padding: 1.25rem;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-soft);
     }
     .widget-header {
       display: flex;
@@ -72,12 +72,12 @@ import { ChartData } from '../../models/stats.model';
     .widget-title {
       font-size: 1rem;
       font-weight: 600;
-      color: #0f172a;
+      color: var(--font-main);
       margin: 0 0 0.25rem;
     }
     .widget-subtitle {
       font-size: 0.8125rem;
-      color: #94a3b8;
+      color: var(--font-secondary);
       margin: 0;
     }
     .chart-legend {
@@ -91,7 +91,7 @@ import { ChartData } from '../../models/stats.model';
       align-items: center;
       gap: 0.375rem;
       font-size: 0.8125rem;
-      color: #64748b;
+      color: var(--font-secondary);
     }
     .legend-dot {
       width: 10px;

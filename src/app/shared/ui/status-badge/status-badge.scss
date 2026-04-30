@@ -10,31 +10,31 @@
 
   &--confirmed {
     background: var(--info);
-    color: #ffffff;
+    color: var(--surface);
   }
 
   &--pending {
     background: var(--standby);
-    color: #ffffff;
+    color: var(--surface);
   }
 
   &--completed {
     background: var(--success);
-    color: #ffffff;
+    color: var(--surface);
   }
 
   &--rejected {
     background: var(--error);
-    color: #ffffff;
+    color: var(--surface);
   }
 
   &--rescheduled {
     background: var(--warning);
-    color: #ffffff;
+    color: var(--surface);
   }
 
   &--cancelled {
     background: var(--error);
-    color: #ffffff;
+    color: var(--surface);
   }
 }

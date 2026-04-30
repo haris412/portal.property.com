@@ -5,7 +5,7 @@ import { Directive, ElementRef, HostListener, Input } from '@angular/core';
   standalone: true,
 })
 export class HighlightDirective {
-  @Input() appHighlight = '#f0f4ff';
+  @Input() appHighlight = 'var(--surface-soft)';
   @Input() defaultColor = 'transparent';
 
   constructor(private el: ElementRef) {}

@@ -53,23 +53,30 @@ function agencyStatusCellRenderer(p: ICellRendererParams<AgencyListItem>): HTMLE
   const translate = p.context?.translate as TranslateService | undefined;
   const t = (key: string) => translate?.instant(key) ?? key;
   const el = document.createElement('span');
+
   if (d?.isActive === true) {
     el.textContent = t('agencies.statuses.active');
-    el.style.cssText = AGENCY_STATUS_PILL_BASE + 'background:rgba(34,197,94,0.15);color:#15803d;';
+    el.style.cssText =
+      AGENCY_STATUS_PILL_BASE +
+      'background:color-mix(in srgb, var(--success) 15%, transparent);color:var(--success);';
   } else if (d?.isActive === false) {
     el.textContent = t('agencies.statuses.inactive');
-    el.style.cssText = AGENCY_STATUS_PILL_BASE + 'background:rgba(148,163,184,0.25);color:#475569;';
+    el.style.cssText =
+      AGENCY_STATUS_PILL_BASE +
+      'background:color-mix(in srgb, var(--font-secondary) 22%, transparent);color:var(--font-secondary);';
   } else {
     el.textContent = '—';
-    el.style.color = '#64748b';
+    el.style.color = 'var(--font-secondary)';
   }
+
   return el;
 }
 
 const AGENCY_LOGO_IMG_STYLE =
-  'width:40px;height:40px;border-radius:10px;object-fit:cover;border:1px solid #ead9d0;background:#fff;';
+  'width:40px;height:40px;border-radius:10px;object-fit:cover;border:1px solid var(--border-soft);background:var(--surface);';
 const AGENCY_LOGO_FALLBACK_STYLE =
-  'display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;background:rgba(31,22,48,0.06);color:#64748b;';
+  'display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;background:color-mix(in srgb, var(--font-main) 6%, transparent);color:var(--font-secondary);';
+
 /** Simple building icon (Material-style domain) for when there is no logo or the image fails. */
 const AGENCY_LOGO_FALLBACK_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>';
@@ -220,10 +227,10 @@ export class AdminAgenciesPageComponent implements OnInit {
       valueGetter: (p: ValueGetterParams<AgencyListItem>) => {
         const d = p.data;
         if (!d) return '';
-        
+
         const contacts = d.contacts || [];
         if (contacts.length === 0) return '—';
-        
+
         return contacts.map(c => {
           const parts = [];
           if (c.name?.trim()) parts.push(c.name.trim());
@@ -238,37 +245,37 @@ export class AdminAgenciesPageComponent implements OnInit {
         if (!d || !d.contacts || d.contacts.length === 0) {
           const el = document.createElement('span');
           el.textContent = '—';
-          el.style.color = '#64748b';
+          el.style.color = 'var(--font-secondary)';
           return el;
         }
 
         const container = document.createElement('div');
         container.style.cssText = 'display: flex; flex-direction: column; gap: 4px; padding: 4px 0;';
 
-        d.contacts.forEach((contact, index) => {
+        d.contacts.forEach((contact) => {
           const contactEl = document.createElement('div');
           contactEl.style.cssText = 'display: flex; align-items: flex-start; gap: 6px;';
-          
+
           // Primary indicator
           if (contact.isPrimary) {
             const starEl = document.createElement('span');
             starEl.innerHTML = '★';
-            starEl.style.cssText = 'color: #fbbf24; font-size: 12px; line-height: 1.4; font-weight: 600;';
+            starEl.style.cssText = 'color: var(--warning); font-size: 12px; line-height: 1.4; font-weight: 600;';
             contactEl.appendChild(starEl);
           }
 
           // Contact details
           const detailsEl = document.createElement('div');
           detailsEl.style.cssText = 'flex: 1; line-height: 1.4;';
-          
+
           const parts = [];
           if (contact.name?.trim()) parts.push(`<strong>${contact.name.trim()}</strong>`);
           if (contact.email?.trim()) parts.push(contact.email.trim());
           if (contact.phone?.trim()) parts.push(contact.phone.trim());
-          
+
           detailsEl.innerHTML = parts.join('<br>');
           contactEl.appendChild(detailsEl);
-          
+
           container.appendChild(contactEl);
         });
 
@@ -335,7 +342,6 @@ export class AdminAgenciesPageComponent implements OnInit {
     this.translate.onLangChange
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        // Rebuild menu item labels and refresh column headers
         (this.agencyGridOptions.context as GridRowMenuContext).menuItems = this.buildMenuItems();
         this.gridApi?.refreshHeader();
         this.gridApi?.refreshCells({ force: true, columns: ['status'] });

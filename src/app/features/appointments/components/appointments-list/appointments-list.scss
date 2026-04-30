@@ -30,8 +30,12 @@
   &__row {
     width: 100%;
     border: 1px solid var(--border-soft);
-    background: linear-gradient(180deg, #fff8f4 0%, #fff 100%);
-    border-radius: 14px;
+    background: linear-gradient(
+      180deg,
+      var(--tertiary) 0%,
+      var(--surface) 100%
+    );
+    border-radius: var(--radius-lg);
     padding: 18px 16px;
     text-align: left;
     margin-bottom: 12px;
@@ -53,7 +57,7 @@
     &--clickable:hover {
       transform: translateY(-1px);
       box-shadow: var(--shadow-soft);
-      border-color: #dcc8bd;
+      border-color: var(--border-soft-strong);
     }
   }
 
@@ -91,8 +95,8 @@
     min-height: 34px;
     padding: 0.45rem 0.75rem;
     border: 1px solid var(--border-soft);
-    border-radius: 10px;
-    background: #fff;
+    border-radius: var(--radius-md);
+    background: var(--surface);
     color: var(--font-main);
     font-size: 0.82rem;
     font-weight: 600;
@@ -103,29 +107,30 @@
 
     &:hover {
       transform: translateY(-1px);
-      background: #fff7f2;
-      border-color: #ddc6ba;
+      background: var(--surface-soft);
+      border-color: var(--border-soft-strong);
     }
 
     &--primary {
       background: var(--primary);
       border-color: var(--primary);
-      color: #fff;
+      color: var(--surface);
 
       &:hover {
-        background: var(--primary);
-        color: #fff;
+        background: var(--primary-hover);
+        border-color: var(--primary-hover);
+        color: var(--surface);
       }
     }
 
     &--danger {
-      background: #fff2f2;
-      border-color: #f1caca;
-      color: #c43d3d;
+      background: color-mix(in srgb, var(--error) 8%, var(--surface));
+      border-color: color-mix(in srgb, var(--error) 22%, var(--surface));
+      color: var(--error-strong);
 
       &:hover {
-        background: #ffe8e8;
-        border-color: #e7b1b1;
+        background: color-mix(in srgb, var(--error) 12%, var(--surface));
+        border-color: color-mix(in srgb, var(--error) 30%, var(--surface));
       }
     }
 
@@ -153,8 +158,12 @@
 
   &__mobile-item {
     border: 1px solid var(--border-soft);
-    border-radius: 14px;
-    background: linear-gradient(180deg, #fff8f4 0%, #fff 100%);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(
+      180deg,
+      var(--tertiary) 0%,
+      var(--surface) 100%
+    );
     padding: 16px;
     text-align: left;
 
@@ -167,7 +176,7 @@
       &:hover {
         transform: translateY(-1px);
         box-shadow: var(--shadow-soft);
-        border-color: #dcc8bd;
+        border-color: var(--border-soft-strong);
       }
     }
   }
@@ -186,13 +195,13 @@
     gap: 8px;
     margin-top: 14px;
   }
+
   &__badges {
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
   }
-
 }
 
 @media (max-width: 767.98px) {

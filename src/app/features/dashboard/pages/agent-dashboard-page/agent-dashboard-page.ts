@@ -49,7 +49,7 @@ import { PageHeaderComponent } from "../../../../shared/ui/page-header/page-head
     LocationsDemandCardComponent,
     AppointmentsTableCardComponent,
     PageHeaderComponent
-],
+  ],
   templateUrl: './agent-dashboard-page.html',
   styleUrl: './agent-dashboard-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -104,13 +104,22 @@ export class AgentDashboardPageComponent {
       });
   }
 
+  private readonly css = getComputedStyle(document.documentElement);
+
+  private readonly primary = this.css.getPropertyValue('--primary').trim();
+  private readonly secondary = this.css.getPropertyValue('--secondary').trim();
+  private readonly surface = this.css.getPropertyValue('--surface').trim();
+  private readonly fontMain = this.css.getPropertyValue('--font-main').trim();
+  private readonly borderSoft = this.css.getPropertyValue('--border-soft').trim();
+  private readonly tertiary = this.css.getPropertyValue('--tertiary').trim();
+
   readonly viewsChartOptions = computed<EChartsOption>(() => ({
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
-      backgroundColor: '#1f1630',
+      backgroundColor: this.primary,
       borderWidth: 0,
-      textStyle: { color: '#ffffff' }
+      textStyle: { color: this.surface }
     },
     grid: { left: 0, right: 0, top: 12, bottom: 0, containLabel: true },
     xAxis: {
@@ -118,15 +127,33 @@ export class AgentDashboardPageComponent {
       data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: '#7a6676', margin: 14 }
+      axisLabel: { color: this.fontMain, margin: 14, fontSize: 12 }
     },
-    yAxis: { type: 'value', show: false },
+    yAxis: {
+      type: 'value',
+      show: true,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: this.fontMain },
+      splitLine: {
+        show: true,
+        lineStyle: { color: this.borderSoft }
+      }
+    },
     series: [
       {
         type: 'bar',
         barWidth: '56%',
         data: [120, 198, 154, 245, 212, 176, 165],
-        itemStyle: { color: '#ff6b57', borderRadius: [10, 10, 0, 0] }
+        itemStyle: {
+          color: this.secondary,
+          borderRadius: [10, 10, 0, 0]
+        },
+        emphasis: {
+          itemStyle: {
+            color: this.secondary
+          }
+        }
       }
     ]
   }));

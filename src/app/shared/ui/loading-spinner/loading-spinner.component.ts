@@ -33,15 +33,16 @@ import { CommonModule } from '@angular/common';
       gap: 1rem;
     }
     .spinner {
-      border: 3px solid #e2e8f0;
-      border-top-color: #6366f1;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    .spinner-text {
-      color: #64748b;
-      font-size: 0.875rem;
-    }
+  border: 3px solid var(--border-soft);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.spinner-text {
+  color: var(--font-secondary);
+  font-size: 0.875rem;
+}
     @keyframes spin {
       to { transform: rotate(360deg); }
     }

@@ -25,7 +25,7 @@
 }
 
 .map-toolbar__btn {
-  background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(4px);
 }
 
@@ -40,6 +40,6 @@
 .map-error {
   margin: 8px 0 0;
   font-size: 0.875rem;
-  color: var(--mat-sys-error, #b3261e);
+  color: var(--mat-sys-error, var(--error-strong));
 }
 

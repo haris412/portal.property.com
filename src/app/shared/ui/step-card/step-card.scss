@@ -1,13 +1,13 @@
 .step-card {
   display: grid;
   grid-template-columns: 4px 1fr;
-  border: 1px solid #ebecef;
-  border-radius: 1rem;
-  background: #fff;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
   overflow: hidden;
 
   &__accent {
-    background: #ff6b57;
+    background: var(--primary);
   }
 
   &__content {
@@ -27,9 +27,9 @@
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    border-radius: 999px;
-    background: #ff6b57;
-    color: #fff;
+    border-radius: var(--radius-pill);
+    background: var(--primary);
+    color: var(--surface);
     font-weight: 700;
     flex-shrink: 0;
   }
@@ -40,10 +40,9 @@
     font-size: 1.5rem;
     font-weight: 700;
   }
-
   &__description {
     margin: 0;
-    color: #98a2b3;
+    color: var(--font-secondary);
     line-height: 1.5;
   }
 }

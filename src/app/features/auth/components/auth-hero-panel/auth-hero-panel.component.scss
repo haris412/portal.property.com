@@ -42,7 +42,7 @@
   padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  color: var(--surface);
   font-size: 0.78rem;
   backdrop-filter: blur(8px);
 
@@ -56,7 +56,7 @@
 .hero-title {
   max-width: 520px;
   margin: 18px 0 14px;
-  color: #fff;
+  color: var(--surface);
   font-size: clamp(2rem, 3vw, 3.65rem);
   font-weight: 800;
   line-height: 0.98;

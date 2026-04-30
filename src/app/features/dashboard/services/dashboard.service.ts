@@ -68,12 +68,12 @@ export class DashboardService {
         {
           label: 'Revenue',
           data: [32000, 41000, 38000, 52000, 47000, 61000, 55000, 68000, 72000, 65000, 78000, 84000],
-          color: '#6366f1',
+          color: 'var(--primary)',
         },
         {
           label: 'Expenses',
           data: [22000, 28000, 25000, 35000, 31000, 38000, 34000, 42000, 45000, 39000, 47000, 51000],
-          color: '#f59e0b',
+          color: 'var(--warning)',
         },
       ],
     };
