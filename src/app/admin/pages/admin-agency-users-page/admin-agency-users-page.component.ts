@@ -46,8 +46,8 @@ function statusCellRenderer(p: ICellRendererParams<UserListItem>): HTMLElement {
   const el = document.createElement('span');
   el.textContent = p.data?.isActive ? t('users.statuses.active') : t('users.statuses.inactive');
   el.style.cssText = p.data?.isActive
-    ? PILL + 'background:rgba(34,197,94,0.15);color:#15803d;'
-    : PILL + 'background:rgba(148,163,184,0.25);color:#475569;';
+    ? PILL + 'background:color-mix(in srgb, var(--success) 15%, transparent);color:var(--success);'
+    : PILL + 'background:color-mix(in srgb, var(--font-secondary) 22%, transparent);color:var(--font-secondary);';
   return el;
 }
 
@@ -59,8 +59,8 @@ function verifiedCellRenderer(p: ICellRendererParams<UserListItem>): HTMLElement
     ? t('users.emailStatuses.verified')
     : t('users.emailStatuses.unverified');
   el.style.cssText = p.data?.isEmailVerified
-    ? PILL + 'background:rgba(59,130,246,0.12);color:#1d4ed8;'
-    : PILL + 'background:rgba(251,191,36,0.15);color:#92400e;';
+    ? PILL + 'background:color-mix(in srgb, var(--info) 12%, transparent);color:var(--info);'
+    : PILL + 'background:color-mix(in srgb, var(--warning) 15%, transparent);color:color-mix(in srgb, var(--warning) 70%, var(--font-main));';
   return el;
 }
 
@@ -87,14 +87,14 @@ function verifiedCellRenderer(p: ICellRendererParams<UserListItem>): HTMLElement
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminAgencyUsersPageComponent {
-  private readonly fb            = inject(FormBuilder);
-  private readonly router        = inject(Router);
-  private readonly adminAuth     = inject(AdminAuthService);
-  private readonly adminAgency   = inject(AdminAgencyService);
-  private readonly userService   = inject(UserService);
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly adminAuth = inject(AdminAuthService);
+  private readonly adminAgency = inject(AdminAgencyService);
+  private readonly userService = inject(UserService);
   private readonly notifications = inject(NotificationService);
   private readonly confirmDialog = inject(ConfirmationDialogService);
-  private readonly translate     = inject(TranslateService);
+  private readonly translate = inject(TranslateService);
 
   private gridApi: GridApi<UserListItem> | null = null;
 
@@ -104,11 +104,11 @@ export class AdminAgencyUsersPageComponent {
   );
 
   // ── State ──────────────────────────────────────────────────────────────────
-  readonly loading    = signal(false);
-  readonly loadError  = signal<string | null>(null);
-  readonly users      = signal<UserListItem[]>([]);
-  readonly total      = signal(0);
-  readonly page       = signal(1);
+  readonly loading = signal(false);
+  readonly loadError = signal<string | null>(null);
+  readonly users = signal<UserListItem[]>([]);
+  readonly total = signal(0);
+  readonly page = signal(1);
   readonly totalPages = signal(1);
 
   // ── Header ─────────────────────────────────────────────────────────────────
@@ -116,19 +116,19 @@ export class AdminAgencyUsersPageComponent {
     void this.langChange$();
     const t = (k: string) => this.translate.instant(k);
     return [
-      { id: 'add-user', label: t('users.create'),  variant: 'flat',    icon: 'person_add' },
-      { id: 'refresh',  label: t('base.refresh'),   variant: 'stroked', icon: 'refresh' },
+      { id: 'add-user', label: t('users.create'), variant: 'flat', icon: 'person_add' },
+      { id: 'refresh', label: t('base.refresh'), variant: 'stroked', icon: 'refresh' },
     ];
   });
 
   // ── Filters ────────────────────────────────────────────────────────────────
   readonly filterForm = this.fb.nonNullable.group({
-    search:    [''],
-    role:      ['all'],
-    isActive:  ['all' as 'all' | 'true' | 'false'],
-    sortBy:    ['createdAt' as 'createdAt' | 'updatedAt' | 'firstName' | 'lastName'],
+    search: [''],
+    role: ['all'],
+    isActive: ['all' as 'all' | 'true' | 'false'],
+    sortBy: ['createdAt' as 'createdAt' | 'updatedAt' | 'firstName' | 'lastName'],
     sortOrder: ['desc' as 'asc' | 'desc'],
-    limit:     [20],
+    limit: [20],
   });
 
   // ── Grid ───────────────────────────────────────────────────────────────────
@@ -236,7 +236,7 @@ export class AdminAgencyUsersPageComponent {
 
   onHeaderAction(id: string): void {
     if (id === 'add-user') void this.router.navigate(['/admin/add-user']);
-    if (id === 'refresh')  this.fetchUsers();
+    if (id === 'refresh') this.fetchUsers();
   }
 
   goPrev(): void {
@@ -342,14 +342,14 @@ export class AdminAgencyUsersPageComponent {
     const f = this.filterForm.getRawValue();
 
     this.userService.listUsers({
-      createdBy:  adminId,
-      search:     f.search.trim() || undefined,
-      role:       f.role !== 'all'     ? f.role     : undefined,
-      isActive:   f.isActive !== 'all' ? f.isActive === 'true' : undefined,
-      page:       this.page(),
-      limit:      f.limit,
-      sortBy:     f.sortBy,
-      sortOrder:  f.sortOrder,
+      createdBy: adminId,
+      search: f.search.trim() || undefined,
+      role: f.role !== 'all' ? f.role : undefined,
+      isActive: f.isActive !== 'all' ? f.isActive === 'true' : undefined,
+      page: this.page(),
+      limit: f.limit,
+      sortBy: f.sortBy,
+      sortOrder: f.sortOrder,
     })
       .pipe(take(1))
       .subscribe({

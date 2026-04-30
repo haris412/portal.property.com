@@ -1,46 +1,50 @@
 .metric-tile {
-  background: linear-gradient(180deg, #fff8f5 0%, #fff 100%);
+  background: linear-gradient(
+    180deg,
+    var(--tertiary) 0%,
+    var(--surface) 100%
+  );
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-lg);
   padding: 16px;
   min-height: 138px;
-}
 
-.metric-tile__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
 
-.metric-tile__title {
-  color: var(--font-main);
-  font-weight: 700;
-  font-size: 0.9375rem;
-}
+  &__title {
+    color: var(--font-main);
+    font-weight: 700;
+    font-size: 0.9375rem;
+  }
 
-.metric-tile__icon-wrap {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-soft);
-  color: var(--primary);
-}
+  &__icon-wrap {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-soft);
+    color: var(--primary);
+  }
 
-.metric-tile__value {
-  color: var(--font-main);
-  font-size: 2rem;
-  line-height: 1;
-  font-weight: 800;
-}
+  &__value {
+    color: var(--font-main);
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: 800;
+  }
 
-.metric-tile__hint {
-  margin-top: 10px;
-  color: var(--font-secondary);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  &__hint {
+    margin-top: 10px;
+    color: var(--font-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
 }

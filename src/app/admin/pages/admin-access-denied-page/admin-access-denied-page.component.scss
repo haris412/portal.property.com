@@ -4,7 +4,12 @@
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background: linear-gradient(to bottom, #1a1428 0%, #2d2640 55%, #3d3554 100%);
+  background: linear-gradient(
+    to bottom,
+    var(--surface-dark) 0%,
+    var(--surface-dark-muted) 55%,
+    var(--overlay-dark-strong) 100%
+  );
 }
 
 .admin-access-denied__card {
@@ -21,7 +26,7 @@
 .admin-access-denied__body {
   margin: 0 0 1.5rem;
   line-height: 1.55;
-  color: var(--color-text-secondary, #5c4d66);
+  color: var(--font-secondary);
 }
 
 .admin-access-denied__actions {

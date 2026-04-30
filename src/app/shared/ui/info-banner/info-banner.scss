@@ -2,11 +2,11 @@
   display: flex;
   gap: 0.75rem;
   padding: 1rem;
-  border-radius: 0.75rem;
-  background: #fff3f1;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
 
   &__icon {
-    color: #ff6b57;
+    color: var(--primary);
     width: 1rem;
     height: 1rem;
     font-size: 1rem;
@@ -16,7 +16,7 @@
 
   &__text {
     margin: 0;
-    color: #4b5563;
+    color: var(--font-secondary);
     line-height: 1.5;
   }
 }

@@ -35,96 +35,112 @@ import { TruncatePipe } from '../../../../shared/pipes/truncate.pipe';
     </div>
   `,
   styles: [`
-    .activity-widget {
-      background: #ffffff;
-      border-radius: 1rem;
-      padding: 1.25rem;
-      border: 1px solid #e2e8f0;
-      height: 100%;
+  .activity-widget {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 1.25rem;
+    border: 1px solid var(--border-soft);
+    height: 100%;
+  }
+
+  .widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .widget-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--font-main);
+    margin: 0;
+  }
+
+  .view-all-btn {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+
+    &:hover {
+      background: color-mix(in srgb, var(--primary) 10%, var(--surface));
     }
-    .widget-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-    .widget-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #0f172a;
-      margin: 0;
-    }
-    .view-all-btn {
-      background: transparent;
-      border: none;
-      color: #6366f1;
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.375rem;
-      &:hover { background: #eef2ff; }
-    }
-    .activity-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.875rem;
-    }
-    .activity-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .activity-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: white;
-      flex-shrink: 0;
-      &.avatar-create  { background: linear-gradient(135deg, #6366f1, #818cf8); }
-      &.avatar-update  { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
-      &.avatar-delete  { background: linear-gradient(135deg, #ef4444, #f87171); }
-      &.avatar-login   { background: linear-gradient(135deg, #10b981, #34d399); }
-    }
-    .activity-content {
-      flex: 1;
-      min-width: 0;
-    }
-    .activity-text {
-      font-size: 0.8125rem;
-      color: #374151;
-      margin: 0 0 0.15rem;
-      line-height: 1.4;
-    }
-    .activity-target {
-      color: #6366f1;
-      font-style: italic;
-    }
-    .activity-time {
-      font-size: 0.75rem;
-      color: #94a3b8;
-    }
-    .activity-type-badge {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      &.badge-create  { background: #eef2ff; color: #6366f1; }
-      &.badge-update  { background: #fffbeb; color: #d97706; }
-      &.badge-delete  { background: #fef2f2; color: #dc2626; }
-      &.badge-login   { background: #ecfdf5; color: #059669; }
-    }
-  `],
+  }
+
+  .activity-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .activity-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--surface);
+    flex-shrink: 0;
+
+    &.avatar-create  { background: linear-gradient(135deg, var(--primary), var(--badge-accent-purple)); }
+    &.avatar-update  { background: linear-gradient(135deg, var(--warning), color-mix(in srgb, var(--warning) 70%, var(--surface))); }
+    &.avatar-delete  { background: linear-gradient(135deg, var(--error), color-mix(in srgb, var(--error) 70%, var(--surface))); }
+    &.avatar-login   { background: linear-gradient(135deg, var(--success), var(--badge-accent-teal)); }
+  }
+
+  .activity-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .activity-text {
+    font-size: 0.8125rem;
+    color: var(--font-main);
+    margin: 0 0 0.15rem;
+    line-height: 1.4;
+  }
+
+  .activity-target {
+    color: var(--primary);
+    font-style: italic;
+  }
+
+  .activity-time {
+    font-size: 0.75rem;
+    color: var(--font-secondary);
+  }
+
+  .activity-type-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    &.badge-create  { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); color: var(--primary); }
+    &.badge-update  { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); color: color-mix(in srgb, var(--warning) 70%, var(--font-main)); }
+    &.badge-delete  { background: color-mix(in srgb, var(--error) 10%, var(--surface)); color: var(--error); }
+    &.badge-login   { background: color-mix(in srgb, var(--success) 10%, var(--surface)); color: var(--success); }
+  }
+`],
 })
 export class RecentActivityComponent {
   @Input({ required: true }) activities!: ActivityItem[];

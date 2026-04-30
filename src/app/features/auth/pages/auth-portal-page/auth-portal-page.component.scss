@@ -1,7 +1,10 @@
 .app-shell-bg {
   min-height: 100dvh;
   padding: 2rem;
-  background: linear-gradient(to bottom, #f1d7cc 0%, #ffeadf 55%, #fff1ea 100%);
+  background:
+    radial-gradient(circle at 30% 0%, rgba(15, 159, 122, 0.12) 0%, rgba(15, 159, 122, 0) 26%),
+    radial-gradient(circle at 70% 0%, rgba(124, 58, 237, 0.14) 0%, rgba(124, 58, 237, 0) 28%),
+    #f8fafc;
 }
 
 .auth-shell {
@@ -31,6 +34,7 @@
 .auth-form-area {
   position: relative;
   min-height: 0;
+  border-radius: var(--radius-xl);
 
   @media (min-width: 992px) {
     flex: 1 1 auto;
@@ -55,13 +59,13 @@
 }
 
 // ── RTL: keep hero always on the left, form on the right ─────────────────────
-// In RTL flex, first DOM child goes to the RIGHT. Setting order:1 on hero pushes
-// it to the left so the layout stays the same regardless of document direction.
-:host-context([dir="rtl"]) .hero-column {
-  order: 1;
+:host-context([dir='rtl']) {
+  .hero-column {
+    order: 1;
+  }
 }
 
-// ── Admin header (shown instead of tabs when mode === 'admin') ────────────────
+// ── Admin header ──────────────────────────────────────────────────────────────
 .admin-header {
   margin-bottom: 1rem;
 
@@ -71,32 +75,36 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(0, 0, 0, 0.4);
+    color: color-mix(in srgb, var(--surface-black) 40%, transparent);
   }
 
   &__title {
     margin: 0 0 8px;
     font-size: clamp(1.5rem, 2.2vw, 2rem);
     font-weight: 800;
+    color: var(--font-main);
   }
 
   &__sub {
     margin: 0;
     font-size: 0.92rem;
     line-height: 1.55;
-    color: rgba(0, 0, 0, 0.55);
+    color: color-mix(in srgb, var(--surface-black) 55%, transparent);
   }
 }
 
 .admin-portal-link {
   text-align: center;
   font-size: 0.88rem;
+  color: var(--font-secondary);
 
   &__anchor {
     color: inherit;
     opacity: 0.65;
 
-    &:hover { opacity: 1; }
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 

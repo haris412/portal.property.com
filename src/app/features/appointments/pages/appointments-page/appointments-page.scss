@@ -1,18 +1,20 @@
-.appointments-page__list {
-  padding-block: 2rem;
-}
+.appointments-page {
+  &__list {
+    padding-block: 2rem;
+  }
 
-.appointments-page__message {
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  background: var(--tertiary, #f4f6f8);
-  color: var(--font-secondary, #5c6670);
-  font-size: 0.95rem;
-}
+  &__message {
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-field);
+    background: var(--tertiary);
+    color: var(--font-secondary);
+    font-size: 0.95rem;
 
-.appointments-page__message--error {
-  border: 1px solid rgba(220, 53, 69, 0.35);
-  background: rgba(220, 53, 69, 0.08);
-  color: #842029;
+    &--error {
+      border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
+      background: color-mix(in srgb, var(--error) 8%, transparent);
+      color: var(--error-strong);
+    }
+  }
 }

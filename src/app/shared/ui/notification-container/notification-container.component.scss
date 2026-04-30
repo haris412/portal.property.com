@@ -12,37 +12,36 @@
   min-width: 260px;
   max-width: 360px;
   padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   font-size: 0.9rem;
   font-weight: 500;
-  color: #0f172a;
-  background: #e5e7eb;
+  color: var(--font-main);
+  background: var(--surface-muted);
   box-shadow:
-    0 10px 15px -3px rgba(15, 23, 42, 0.2),
-    0 4px 6px -2px rgba(15, 23, 42, 0.12);
-}
+    0 10px 15px -3px rgba(16, 32, 28, 0.2),
+    0 4px 6px -2px rgba(16, 32, 28, 0.12);
 
-.notification--success {
-  background: #ecfdf3;
-  color: #166534;
-}
+  &--success {
+    background: color-mix(in srgb, var(--success) 10%, var(--surface));
+    color: var(--success);
+  }
 
-.notification--error {
-  background: #fef2f2;
-  color: #b91c1c;
-}
+  &--error {
+    background: color-mix(in srgb, var(--error) 10%, var(--surface));
+    color: var(--error-strong);
+  }
 
-.notification--warning {
-  background: #fffbeb;
-  color: #92400e;
-}
+  &--warning {
+    background: color-mix(in srgb, var(--warning) 12%, var(--surface));
+    color: color-mix(in srgb, var(--warning) 70%, var(--font-main));
+  }
 
-.notification--info {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
+  &--info {
+    background: color-mix(in srgb, var(--info) 10%, var(--surface));
+    color: var(--info);
+  }
 
-.notification__message {
-  display: block;
+  &__message {
+    display: block;
+  }
 }
-

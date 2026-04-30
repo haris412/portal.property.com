@@ -122,7 +122,7 @@
 
   &__submit {
     --mdc-filled-button-container-color: var(--primary);
-    --mdc-filled-button-label-text-color: #fff;
+    --mdc-filled-button-label-text-color: var(--surface)
     min-height: 46px;
     border-radius: 12px;
     font-weight: 700;

@@ -36,11 +36,10 @@ export class DashboardComponent implements OnInit {
   ];
 
   quickStats = [
-    { label: 'Customer Satisfaction', value: '94%', percent: 94, color: '#10b981' },
-    { label: 'System Uptime', value: '99.9%', percent: 99.9, color: '#6366f1' },
-    { label: 'Task Completion', value: '78%', percent: 78, color: '#f59e0b' },
-  ];
-
+  { label: 'Customer Satisfaction', value: '94%', percent: 94, color: 'var(--success)' },
+  { label: 'System Uptime', value: '99.9%', percent: 99.9, color: 'var(--primary)' },
+  { label: 'Task Completion', value: '78%', percent: 78, color: 'var(--warning)' },
+];
   ngOnInit(): void {
     this.loadDashboard();
   }

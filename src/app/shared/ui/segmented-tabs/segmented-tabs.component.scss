@@ -1,8 +1,8 @@
 .segmented-tabs {
   position: relative;
-  border: 1px solid var(--color-border-soft, #ead9d0);
-  border-radius: 16px;
-  background: rgba(255, 248, 243, 0.72);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--tertiary) 72%, transparent);
 
   &__scroll {
     overflow: hidden;
@@ -21,9 +21,9 @@
     top: 4px;
     left: 4px;
     height: calc(100% - 8px);
-    border-radius: 12px;
-    background: var(--color-surface, #ffffff);
-    box-shadow: 0 8px 24px rgba(31, 22, 48, 0.08);
+    border-radius: var(--radius-field);
+    background: var(--surface);
+    box-shadow: 0 8px 24px rgba(16, 32, 28, 0.08);
     transition:
       transform 220ms ease,
       opacity 220ms ease,
@@ -38,16 +38,15 @@
     padding: 0 16px;
     border: 0;
     background: transparent;
-    color: var(--color-text-secondary, #7a6676);
+    color: var(--font-secondary);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
-
     transition: color 180ms ease;
 
     &--active {
-      color: var(--color-text-primary, #1f1630);
+      color: var(--font-main);
     }
   }
 }
@@ -60,24 +59,24 @@
     }
 
     &__inner {
-      display: flex; // 🔥 switch from grid → flex
+      display: flex;
       width: max-content;
       gap: 4px;
     }
 
     &__pill {
-      display: none; // ❌ disable pill on mobile
+      display: none;
     }
 
     &__button {
       flex: 0 0 auto;
       min-width: 100px;
       padding: 0 14px;
-      border-radius: 12px;
+      border-radius: var(--radius-field);
 
       &--active {
-        background: var(--color-surface, #ffffff);
-        box-shadow: 0 6px 16px rgba(31, 22, 48, 0.08);
+        background: var(--surface);
+        box-shadow: 0 6px 16px rgba(16, 32, 28, 0.08);
       }
     }
   }

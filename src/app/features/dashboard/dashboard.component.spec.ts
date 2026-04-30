@@ -17,7 +17,7 @@ describe('DashboardComponent', () => {
     ],
     revenueChart: {
       labels: ['Jan', 'Feb'],
-      datasets: [{ label: 'Revenue', data: [100, 200], color: '#6366f1' }],
+      datasets: [{ label: 'Revenue', data: [100, 200], color: 'var(--primary)' }],
     },
     activities: [
       { id: '1', user: 'Alice', action: 'created', target: 'Project', timestamp: '1m ago', avatar: 'AL', type: 'create' },

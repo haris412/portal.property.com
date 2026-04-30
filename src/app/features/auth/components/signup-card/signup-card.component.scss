@@ -1,78 +1,82 @@
 .auth-card {
   min-height: 100%;
-}
 
-.card-inner {
-  padding: 20px;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.auth-card-title {
-  margin: 0 0 8px;
-  font-size: 2rem;
-  line-height: 1.1;
-  font-weight: 800;
-  color: var(--font-main);
-}
-
-.auth-card-copy {
-  margin: 0 0 18px;
-  font-size: 0.95rem;
-  line-height: 1.55;
-}
-
-.form-label-auth {
-  display: inline-block;
-  margin-bottom: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--font-main);
-}
-
-.user-type-pill {
-  min-height: 38px;
-  padding: 8px 14px;
-  border: 1px solid #ead7ce;
-  border-radius: 10px;
-  background: #fff7f3;
-  color: var(--font-main);
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-.user-type-pill--active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #ffffff;
-}
-
-.phone-row {
-  .phone-country {
-    flex: 0 0 120px;
-  }
-}
-
-.form-error {
-  margin: 0 0 0 16px;
-  padding: 4px 0 0;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--font-main);
-  border-left: 3px solid var(--primary);
-}
-
-.confirm-password-error {
-  margin-top: -8px;
-  margin-bottom: 8px;
-}
-
-@media (max-width: 575.98px) {
   .card-inner {
-    padding: 18px;
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
   }
 
   .auth-card-title {
-    font-size: 1.65rem;
+    margin: 0 0 8px;
+    font-size: 2rem;
+    line-height: 1.1;
+    font-weight: 800;
+    color: var(--font-main);
   }
+
+  .auth-card-copy {
+    margin: 0 0 18px;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .form-label-auth {
+    display: inline-block;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--font-main);
+  }
+
+  .user-type-pill {
+    min-height: 38px;
+    padding: 8px 14px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--tertiary);
+    color: var(--font-main);
+    font-size: 0.82rem;
+    font-weight: 600;
+
+    &--active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--surface);
+    }
+  }
+
+  .phone-row {
+    .phone-country {
+      flex: 0 0 120px;
+    }
+  }
+
+  .form-error {
+    margin: 0 0 0 16px;
+    padding: 4px 0 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--font-main);
+    border-left: 3px solid var(--primary);
+  }
+
+  .confirm-password-error {
+    margin-top: -8px;
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 575.98px) {
+    .card-inner {
+      padding: 18px;
+    }
+
+    .auth-card-title {
+      font-size: 1.65rem;
+    }
+  }
+}
+
+.mat-icon {
+  color: var(--font-secondary);
 }
