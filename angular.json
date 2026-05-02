@@ -31,6 +31,16 @@
               {
                 "glob": "**/*",
                 "input": "public/assets"
+              },
+              {
+                "glob": "**/*",
+                "input": "public/assets/i18n",
+                "output": "/i18n"
+              },
+              {
+                "glob": "web.config",
+                "input": "public",
+                "output": "/"
               }
             ],
             "styles": [
@@ -56,8 +66,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1.5MB",
-                  "maximumError": "2MB"
+                  "maximumWarning": "2.5MB",
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",

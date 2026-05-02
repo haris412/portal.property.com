@@ -16,6 +16,7 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { AdminAuthService } from './core/services/admin-auth.service';
+import { environment } from '../environments/environment';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -28,7 +29,15 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideAnimationsAsync(),
     importProvidersFrom(MatDialogModule),
-    { provide: TRANSLATE_HTTP_LOADER_CONFIG, useValue: { prefix: '/i18n/', suffix: '.json' } },
+    {
+      provide: TRANSLATE_HTTP_LOADER_CONFIG,
+      useValue: {
+        prefix: environment.translateLoaderPrefix,
+        suffix: '.json',
+        /** Avoid auth interceptor / 401 refresh flow on translation GETs. */
+        useHttpBackend: true,
+      },
+    },
     importProvidersFrom(
       TranslateModule.forRoot({
         defaultLanguage: 'en',
