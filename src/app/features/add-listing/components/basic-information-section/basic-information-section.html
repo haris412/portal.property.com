@@ -1,70 +1,70 @@
 <app-section-card [title]="'addListing.basicInfo.title' | translate">
-  <div class="row g-4" [formGroup]="form">
+  <div class="row g-4" [formGroup]="form()">
     <div class="col-12 col-lg-4">
       <label class="field-label">{{ 'addListing.basicInfo.purpose.label' | translate }}</label>
       <app-segmented-option-group
-        [items]="purposeOptions()"
-        [selectedValue]="form.get('purpose')?.value"
+        [items]="purposeOptions"
+        [selectedValue]="form().get('purpose')?.value"
         (changed)="onPurposeChange($event)"
       />
-      @if (form.get('purpose')?.hasError('server')) {
-        <div class="field-validation-msg" role="alert">{{ form.get('purpose')?.getError('server') }}</div>
-      } @else if (form.get('purpose')?.invalid && form.get('purpose')?.touched) {
+      @if (form().get('purpose')?.hasError('server')) {
+        <div class="field-validation-msg" role="alert">{{ form().get('purpose')?.getError('server') }}</div>
+      } @else if (form().get('purpose')?.invalid && form().get('purpose')?.touched) {
         <div class="field-validation-msg" role="alert">{{ 'addListing.basicInfo.purpose.required' | translate }}</div>
       }
     </div>
 
     <div class="col-12 col-lg-8">
-      @if (catalogError()) {
+      @if (typesError()) {
         <app-info-banner icon="error_outline" [text]="'addListing.basicInfo.catalogError' | translate" />
-        <button type="button" mat-stroked-button class="mt-2" (click)="retryLoadCatalog()">
+        <button type="button" mat-stroked-button class="mt-2" (click)="retryLoadTypes()">
           {{ 'addListing.retry' | translate }}
         </button>
       } @else {
         <div class="row">
-          <div class="col-6">
-            <label class="field-label d-block">{{ 'addListing.basicInfo.category.label' | translate }}</label>
-            <mat-form-field appearance="outline" class="w-100">
-              <mat-select
-                formControlName="propertySubtypeName"
-                [placeholder]="'addListing.basicInfo.category.placeholder' | translate"
-                [disabled]="catalogLoading() || !form.get('propertyCategoryName')?.value || availableSubtypes().length === 0"
-                (openedChange)="onCategoryFieldPanelToggle($event)"
-              >
-                @for (st of availableSubtypes(); track st._id) {
-                  <mat-option [value]="st.name">{{ st.name }}</mat-option>
-                }
-              </mat-select>
-              @if (form.get('propertyCategoryName')?.value && availableSubtypes().length === 0 && !catalogLoading()) {
-                <mat-hint>{{ 'addListing.basicInfo.category.noCategories' | translate }}</mat-hint>
-              }
-              <mat-error>
-                @if (form.get('propertySubtypeName')?.hasError('server')) {
-                  {{ form.get('propertySubtypeName')?.getError('server') }}
-                } @else {
-                  {{ 'addListing.basicInfo.category.required' | translate }}
-                }
-              </mat-error>
-            </mat-form-field>
-          </div>
           <div class="col-6">
             <label class="field-label">{{ 'addListing.basicInfo.propertyType.label' | translate }}</label>
             <mat-form-field appearance="outline" class="w-100">
               <mat-select
                 formControlName="propertyCategoryName"
                 [placeholder]="'addListing.basicInfo.propertyType.placeholder' | translate"
-                [disabled]="catalogLoading()"
+                [disabled]="typesLoading()"
                 (openedChange)="onPropertyTypePanelToggle($event)"
               >
-                @for (cat of categories(); track cat._id) {
-                  <mat-option [value]="cat.name">{{ cat.name }}</mat-option>
+                @for (type of propertyTypes(); track type.key) {
+                  <mat-option [value]="type.value">{{ type.value }}</mat-option>
                 }
               </mat-select>
               <mat-error>
-                @if (form.get('propertyCategoryName')?.hasError('server')) {
-                  {{ form.get('propertyCategoryName')?.getError('server') }}
+                @if (form().get('propertyCategoryName')?.hasError('server')) {
+                  {{ form().get('propertyCategoryName')?.getError('server') }}
                 } @else {
                   {{ 'addListing.basicInfo.propertyType.required' | translate }}
+                }
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <div class="col-6">
+            <label class="field-label d-block">{{ 'addListing.basicInfo.category.label' | translate }}</label>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-select
+                formControlName="propertySubtypeName"
+                [placeholder]="'addListing.basicInfo.category.placeholder' | translate"
+                [disabled]="typesLoading() || subtypesLoading() || !form().get('propertyCategoryName')?.value || availableSubtypes().length === 0"
+                (openedChange)="onCategoryFieldPanelToggle($event)"
+              >
+                @for (st of availableSubtypes(); track st.key) {
+                  <mat-option [value]="st.value">{{ st.value }}</mat-option>
+                }
+              </mat-select>
+              @if (form().get('propertyCategoryName')?.value && availableSubtypes().length === 0 && !typesLoading() && !subtypesLoading()) {
+                <mat-hint>{{ 'addListing.basicInfo.category.noCategories' | translate }}</mat-hint>
+              }
+              <mat-error>
+                @if (form().get('propertySubtypeName')?.hasError('server')) {
+                  {{ form().get('propertySubtypeName')?.getError('server') }}
+                } @else {
+                  {{ 'addListing.basicInfo.category.required' | translate }}
                 }
               </mat-error>
             </mat-form-field>
@@ -76,7 +76,7 @@
     <div class="col-12">
       <div class="section-inline-header">
         <label class="field-label mb-0">{{ 'addListing.basicInfo.listingTitle.label' | translate }}</label>
-        <app-action-chip-list [items]="titleActions()" />
+        <app-action-chip-list [items]="titleActions" />
       </div>
       <mat-form-field appearance="outline" class="w-100">
         <input
@@ -86,11 +86,11 @@
           (blur)="onListingTitleBlur()"
         />
         <mat-error>
-          @if (form.get('listingTitle')?.hasError('server')) {
-            {{ form.get('listingTitle')?.getError('server') }}
-          } @else if (form.get('listingTitle')?.hasError('required')) {
+          @if (form().get('listingTitle')?.hasError('server')) {
+            {{ form().get('listingTitle')?.getError('server') }}
+          } @else if (form().get('listingTitle')?.hasError('required')) {
             {{ 'addListing.basicInfo.listingTitle.required' | translate }}
-          } @else if (form.get('listingTitle')?.hasError('maxlength')) {
+          } @else if (form().get('listingTitle')?.hasError('maxlength')) {
             {{ 'addListing.basicInfo.listingTitle.maxLength' | translate }}
           }
         </mat-error>

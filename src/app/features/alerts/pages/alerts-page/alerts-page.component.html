@@ -1,0 +1,46 @@
+<div class="alerts-page">
+  <div class="container-fluid alerts-page__container">
+
+    <app-page-header
+      title="My Property Alerts"
+      subtitle="Get notified when new properties match your criteria."
+      [actions]="headerActions"
+      (actionClicked)="onHeaderAction($event)"
+    />
+
+    @if (loading()) {
+      <div class="alerts-page__loading">
+        <mat-progress-spinner mode="indeterminate" diameter="40" />
+        <span>Loading alerts…</span>
+      </div>
+    } @else if (loadError()) {
+      <app-info-banner [text]="loadError()!" icon="error_outline" />
+    } @else if (alerts().length === 0) {
+      <div class="alerts-page__empty">
+        <div class="alerts-page__empty-icon">
+          <mat-icon>notifications_off</mat-icon>
+        </div>
+        <p class="alerts-page__empty-title">No alerts yet</p>
+        <p class="alerts-page__empty-copy">
+          Create your first alert to get notified when matching properties are listed.
+        </p>
+        <button mat-flat-button type="button" (click)="openForm()" class="alerts-page__empty-cta">
+          <mat-icon>add</mat-icon>
+          New Alert
+        </button>
+      </div>
+    } @else {
+      <div class="alerts-page__list">
+        @for (alert of alerts(); track alert._id) {
+          <app-alert-card
+            [alert]="alert"
+            (editClicked)="openForm(alert)"
+            (deleteClicked)="onDelete(alert)"
+            (toggleClicked)="onToggle(alert)"
+          />
+        }
+      </div>
+    }
+
+  </div>
+</div>

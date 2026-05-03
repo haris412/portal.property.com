@@ -1,0 +1,68 @@
+<div class="alert-card" [class.alert-card--paused]="!alert().isActive">
+
+  <!-- Bell icon -->
+  <div class="alert-card__icon-wrap" aria-hidden="true">
+    <mat-icon class="alert-card__icon">notifications</mat-icon>
+  </div>
+
+  <!-- Main content -->
+  <div class="alert-card__body">
+    <p class="alert-card__summary">{{ summaryLine() }}</p>
+
+    <div class="alert-card__meta">
+      @if (bedsLabel()) {
+        <span class="alert-card__chip">
+          <mat-icon>bed</mat-icon>{{ bedsLabel() }}
+        </span>
+      }
+      @if (priceLabel()) {
+        <span class="alert-card__chip">
+          <mat-icon>currency_rupee</mat-icon>{{ priceLabel() }}
+        </span>
+      }
+      @if (!bedsLabel() && !priceLabel()) {
+        <span class="alert-card__chip alert-card__chip--muted">No price or bed filter</span>
+      }
+    </div>
+  </div>
+
+  <!-- Status + actions -->
+  <div class="alert-card__side">
+    <span class="alert-card__status" [class.alert-card__status--active]="alert().isActive">
+      @if (alert().isActive) {
+        <mat-icon>check_circle</mat-icon> Active
+      } @else {
+        <mat-icon>pause_circle</mat-icon> Paused
+      }
+    </span>
+
+    <div class="alert-card__actions">
+      <mat-slide-toggle
+        [checked]="alert().isActive"
+        (change)="toggleClicked.emit()"
+        [matTooltip]="alert().isActive ? 'Pause alert' : 'Activate alert'"
+        aria-label="Toggle alert"
+      />
+      <button
+        mat-icon-button
+        type="button"
+        (click)="editClicked.emit()"
+        matTooltip="Edit"
+        aria-label="Edit alert"
+      >
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        class="alert-card__delete-btn"
+        (click)="deleteClicked.emit()"
+        matTooltip="Delete"
+        aria-label="Delete alert"
+      >
+        <mat-icon>delete_outline</mat-icon>
+      </button>
+    </div>
+  </div>
+
+</div>

@@ -5,7 +5,7 @@ import {
   DestroyRef,
   inject,
   OnInit,
-  signal
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -13,7 +13,7 @@ import {
   FormControl,
   FormGroup,
   ReactiveFormsModule,
-  Validators
+  Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { startWith } from 'rxjs';
@@ -25,7 +25,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import countryList from 'country-state-city/lib/assets/country.json';
 import type { ICountry } from 'country-state-city';
-
 import {
   filterCountriesBySearch,
   findCountryByCode,
@@ -33,20 +32,18 @@ import {
   formatPhoneCountryDisplay,
   getLocationIsoCode,
   validCountryCodeValidator,
-  validLocationCountryValidator
+  validLocationCountryValidator,
 } from '../../../../shared/utils/country-filter.util';
 import {
   DEFAULT_PHONE_VALIDATION_CONFIG,
-  phoneNumberValidator
+  phoneNumberValidator,
 } from '../../../../shared/validators/phone-number.validator';
 import { SocialButtonComponent } from '../../../../shared/ui/social-button/social-button.component';
-import {
-  getDefaultUserTypeOptions,
-  rolesToUserTypeOptions,
-  type UserTypeOption
-} from '../../../../core/models/auth.models';
 import { AuthService, RegisterPayload } from '../../../../core/services/auth.service';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
+import { KeyValueItem } from '../../../../core/models/common.model';
+import { ESelectEntity } from '../../../../core/enums/select-entity.enum';
+import { CommonService } from '../../../../core/services/common.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 const DEFAULT_PHONE_COUNTRY_CODE = 'US';
@@ -78,7 +75,6 @@ interface SignupFormControls {
 
 @Component({
   selector: 'app-signup-card',
-  standalone: true,
   imports: [
     TranslateModule,
     ReactiveFormsModule,
@@ -89,15 +85,16 @@ interface SignupFormControls {
     MatIconModule,
     MatCheckboxModule,
     SocialButtonComponent,
-    FormFieldErrorComponent
+    FormFieldErrorComponent,
   ],
   templateUrl: './signup-card.component.html',
   styleUrl: './signup-card.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignupCardComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly commonService = inject(CommonService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -107,34 +104,30 @@ export class SignupCardComponent implements OnInit {
   readonly successMessage = signal<string | null>(null);
   readonly loading = signal(false);
   readonly rolesLoading = signal(true);
+  readonly rolesError = signal(false);
   private readonly formValid = signal(false);
 
-  // —— Options & data (user types from API) ——
-  readonly userTypes = signal<UserTypeOption[]>(getDefaultUserTypeOptions());
+  // —— Options & data ——
+  readonly userTypes = signal<KeyValueItem[]>([]);
   readonly countries: ICountry[] = countryList as ICountry[];
 
   ngOnInit(): void {
-    this.loadUserTypeOptions();
+    this.loadRoles();
   }
 
-  /** Fetch roles from backend and populate user type options; fallback to defaults on error. */
-  private loadUserTypeOptions(): void {
-    this.auth
-      .getRoles()
+  private loadRoles(): void {
+    this.commonService
+      .querySelectItems(ESelectEntity.Role)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (roleNames) => {
-          const options =
-            roleNames.length > 0
-              ? rolesToUserTypeOptions(roleNames)
-              : getDefaultUserTypeOptions();
-          this.userTypes.set(options);
-        },
-        error: () => {
-          this.userTypes.set(getDefaultUserTypeOptions());
+        next: (roles) => {
+          this.userTypes.set(roles);
           this.rolesLoading.set(false);
         },
-        complete: () => this.rolesLoading.set(false)
+        error: () => {
+          this.rolesLoading.set(false);
+          this.rolesError.set(true);
+        },
       });
   }
 
@@ -146,14 +139,14 @@ export class SignupCardComponent implements OnInit {
   readonly filteredPhoneCountries = computed(() =>
     filterCountriesBySearch(this.countries, this.phoneCountrySearchTerm(), {
       includePhoneCode: true,
-      codeOnly: true
-    })
+      codeOnly: true,
+    }),
   );
 
   readonly filteredLocationCountries = computed(() =>
     filterCountriesBySearch(this.countries, this.locationCountrySearchTerm(), {
-      codeOnly: false
-    })
+      codeOnly: false,
+    }),
   );
 
   readonly form = this.buildForm();
@@ -167,7 +160,7 @@ export class SignupCardComponent implements OnInit {
     if (value != null && typeof value === 'object' && 'name' in value)
       return (value as ICountry).name ?? '';
     return formatLocationCountryDisplay(
-      findCountryByCode(this.countries, typeof value === 'string' ? value : '')
+      findCountryByCode(this.countries, typeof value === 'string' ? value : ''),
     );
   };
 
@@ -184,18 +177,19 @@ export class SignupCardComponent implements OnInit {
     const payload = this.buildRegisterPayload(this.form.getRawValue());
     this.auth.register(payload).subscribe({
       next: (res) => {
-        this.successMessage.set(res.message ?? 'User registered successfully. Please verify your email.');
+        this.successMessage.set(
+          res.message ?? 'User registered successfully. Please verify your email.',
+        );
         setTimeout(() => this.router.navigate(['/auth'], { replaceUrl: true }), 2500);
       },
       error: (err: unknown) => {
         this.loading.set(false);
         this.error.set((err as { message?: string })?.message ?? REGISTER_ERROR_FALLBACK);
       },
-      complete: () => this.loading.set(false)
+      complete: () => this.loading.set(false),
     });
   }
 
-  // —— Keep location search term in sync with form value (for autocomplete filter) ——
   private setLocationSearchFromValue(value: string | ICountry | null): void {
     if (value == null) {
       this.locationCountrySearchTerm.set('');
@@ -208,14 +202,10 @@ export class SignupCardComponent implements OnInit {
     this.locationCountrySearchTerm.set(term);
   }
 
-  // —— Build form and wire validity, search terms, and phone validation ——
   private buildForm(): FormGroup<SignupFormControls> {
     const form = this.createFormGroup();
     form.controls.phone.addValidators(
-      phoneNumberValidator(
-        form.controls.phoneCountryCode,
-        DEFAULT_PHONE_VALIDATION_CONFIG
-      )
+      phoneNumberValidator(form.controls.phoneCountryCode, DEFAULT_PHONE_VALIDATION_CONFIG),
     );
     this.wireFormReactivity(form);
     return form;
@@ -223,32 +213,21 @@ export class SignupCardComponent implements OnInit {
 
   private createFormGroup(): FormGroup<SignupFormControls> {
     return new FormGroup<SignupFormControls>({
-      firstName: this.fb.nonNullable.control('', [
-        Validators.required,
-        Validators.minLength(2)
-      ]),
-      lastName: this.fb.nonNullable.control('', [
-        Validators.required,
-        Validators.minLength(2)
-      ]),
-      email: this.fb.nonNullable.control('', [
-        Validators.required,
-        Validators.email
-      ]),
+      firstName: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
+      lastName: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
+      email: this.fb.nonNullable.control('', [Validators.required, Validators.email]),
       phoneCountryCode: this.fb.nonNullable.control(DEFAULT_PHONE_COUNTRY_CODE, [
         Validators.required,
-        validCountryCodeValidator(this.countries)
+        validCountryCodeValidator(this.countries),
       ]),
       phone: this.fb.nonNullable.control('', [Validators.required]),
       locationCountryCode: this.fb.control<string | ICountry | null>('', [
         Validators.required,
-        validLocationCountryValidator(this.countries)
+        validLocationCountryValidator(this.countries),
       ]),
-      userType: this.fb.nonNullable.control('Buyer', [
-        Validators.required
-      ]),
+      userType: this.fb.nonNullable.control('', [Validators.required]),
       password: this.fb.nonNullable.control('', [Validators.required]),
-      agree: this.fb.nonNullable.control(false, [Validators.requiredTrue])
+      agree: this.fb.nonNullable.control(false, [Validators.requiredTrue]),
     });
   }
 
@@ -257,28 +236,20 @@ export class SignupCardComponent implements OnInit {
       .pipe(startWith(form.status), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.formValid.set(form.valid));
 
-    this.phoneCountrySearchTerm.set(
-      form.controls.phoneCountryCode.value ?? ''
-    );
+    this.phoneCountrySearchTerm.set(form.controls.phoneCountryCode.value);
     form.controls.phoneCountryCode.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value: string | null) =>
-        this.phoneCountrySearchTerm.set((value ?? '').toString())
-      );
+      .subscribe((value: string) => {
+        this.phoneCountrySearchTerm.set(value);
+        form.controls.phone.updateValueAndValidity();
+      });
 
     this.setLocationSearchFromValue(form.controls.locationCountryCode.value);
     form.controls.locationCountryCode.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value: string | ICountry | null) =>
-        this.setLocationSearchFromValue(value)
-      );
-
-    form.controls.phoneCountryCode.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => form.controls.phone.updateValueAndValidity());
+      .subscribe((value: string | ICountry | null) => this.setLocationSearchFromValue(value));
   }
 
-  // —— Map form value to API payload (role sent as-is to backend) ——
   private buildRegisterPayload(value: SignupFormValue): RegisterPayload {
     const phoneNumber = this.formatPhoneNumber(value);
     const location = this.formatLocation(value);
@@ -288,8 +259,8 @@ export class SignupCardComponent implements OnInit {
       password: value.password,
       firstName: value.firstName.trim(),
       lastName: value.lastName.trim(),
-      roleName: value.userType?.trim() ?? '',
-      phoneNumber
+      roleName: value.userType,
+      phoneNumber,
     };
     if (location) payload.location = location;
     return payload;
@@ -298,8 +269,7 @@ export class SignupCardComponent implements OnInit {
   private formatPhoneNumber(value: SignupFormValue): string {
     const country = findCountryByCode(this.countries, value.phoneCountryCode);
     const codeDigits = (country?.phonecode ?? '').replace(/\D/g, '');
-    const numberDigits =
-      (value.phone ?? '').replace(/\D/g, '').replace(/^0+/, '') || '';
+    const numberDigits = (value.phone ?? '').replace(/\D/g, '').replace(/^0+/, '') || '';
     return codeDigits ? `+${codeDigits}${numberDigits}` : numberDigits;
   }
 
@@ -307,9 +277,6 @@ export class SignupCardComponent implements OnInit {
     const isoCode = getLocationIsoCode(value.locationCountryCode);
     const country = findCountryByCode(this.countries, isoCode);
     if (!country) return undefined;
-    return JSON.stringify({
-      country: country.name,
-      countryCode: isoCode
-    });
+    return JSON.stringify({ country: country.name, countryCode: isoCode });
   }
 }

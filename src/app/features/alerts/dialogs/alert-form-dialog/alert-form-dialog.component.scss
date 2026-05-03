@@ -1,0 +1,33 @@
+.alert-form-dialog {
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--font-main);
+  }
+
+  &__title-icon {
+    color: var(--mat-sys-primary);
+    font-size: 1.4rem;
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  &__content {
+    padding-top: 0.5rem !important;
+    min-width: min(480px, 90vw);
+  }
+
+  &__actions {
+    padding: 0.75rem 1.5rem 1rem !important;
+    gap: 0.75rem;
+  }
+
+  &__submit {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+}

@@ -207,8 +207,8 @@
       "location": "Location",
       "contact": "Contact",
       "contacts": "Contacts",
-      "status": "{{base.status}}",
-      "createdAt": "{{base.createdAt}}"
+      "status": "Status",
+      "createdAt": "Created"
     },
     "form": {
       "name": "Agency name",
@@ -302,10 +302,10 @@
       "user": "User",
       "phone": "Phone",
       "agency": "{{base.agency}}",
-      "role": "{{base.role}}",
-      "status": "{{base.status}}",
+      "role": "Role",
+      "status": "Status",
       "email": "Email",
-      "createdAt": "{{base.createdAt}}"
+      "createdAt": "Created"
     },
     "statuses": {
       "0": "Inactive",
@@ -462,7 +462,7 @@
       "area": "Area",
       "purpose": "Purpose",
       "price": "Price",
-      "status": "{{base.status}}",
+      "status": "Status",
       "listedBy": "Listed by"
     },
     "actions": {
@@ -490,8 +490,8 @@
   "pagination": {
     "page": "Page {{current}} of {{total}}",
     "total": "{{count}} total",
-    "previous": "{{base.previous}}",
-    "next": "{{base.next}}"
+    "previous": "Previous",
+    "next": "Next"
   },
   "profile": {
     "defaultTitle": "Profile Settings",

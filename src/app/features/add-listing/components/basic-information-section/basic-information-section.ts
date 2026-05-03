@@ -3,14 +3,14 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
-  Input,
   OnInit,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormGroup, Validators } from '@angular/forms';
-import { merge } from 'rxjs';
+import { EMPTY, catchError, merge, of, switchMap, tap } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -20,11 +20,9 @@ import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-bann
 import { SegmentedOptionGroupComponent } from '../../../../shared/ui/segmented-option-group/segmented-option-group';
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
 import { OptionItem, ActionChipData } from '../../../../core/models/ui.models';
-import {
-  PropertyCatalogCategory,
-  PropertyCatalogSubtype
-} from '../../../../core/models/property-catalog.model';
-import { AddListingService } from '../../../../core/services/add-listing.service';
+import { KeyValueItem } from '../../../../core/models/common.model';
+import { ESelectEntity } from '../../../../core/enums/select-entity.enum';
+import { CommonService } from '../../../../core/services/common.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 type ListingPurpose = 'sale' | 'rent';
@@ -45,125 +43,163 @@ type ListingPurpose = 'sale' | 'rent';
   ],
   templateUrl: './basic-information-section.html',
   styleUrl: './basic-information-section.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BasicInformationSectionComponent implements OnInit {
-  private readonly addListingService = inject(AddListingService);
+  private readonly commonService = inject(CommonService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly purposeOptions = signal<readonly OptionItem<ListingPurpose>[]>([
+  readonly form = input.required<FormGroup>();
+
+  readonly purposeOptions: readonly OptionItem<ListingPurpose>[] = [
     { value: 'sale', label: 'For Sale' },
-    { value: 'rent', label: 'For Rent' }
-  ]);
+    { value: 'rent', label: 'For Rent' },
+  ];
 
-  readonly categories = signal<readonly PropertyCatalogCategory[]>([]);
-  readonly availableSubtypes = signal<readonly PropertyCatalogSubtype[]>([]);
-  readonly catalogLoading = signal(true);
-  readonly catalogError = signal(false);
+  readonly propertyTypes = signal<readonly KeyValueItem[]>([]);
+  readonly availableSubtypes = signal<readonly KeyValueItem[]>([]);
+  readonly typesLoading = signal(true);
+  readonly typesError = signal(false);
+  readonly subtypesLoading = signal(false);
 
-  readonly titleActions = signal<readonly ActionChipData[]>([
+  readonly titleActions: readonly ActionChipData[] = [
     { id: 'generate-title', label: 'Ask AI to generate title' },
     { id: 'title-loading', label: 'Generating and populating field', muted: true, disabled: true },
-  ]);
-
-  @Input({ required: true }) form!: FormGroup;
+  ];
 
   ngOnInit(): void {
-    this.loadCatalog();
-
-    const purpose = this.form.get('purpose');
-    const propertyType = this.form.get('propertyCategoryName');
-    const categoryField = this.form.get('propertySubtypeName');
-    const title = this.form.get('listingTitle');
-    const streams = [purpose, propertyType, categoryField, title]
-      .filter(Boolean)
-      .map((c) => merge(c!.valueChanges, c!.statusChanges));
-    if (streams.length) {
-      merge(...streams)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.cdr.markForCheck());
-    }
-
-    this.form
-      .get('propertyCategoryName')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((categoryName) => {
-        this.form.get('propertySubtypeName')?.setValue('', { emitEvent: false });
-        this.applyCategorySelection(categoryName ?? '');
-      });
+    this.loadPropertyTypes();
+    this.listenToFormChanges();
+    this.listenToTypeSelection();
   }
 
   onPurposeChange(value: string): void {
-    const c = this.form.get('purpose');
-    c?.setValue(value as ListingPurpose);
-    c?.markAsTouched();
+    const ctrl = this.form().get('purpose');
+    ctrl?.setValue(value as ListingPurpose);
+    ctrl?.markAsTouched();
     this.cdr.markForCheck();
   }
 
   onPropertyTypePanelToggle(opened: boolean): void {
     if (!opened) {
-      this.form.get('propertyCategoryName')?.markAsTouched();
+      this.form().get('propertyCategoryName')?.markAsTouched();
       this.cdr.markForCheck();
     }
   }
 
   onCategoryFieldPanelToggle(opened: boolean): void {
     if (!opened) {
-      this.form.get('propertySubtypeName')?.markAsTouched();
+      this.form().get('propertySubtypeName')?.markAsTouched();
       this.cdr.markForCheck();
     }
   }
 
   onListingTitleBlur(): void {
-    this.form.get('listingTitle')?.markAsTouched();
+    this.form().get('listingTitle')?.markAsTouched();
     this.cdr.markForCheck();
   }
 
-  retryLoadCatalog(): void {
-    this.addListingService.invalidatePropertyCatalogCache();
-    this.catalogError.set(false);
-    this.catalogLoading.set(true);
-    this.loadCatalog();
+  retryLoadTypes(): void {
+    this.typesError.set(false);
+    this.typesLoading.set(true);
+    this.loadPropertyTypes();
   }
 
-  private loadCatalog(): void {
-    this.addListingService
-      .getPropertyCatalog()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => {
-          this.categories.set(data.categories ?? []);
-          this.catalogLoading.set(false);
-          this.catalogError.set(false);
-          const categoryName = this.form.get('propertyCategoryName')?.value;
-          if (categoryName) {
-            this.applyCategorySelection(categoryName);
+  // Triggers markForCheck whenever a form field's value or validation state changes.
+  // Required because OnPush does not track reactive form control updates automatically.
+  private listenToFormChanges(): void {
+    const controls = ['purpose', 'propertyCategoryName', 'propertySubtypeName', 'listingTitle']
+      .map((name) => this.form().get(name))
+      .filter((ctrl): ctrl is NonNullable<typeof ctrl> => ctrl !== null)
+      .map((ctrl) => merge(ctrl.valueChanges, ctrl.statusChanges));
+
+    if (controls.length) {
+      merge(...controls)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.cdr.markForCheck());
+    }
+  }
+
+  // Reacts to property type changes: resets the subtype field and fetches
+  // the new subtype list from the API. switchMap cancels any in-flight
+  // subtype request when the user changes the type before it resolves.
+  private listenToTypeSelection(): void {
+    this.form()
+      .get('propertyCategoryName')
+      ?.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef),
+        tap(() => {
+          this.form().get('propertySubtypeName')?.setValue('', { emitEvent: false });
+          this.availableSubtypes.set([]);
+        }),
+        switchMap((typeName: string) => {
+          if (!typeName) {
+            this.subtypesLoading.set(false);
+            this.updateSubtypeValidators([]);
+            return EMPTY;
           }
-        },
-        error: () => {
-          this.catalogLoading.set(false);
-          this.catalogError.set(true);
-        }
+          this.subtypesLoading.set(true);
+          return this.commonService
+            .querySelectItems(ESelectEntity.PropertySubtype, typeName)
+            .pipe(catchError(() => of([] as KeyValueItem[])));
+        }),
+      )
+      .subscribe((subtypes) => {
+        this.availableSubtypes.set(subtypes);
+        this.subtypesLoading.set(false);
+        this.updateSubtypeValidators(subtypes);
       });
   }
 
-  private applyCategorySelection(categoryName: string): void {
-    const category = this.categories().find((c) => c.name === categoryName);
-    const subtypes = category?.subtypes ?? [];
-    this.availableSubtypes.set(subtypes);
+  private loadPropertyTypes(): void {
+    this.commonService
+      .querySelectItems(ESelectEntity.PropertyType)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (types) => {
+          this.propertyTypes.set(types);
+          this.typesLoading.set(false);
+          this.typesError.set(false);
+          // Edit mode: a type is already selected, pre-load its subtypes.
+          const existingType = this.form().get('propertyCategoryName')?.value;
+          if (existingType) {
+            this.loadSubtypesFor(existingType);
+          }
+        },
+        error: () => {
+          this.typesLoading.set(false);
+          this.typesError.set(true);
+        },
+      });
+  }
 
-    const subtypeCtrl = this.form.get('propertySubtypeName');
-    if (!subtypeCtrl) {
-      return;
-    }
+  private loadSubtypesFor(typeName: string): void {
+    this.subtypesLoading.set(true);
+    this.commonService
+      .querySelectItems(ESelectEntity.PropertySubtype, typeName)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (subtypes) => {
+          this.availableSubtypes.set(subtypes);
+          this.subtypesLoading.set(false);
+          this.updateSubtypeValidators(subtypes);
+        },
+        error: () => {
+          this.subtypesLoading.set(false);
+        },
+      });
+  }
 
+  private updateSubtypeValidators(subtypes: readonly KeyValueItem[]): void {
+    const ctrl = this.form().get('propertySubtypeName');
+    if (!ctrl) return;
     if (subtypes.length > 0) {
-      subtypeCtrl.setValidators(Validators.required);
+      ctrl.setValidators(Validators.required);
     } else {
-      subtypeCtrl.clearValidators();
-      subtypeCtrl.setValue('', { emitEvent: false });
+      ctrl.clearValidators();
+      ctrl.setValue('', { emitEvent: false });
     }
-    subtypeCtrl.updateValueAndValidity({ emitEvent: false });
+    ctrl.updateValueAndValidity({ emitEvent: false });
   }
 }
