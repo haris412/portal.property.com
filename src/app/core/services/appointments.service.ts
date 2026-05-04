@@ -44,8 +44,10 @@ function roleLabel(user: unknown): string {
 }
 
 function normalizeStatus(raw: string): AppointmentStatus {
-  const lower = raw.trim().toLowerCase();
+  const lower = raw.trim().toLowerCase().replace(/\s+/g, '_');
   if (
+    lower === 'in_progress' ||
+    lower === 'inprogress' ||
     lower === 'confirmed' ||
     lower === 'pending' ||
     lower === 'completed' ||
@@ -53,7 +55,10 @@ function normalizeStatus(raw: string): AppointmentStatus {
     lower === 'cancelled' ||
     lower === 'rescheduled'
   ) {
-    return lower;
+    if (lower === 'in_progress' || lower === 'inprogress') {
+      return 'in_progress';
+    }
+    return lower as AppointmentStatus;
   }
   return 'pending';
 }
@@ -72,21 +77,21 @@ function extractAppointmentRows(body: unknown): unknown[] {
   return [];
 }
 
-/** Parses `date` (ISO, day in UTC) with optional `time` ("HH:mm") as local wall-clock that day. */
-function formatAppointmentDateTime(
-  dateRaw: unknown,
-  timeRaw: unknown
-): { date: string; time: string } {
+/**
+ * Same instant used for list date/time labels and {@link AppointmentListItem.scheduledStartMs}.
+ * API `date` is read as UTC calendar day; optional `time` is local wall-clock on that day.
+ */
+function resolveAppointmentLocalInstant(dateRaw: unknown, timeRaw: unknown): Date | null {
   const dateStr = dateRaw != null ? String(dateRaw) : '';
   const timeStr = timeRaw != null ? String(timeRaw).trim() : '';
 
   if (!dateStr) {
-    return { date: '—', time: '—' };
+    return null;
   }
 
   const parsed = new Date(dateStr);
   if (Number.isNaN(parsed.getTime())) {
-    return { date: '—', time: '—' };
+    return null;
   }
 
   const y = parsed.getUTCFullYear();
@@ -95,16 +100,25 @@ function formatAppointmentDateTime(
 
   if (timeStr && /^\d{1,2}:\d{2}/.test(timeStr)) {
     const [hh, mm] = timeStr.split(':').map((x) => parseInt(x, 10));
-    const local = new Date(y, mo, da, hh || 0, mm || 0, 0, 0);
-    return {
-      date: formatDate(local, 'd MMM yyyy', 'en-US'),
-      time: formatDate(local, 'h:mm a', 'en-US')
-    };
+    return new Date(y, mo, da, hh || 0, mm || 0, 0, 0);
+  }
+
+  return parsed;
+}
+
+/** Parses `date` (ISO, day in UTC) with optional `time` ("HH:mm") as local wall-clock that day. */
+function formatAppointmentDateTime(
+  dateRaw: unknown,
+  timeRaw: unknown
+): { date: string; time: string } {
+  const instant = resolveAppointmentLocalInstant(dateRaw, timeRaw);
+  if (!instant) {
+    return { date: '—', time: '—' };
   }
 
   return {
-    date: formatDate(parsed, 'd MMM yyyy', 'en-US'),
-    time: formatDate(parsed, 'h:mm a', 'en-US')
+    date: formatDate(instant, 'd MMM yyyy', 'en-US'),
+    time: formatDate(instant, 'h:mm a', 'en-US')
   };
 }
 
@@ -189,6 +203,9 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
     o['time']
   );
 
+  const scheduledInstant = resolveAppointmentLocalInstant(o['date'], o['time']);
+  const scheduledStartMs = scheduledInstant ? scheduledInstant.getTime() : undefined;
+
   const status = normalizeStatus(String(o['status'] ?? 'pending'));
   const type =
     pickString(o, 'appointmentType', 'type', 'purpose', 'visitType') || 'Appointment';
@@ -201,6 +218,9 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
     o['createdAt'] != null ? String(o['createdAt']) : undefined;
   const updatedAt =
     o['updatedAt'] != null ? String(o['updatedAt']) : undefined;
+
+  const appointmentLink =
+    pickString(o, 'appointmentLink', 'appointment_link') || undefined;
 
   return {
     id,
@@ -219,7 +239,9 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
     role,
     phone: fallbackPhone,
     time: timeDisplay,
+    scheduledStartMs,
     status,
+    appointmentLink,
     isRescheduled: Boolean(o['isRescheduled'] ?? o['rescheduled']),
     createdAt,
     updatedAt
@@ -246,9 +268,25 @@ export class AppointmentsService {
     );
   }
 
-  /** PATCH /api/appointments/:id/status — API status values may be PascalCase (e.g. `Confirmed`). */
-  patchStatus(appointmentId: string, status: string): Observable<unknown> {
+  /**
+   * PATCH `/api/appointments/:id/status` — updates status and optionally persists the video room URL.
+   * Backend status values may be PascalCase (e.g. `Confirmed`).
+   */
+  updateAppointmentStatus(
+    appointmentId: string,
+    status: string,
+    appointmentLink?: string | null
+  ): Observable<unknown> {
     const url = `${this.base}/${encodeURIComponent(appointmentId)}/status`;
-    return this.http.patch<unknown>(url, { status });
+    const body: Record<string, unknown> = { status };
+    if (appointmentLink != null && String(appointmentLink).trim() !== '') {
+      body['appointmentLink'] = String(appointmentLink).trim();
+    }
+    return this.http.patch<unknown>(url, body);
+  }
+
+  /** Status-only update (cancel / reject). Same endpoint as {@link updateAppointmentStatus} without a link. */
+  patchStatus(appointmentId: string, status: string): Observable<unknown> {
+    return this.updateAppointmentStatus(appointmentId, status);
   }
 }

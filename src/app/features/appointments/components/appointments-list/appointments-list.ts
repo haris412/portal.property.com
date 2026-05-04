@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { StatusBadgeComponent } from '../../../../shared/ui/status-badge/status-badge';
 import { AppointmentListItem } from '../../../../core/models/appointment.models';
@@ -9,7 +10,7 @@ import { AppointmentViewerRole } from '../../pages/appointments-page/appointment
 @Component({
   selector: 'app-appointments-list',
   standalone: true,
-  imports: [CommonModule, StatusBadgeComponent, MatIconModule],
+  imports: [CommonModule, RouterLink, StatusBadgeComponent, MatIconModule],
   templateUrl: './appointments-list.html',
   styleUrl: './appointments-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -49,11 +50,20 @@ export class AppointmentsListComponent {
     return item.propertyObj?.neighborhood || item.propertyObj?.city || item.area;
   }
 
+  /** Video join icon: confirmed or active call, with a persisted link. */
+  hasSavedVideoCallLink(item: AppointmentListItem): boolean {
+    return (
+      (item.status === 'confirmed' || item.status === 'in_progress') &&
+      Boolean(item.appointmentLink?.trim())
+    );
+  }
+
   /** Confirm control shown for appointments that can still be confirmed. */
   canShowConfirmAction(item: AppointmentListItem): boolean {
     return (
       item.status !== 'completed' &&
       item.status !== 'confirmed' &&
+      item.status !== 'in_progress' &&
       item.status !== 'cancelled' &&
       item.status !== 'rejected'
     );
@@ -62,6 +72,7 @@ export class AppointmentsListComponent {
   canReschedule(item: AppointmentListItem): boolean {
     return (
       item.status !== 'completed' &&
+      item.status !== 'in_progress' &&
       item.status !== 'cancelled' &&
       item.status !== 'rejected'
     );

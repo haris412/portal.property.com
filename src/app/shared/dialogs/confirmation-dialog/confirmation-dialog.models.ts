@@ -14,4 +14,6 @@ export interface ConfirmationDialogData {
   tone?: ConfirmationDialogTone;
   /** Optional Material icon ligature shown beside the title. */
   icon?: string;
+  /** When true, only the primary button is shown (informational dismiss). */
+  alertOnly?: boolean;
 }

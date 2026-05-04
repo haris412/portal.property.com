@@ -13,6 +13,7 @@ import { combineLatest, firstValueFrom, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, take } from 'rxjs/operators';
 import { WebRtcSignalingService } from '../../../../core/services/webrtc-signaling.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AppointmentsService } from '../../../../core/services/appointments.service';
 
 const REMOTE_LEFT_STATUS = 'The other participant left the call';
 
@@ -29,6 +30,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly signaling = inject(WebRtcSignalingService);
   private readonly auth = inject(AuthService);
+  private readonly appointmentsService = inject(AppointmentsService);
 
   @ViewChild('localVideo', { static: true })
   private localVideoRef!: ElementRef<HTMLVideoElement>;
@@ -48,8 +50,14 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   private retriedAfterInvalidToken = false;
   /** `peer-joined` can arrive before `room-joined`; queue until we know our `peerId`. */
   private readonly pendingPeerJoinIds: string[] = [];
-  /** User explicitly ended the call (skip duplicate teardown in destroy). */
+  /** User explicitly ended the call or left the page (skip duplicate teardown in destroy). */
   private userEndedCall = false;
+  /** Another participant was in this room at least once (not solo the whole time). */
+  private otherJoined = false;
+  /** We saw a `peer-left` for someone other than ourselves (signaling disconnect). */
+  private peerAnotherLeftSignaling = false;
+  private inProgressPatchSent = false;
+  private completedPatchSent = false;
 
   /** Shown in template */
   statusText: string | null = null;
@@ -111,6 +119,9 @@ export class VideoCallComponent implements OnInit, OnDestroy {
         )
       ).subscribe((p) => {
         this.peerId = p.peerId;
+        if (!this.inProgressPatchSent && this.isLikelyMongoAppointmentId(this.roomName)) {
+          this.patchAppointmentInProgressOnce();
+        }
         const hadBeenAloneAfterRemoteLeft = this.remoteDisconnected;
         const hasOtherInRoster = (p.peers ?? []).some((peer) => peer.peerId !== p.peerId);
         const hasPendingJoin = this.pendingPeerJoinIds.length > 0;
@@ -124,6 +135,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
         }
         const othersInRoom = (p.peers ?? []).filter((peer) => peer.peerId !== p.peerId);
         if (othersInRoom.length > 0) {
+          this.otherJoined = true;
           if (hadBeenAloneAfterRemoteLeft) {
             this.showTransient('A participant rejoined the call.');
           } else {
@@ -145,6 +157,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
           return;
         }
         this.clearRemoteAloneUiState();
+        this.otherJoined = true;
         this.showTransient('Another participant joined the call.');
         void this.ensurePeerConnection(p.peerId, this.shouldInitiateOffer(p.peerId));
       })
@@ -152,6 +165,9 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     this.subs.add(
       this.signaling.peerLeft$.subscribe((p) => {
         this.clearTransientBanner();
+        if (!this.peerId || p.peerId !== this.peerId) {
+          this.peerAnotherLeftSignaling = true;
+        }
         this.closePeer(p.peerId);
         if (!this.userEndedCall) {
           this.statusText = REMOTE_LEFT_STATUS;
@@ -164,6 +180,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
           }
         }
         this.syncRemotePreview();
+        this.maybePatchAppointmentCompleted();
         this.cdr.markForCheck();
       })
     );
@@ -191,8 +208,8 @@ export class VideoCallComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearTransientBanner();
-    this.subs.unsubscribe();
     this.teardownMediaAndConnections();
+    this.subs.unsubscribe();
   }
 
   /**
@@ -209,6 +226,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   /** Optional: leave to appointments after the other party ended (you stayed on the call). */
   goToAppointments(): void {
     this.clearTransientBanner();
+    this.userEndedCall = true;
     this.teardownMediaAndConnections();
     void this.router.navigate(['/appointments']);
   }
@@ -290,7 +308,53 @@ export class VideoCallComponent implements OnInit, OnDestroy {
       }
     }
     this.signaling.disconnect();
+    this.maybePatchAppointmentCompleted();
     this.cdr.markForCheck();
+  }
+
+  private isLikelyMongoAppointmentId(value: string): boolean {
+    return /^[a-f\d]{24}$/i.test(value.trim());
+  }
+
+  private patchAppointmentInProgressOnce(): void {
+    if (this.inProgressPatchSent || !this.isLikelyMongoAppointmentId(this.roomName)) {
+      return;
+    }
+    this.inProgressPatchSent = true;
+    this.appointmentsService
+      .updateAppointmentStatus(this.roomName, 'InProgress')
+      .pipe(take(1))
+      .subscribe({
+        error: () => {
+          this.inProgressPatchSent = false;
+        },
+      });
+  }
+
+  /**
+   * Marks completed once both sides have disconnected from the call: we only PATCH when this user
+   * ends the session after at least one other participant joined, and we have seen them leave
+   * signaling (covers normal and near-simultaneous hang-ups).
+   */
+  private maybePatchAppointmentCompleted(): void {
+    if (
+      this.completedPatchSent ||
+      !this.isLikelyMongoAppointmentId(this.roomName) ||
+      !this.otherJoined ||
+      !this.userEndedCall ||
+      !this.peerAnotherLeftSignaling
+    ) {
+      return;
+    }
+    this.completedPatchSent = true;
+    this.appointmentsService
+      .updateAppointmentStatus(this.roomName, 'Completed')
+      .pipe(take(1))
+      .subscribe({
+        error: () => {
+          this.completedPatchSent = false;
+        },
+      });
   }
 
   private clearRemoteStreamTracks(): void {
