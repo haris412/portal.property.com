@@ -30,7 +30,7 @@
           [appointments]="filteredAppointments()"
           [viewerRole]="viewerRole()"
           [showActions]="true"
-          (confirmClicked)="confirmAppointment($event.id)"
+          (confirmClicked)="onConfirmClicked($event)"
           (rescheduleClicked)="rescheduleAppointment($event.id)"
           (cancelClicked)="cancelAppointment($event)"
         />

@@ -18,6 +18,11 @@
     color: var(--surface);
   }
 
+  &--in_progress {
+    background: color-mix(in srgb, var(--info) 85%, var(--surface));
+    color: var(--surface);
+  }
+
   &--completed {
     background: var(--success);
     color: var(--surface);

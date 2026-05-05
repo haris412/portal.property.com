@@ -17,6 +17,7 @@ export class StatusBadgeComponent {
 
     if (status === 'confirmed') return 'Confirmed';
     if (status === 'pending') return 'Pending';
+    if (status === 'in_progress') return 'In progress';
     if (status === 'completed') return 'Completed';
     if (status === 'rejected') return 'Rejected';
     if (status === 'cancelled') return 'Cancelled';

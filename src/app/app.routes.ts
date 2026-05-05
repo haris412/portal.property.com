@@ -98,6 +98,14 @@ export const routes: Routes = [
           import('./features/appointments/appointments.routes').then((m) => m.APPOINTMENTS_ROUTES),
         title: 'Appointments',
       },
+      {
+        path: 'video/:roomName',
+        loadComponent: () =>
+          import('./features/video-call/pages/video-call/video-call.component').then(
+            (m) => m.VideoCallComponent
+          ),
+        title: 'Video call',
+      },
     ],
   },
   {

@@ -1,6 +1,7 @@
 export type AppointmentStatus =
   | 'confirmed'
   | 'pending'
+  | 'in_progress'
   | 'completed'
   | 'rejected'
   | 'cancelled'
@@ -69,8 +70,15 @@ export interface AppointmentListItem {
   phone: string;
   /** Formatted from `time` (+ `date`) */
   time: string;
+  /**
+   * Start of the scheduled slot in local time (ms since epoch), derived from API `date` + `time`.
+   * Used to block confirming appointments whose slot has already started.
+   */
+  scheduledStartMs?: number;
   /** Appointment status (not listing `propertyId.status`) */
   status: AppointmentStatus;
+  /** Full URL to join the video call room (saved when status is confirmed). */
+  appointmentLink?: string;
   isRescheduled?: boolean;
   /** API `createdAt` */
   createdAt?: string;

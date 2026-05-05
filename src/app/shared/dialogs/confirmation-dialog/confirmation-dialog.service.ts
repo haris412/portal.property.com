@@ -4,6 +4,9 @@ import { Observable, map } from 'rxjs';
 import { ConfirmationDialogComponent } from './confirmation-dialog.component';
 import type { ConfirmationDialogData } from './confirmation-dialog.models';
 
+export type AlertDialogInput = Pick<ConfirmationDialogData, 'title' | 'message'> &
+  Partial<Pick<ConfirmationDialogData, 'icon' | 'confirmLabel' | 'tone'>>;
+
 const DEFAULT_CONFIG = {
   width: '420px',
   maxWidth: '92vw',
@@ -23,5 +26,22 @@ export class ConfirmationDialogService {
       data,
     });
     return ref.afterClosed().pipe(map((r) => r === true));
+  }
+
+  /** Single primary button (OK); closes without returning a meaningful boolean. */
+  alert(input: AlertDialogInput): Observable<void> {
+    const data: ConfirmationDialogData = {
+      title: input.title,
+      message: input.message,
+      confirmLabel: input.confirmLabel ?? 'OK',
+      tone: input.tone,
+      icon: input.icon,
+      alertOnly: true,
+    };
+    const ref = this.dialog.open(ConfirmationDialogComponent, {
+      ...DEFAULT_CONFIG,
+      data,
+    });
+    return ref.afterClosed().pipe(map(() => undefined));
   }
 }

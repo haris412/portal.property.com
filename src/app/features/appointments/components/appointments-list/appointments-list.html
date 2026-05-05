@@ -57,6 +57,17 @@
 
       @if (showActions()) {
       <div class="appointments-list__actions">
+        @if (hasSavedVideoCallLink(appointment)) {
+        <a
+          class="appointments-list__action appointments-list__action--icon appointments-list__action--video-link"
+          [routerLink]="['/video', appointment.id]"
+          title="Join video call"
+          aria-label="Join video call"
+          (click)="$event.stopPropagation()"
+        >
+          <mat-icon fontSet="material-symbols-outlined" inline>videocam</mat-icon>
+        </a>
+        }
         @if (canShowConfirmAction(appointment)) {
         <button type="button"
                 class="appointments-list__action appointments-list__action--primary appointments-list__action--icon"
@@ -111,6 +122,17 @@
 
       @if (showActions()) {
       <div class="appointments-list__mobile-actions">
+        @if (hasSavedVideoCallLink(appointment)) {
+        <a
+          class="appointments-list__action appointments-list__action--icon appointments-list__action--video-link"
+          [routerLink]="['/video', appointment.id]"
+          title="Join video call"
+          aria-label="Join video call"
+          (click)="$event.stopPropagation()"
+        >
+          <mat-icon fontSet="material-symbols-outlined" inline>videocam</mat-icon>
+        </a>
+        }
         @if (canShowConfirmAction(appointment)) {
         <button type="button"
                 class="appointments-list__action appointments-list__action--primary appointments-list__action--icon"

@@ -17,7 +17,6 @@ import type {
   GridOptions,
   ICellRendererParams,
   ValueFormatterParams,
-  ValueGetterParams,
 } from 'ag-grid-community';
 import { debounceTime, distinctUntilChanged, filter, merge, startWith, switchMap, take } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -199,8 +198,8 @@ export class AdminAgenciesPageComponent implements OnInit {
       minWidth: 160,
       wrapText: true,
       autoHeight: true,
-      valueGetter: (p: ValueGetterParams<AgencyListItem>) => {
-        const d = p.data;
+      valueGetter: (p: any) => {
+        const d = p?.data as AgencyListItem | undefined;
         if (!d) return '';
         const name = d.name?.trim() || '—';
         return `${name}\n${d._id}`;
@@ -224,14 +223,14 @@ export class AdminAgenciesPageComponent implements OnInit {
       minWidth: 200,
       wrapText: true,
       autoHeight: true,
-      valueGetter: (p: ValueGetterParams<AgencyListItem>) => {
-        const d = p.data;
+      valueGetter: (p: any) => {
+        const d = p?.data as AgencyListItem | undefined;
         if (!d) return '';
-
-        const contacts = d.contacts || [];
+        
+        const contacts = (d.contacts ?? []) as NonNullable<AgencyListItem['contacts']>;
         if (contacts.length === 0) return '—';
-
-        return contacts.map(c => {
+        
+        return contacts.map((c: any) => {
           const parts = [];
           if (c.name?.trim()) parts.push(c.name.trim());
           if (c.email?.trim()) parts.push(c.email.trim());

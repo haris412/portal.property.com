@@ -10,9 +10,11 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end" class="confirmation-dialog__actions">
-  <button mat-stroked-button type="button" [mat-dialog-close]="false">
-    {{ data.cancelLabel ?? ('base.cancel' | translate) }}
-  </button>
+  @if (!data.alertOnly) {
+    <button mat-stroked-button type="button" [mat-dialog-close]="false">
+      {{ data.cancelLabel ?? ('base.cancel' | translate) }}
+    </button>
+  }
   <button
     mat-flat-button
     type="button"

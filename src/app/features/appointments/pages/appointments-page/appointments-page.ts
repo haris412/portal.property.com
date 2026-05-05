@@ -1,3 +1,4 @@
+import { Location, DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -6,9 +7,10 @@ import {
   computed,
   inject,
   input,
-  signal
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, finalize, switchMap, take, tap } from 'rxjs/operators';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
@@ -17,6 +19,7 @@ import { AppointmentsListComponent } from '../../components/appointments-list/ap
 import { AppointmentListItem } from '../../../../core/models/appointment.models';
 import { AppointmentsService } from '../../../../core/services/appointments.service';
 import { AuthService, User } from '../../../../core/services/auth.service';
+import { ConfirmationDialogService } from '../../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
 
 export type AppointmentTab = 'all' | 'confirmed' | 'pending' | 'completed';
 export type AppointmentViewerRole = 'agent' | 'user';
@@ -32,7 +35,7 @@ interface SegmentedTabItem {
   imports: [
     SectionCardComponent,
     SegmentedTabsComponent,
-    AppointmentsListComponent
+    AppointmentsListComponent,
   ],
   templateUrl: './appointments-page.html',
   styleUrl: './appointments-page.scss',
@@ -41,8 +44,12 @@ interface SegmentedTabItem {
 export class AppointmentsPageComponent {
   private readonly auth = inject(AuthService);
   private readonly appointmentsService = inject(AppointmentsService);
+  private readonly confirmationDialog = inject(ConfirmationDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
+  private readonly document = inject(DOCUMENT);
 
   readonly viewerRole = input<AppointmentViewerRole>('agent');
 
@@ -116,12 +123,31 @@ export class AppointmentsPageComponent {
     this.activeTab.set(tab as AppointmentTab);
   }
 
-  confirmAppointment(id: string): void {
+  onConfirmClicked(item: AppointmentListItem): void {
     this.actionError.set(null);
+
+    if (this.isAppointmentSlotInThePast(item)) {
+      this.confirmationDialog
+        .alert({
+          title: 'Appointment expired',
+          message:
+            "This appointment's scheduled date and time have already passed, so it can no longer be confirmed. Please schedule a new appointment if you still need a visit.",
+          confirmLabel: 'OK',
+        })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.cdr.markForCheck();
+        });
+      return;
+    }
+
+    const href = this.buildVideoCallLink(item.id);
     this.appointmentsService
-      .patchStatus(id, 'Confirmed')
+      .updateAppointmentStatus(item.id, 'Confirmed', href)
       .pipe(
-        tap(() => this.updateAppointment(id, { status: 'confirmed' })),
+        tap(() => {
+          this.updateAppointment(item.id, { status: 'confirmed', appointmentLink: href });
+        }),
         catchError(() => {
           this.actionError.set('Could not confirm appointment. Please try again.');
           return of(null);
@@ -133,6 +159,22 @@ export class AppointmentsPageComponent {
       });
   }
 
+  /** True when the scheduled start is before “now” (same rules as list mapping). */
+  private isAppointmentSlotInThePast(item: AppointmentListItem): boolean {
+    const ms = item.scheduledStartMs;
+    if (ms == null || Number.isNaN(ms)) {
+      return false;
+    }
+    return Date.now() > ms;
+  }
+
+  private buildVideoCallLink(appointmentId: string): string {
+    const origin = this.document.defaultView?.location?.origin ?? '';
+    const tree = this.router.createUrlTree(['/video', appointmentId]);
+    const path = this.location.prepareExternalUrl(this.router.serializeUrl(tree));
+    return `${origin}${path}`;
+  }
+
   rescheduleAppointment(id: string): void {
     this.updateAppointment(id, {
       isRescheduled: true,
@@ -142,7 +184,7 @@ export class AppointmentsPageComponent {
 
   cancelAppointment(item: AppointmentListItem): void {
     const next =
-      item.status === 'confirmed'
+      item.status === 'confirmed' || item.status === 'in_progress'
         ? { api: 'Cancelled', ui: 'cancelled' as const }
         : item.status === 'pending'
           ? { api: 'Rejected', ui: 'rejected' as const }

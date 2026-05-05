@@ -142,7 +142,10 @@ export class AdminAgencyUsersPageComponent {
       headerValueGetter: () => this.translate.instant('users.tc.user'),
       flex: 2,
       minWidth: 180,
-      valueGetter: (p) => p.data ? `${p.data.firstName} ${p.data.lastName}\n${p.data.email}` : '',
+      valueGetter: (p: any) => {
+        const d = p?.data as UserListItem | undefined;
+        return d ? `${d.firstName} ${d.lastName}\n${d.email}` : '';
+      },
       cellStyle: { lineHeight: '1.45', fontSize: '0.92rem', whiteSpace: 'pre-line' },
     },
     {
@@ -158,14 +161,14 @@ export class AdminAgencyUsersPageComponent {
       headerValueGetter: () => this.translate.instant('users.tc.agency'),
       flex: 1.5,
       minWidth: 140,
-      valueGetter: (p) => p.data?.agency?.name?.trim() || '—',
+      valueGetter: (p: any) => (p?.data as UserListItem | undefined)?.agency?.name?.trim() || '—',
     },
     {
       colId: 'role',
       headerValueGetter: () => this.translate.instant('users.tc.role'),
       flex: 1,
       minWidth: 100,
-      valueGetter: (p) => p.data?.role?.name?.trim() || '—',
+      valueGetter: (p: any) => (p?.data as UserListItem | undefined)?.role?.name?.trim() || '—',
     },
     {
       colId: 'status',

@@ -1,0 +1,219 @@
+.video-call {
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-soft, #e5e7eb);
+    border-radius: 14px;
+    background: #fff;
+  }
+
+  &__room {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__room-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--font-muted, #6b7280);
+  }
+
+  &__room-name {
+    font-size: 1rem;
+    word-break: break-all;
+    color: var(--font-main, #111827);
+  }
+
+  &__btn-end {
+    font-weight: 600;
+    min-width: 140px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+
+  &__banner {
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    &--info {
+      background: #e0f2fe;
+      color: #075985;
+      border: 1px solid #bae6fd;
+    }
+
+    &--alert {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+  }
+
+  /** Main meeting area: remote fills; PiP overlays corner (Teams / Skype style). */
+  &__stage {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #0f1419;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.12),
+      0 12px 24px -4px rgba(0, 0, 0, 0.18);
+    aspect-ratio: 16 / 9;
+    min-height: min(360px, 42vh);
+    max-height: min(78vh, 880px);
+  }
+
+  &__stage-main {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0e12;
+  }
+
+  &__stage-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+  }
+
+  &__placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    background: rgba(10, 14, 18, 0.92);
+    color: #e5e7eb;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    padding: 24px;
+    pointer-events: none;
+  }
+
+  &__video {
+    display: block;
+    background: #000;
+    object-fit: cover;
+
+    &--main {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      border-radius: 0;
+    }
+
+    &--pip {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+    }
+
+    &--hidden {
+      opacity: 0;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+  }
+
+  /** Self preview: smaller tile, bottom-right like Teams */
+  &__pip {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 4;
+    width: min(26%, 280px);
+    min-width: 120px;
+    max-width: 320px;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(0, 0, 0, 0.35);
+    background: #111;
+  }
+
+  &__pip-label {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    z-index: 1;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+  }
+
+  /** Floating call controls over the main video (bottom center). */
+  &__stage-actions {
+    position: absolute;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 6;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(15, 20, 25, 0.72);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .video-call {
+    &__stage {
+      aspect-ratio: unset;
+      min-height: min(52dvh, 420px);
+      max-height: 72dvh;
+    }
+
+    &__pip {
+      width: 38%;
+      min-width: 96px;
+      right: 8px;
+      bottom: 8px;
+    }
+  }
+}

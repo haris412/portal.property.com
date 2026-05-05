@@ -148,6 +148,24 @@
         height: 1.35rem;
       }
     }
+
+    &--video-link {
+      text-decoration: none;
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 25%, var(--border-soft));
+      background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+
+      &:hover {
+        color: var(--primary-hover, var(--primary));
+        background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+        border-color: color-mix(in srgb, var(--primary) 35%, var(--border-soft));
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+    }
   }
 
   &__mobile {

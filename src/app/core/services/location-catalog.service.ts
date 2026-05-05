@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -10,6 +10,8 @@ import type {
   OverpassResponse,
 } from '../models/overpass.models';
 
+const GEONAMES_SEARCH_JSON_URL = 'https://secure.geonames.org/searchJSON';
+
 const POPULATED_PLACE_FEATURE_CODES = [
   'PPLC',
   'PPLA',
@@ -20,19 +22,16 @@ const POPULATED_PLACE_FEATURE_CODES = [
 ] as const;
 
 export interface PopulatedPlacesQuery {
-  /** ISO-3166 alpha-2 (e.g. PK). */
   countryCode: string;
   startRow?: number;
   maxRows?: number;
 }
 
-/** Half-span in degrees for OSM suburb/neighbourhood bbox around the city center (≈18 km latitude). */
 const DEFAULT_OSM_BBOX_HALF_DEG = 0.16;
 
 export interface SuburbsAroundPointQuery {
   lat: number;
   lng: number;
-  /** Symmetric bbox padding in degrees (south/west/north/east from center). */
   halfSpanDeg?: number;
 }
 
@@ -44,10 +43,6 @@ export class LocationCatalogService {
   private readonly osmCache = new Map<string, Observable<OsmAreaSuggestion[]>>();
   private readonly mergedOsmCache = new Map<string, Observable<OsmLocationPickItem[]>>();
 
-  /**
-   * Populated places for a country (cities, admin seats, etc.), ordered by population desc.
-   * Results are cached per query key so multiple consumers share one HTTP call.
-   */
   getPopulatedPlaces(query: PopulatedPlacesQuery): Observable<GeoNamePlace[]> {
     const startRow = query.startRow ?? 0;
     const maxRows = query.maxRows ?? 1000;
@@ -55,7 +50,7 @@ export class LocationCatalogService {
 
     let cached = this.cache.get(key);
     if (!cached) {
-      const { baseUrl, username, userAgent } = environment.geonames;
+      const { username } = environment.geonames;
       let params = new HttpParams()
         .set('country', query.countryCode)
         .set('featureClass', 'P')
@@ -68,14 +63,8 @@ export class LocationCatalogService {
         params = params.append('featureCode', code);
       }
 
-      const headers = new HttpHeaders({
-        'User-Agent': userAgent,
-      });
-
-      const url = `${baseUrl.replace(/\/$/, '')}/searchJSON`;
-
       cached = this.http
-        .get<GeoNamesSearchResponse>(url, { params, headers })
+        .get<GeoNamesSearchResponse>(GEONAMES_SEARCH_JSON_URL, { params })
         .pipe(
           map((res) => res.geonames ?? []),
           shareReplay({ bufferSize: 1, refCount: false })
@@ -87,10 +76,6 @@ export class LocationCatalogService {
     return cached;
   }
 
-  /**
-   * OpenStreetMap suburbs and neighbourhoods inside a bounding box around a GeoNames city point.
-   * Uses the public Overpass interpreter; results are cached per rounded center + span.
-   */
   getSuburbsAndNeighbourhoodsAround(query: SuburbsAroundPointQuery): Observable<OsmAreaSuggestion[]> {
     const half = query.halfSpanDeg ?? DEFAULT_OSM_BBOX_HALF_DEG;
     const lat = query.lat;
@@ -117,11 +102,6 @@ export class LocationCatalogService {
     return cached;
   }
 
-  /**
-   * Suburbs/neighbourhoods, named roads (`way` + `highway` + `name`, `out center`), and restaurants
-   * in one bbox around the city center. Each Overpass leg is isolated with `catchError` so one
-   * failure still returns partial results. Cached per rounded center + span.
-   */
   getMergedLocationSuggestionsAround(query: SuburbsAroundPointQuery): Observable<OsmLocationPickItem[]> {
     const half = query.halfSpanDeg ?? DEFAULT_OSM_BBOX_HALF_DEG;
     const lat = query.lat;
