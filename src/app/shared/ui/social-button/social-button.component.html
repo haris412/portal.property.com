@@ -1,11 +1,10 @@
 
-<button
+<div
   type="button"
-  mat-stroked-button
   class="social-btn w-100"
   (click)="onClick()"
-  [attr.aria-label]="label() + ' sign in'"
+  [attr.aria-label]="label()"
 >
-  <mat-icon [fontIcon]="icon()" aria-hidden="true"></mat-icon>
+  <img [src]="'/icons/' + icon() + '.svg'" alt="{{ icon() }}" class="social-icon" />
   <span>{{ label() }}</span>
-</button>
+</div>

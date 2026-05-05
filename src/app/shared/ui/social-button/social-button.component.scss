@@ -1,14 +1,23 @@
 .social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   min-height: 46px;
   border-radius: var(--radius-field);
   border-color: var(--border-soft);
   color: var(--font-main);
   background: var(--tertiary);
+  font-size: 0.875rem;
+  font-weight: 500;
 
   .mat-icon {
     margin-right: 8px;
     font-size: 18px;
     width: 18px;
+    height: 18px;
+  }
+  .social-icon{
     height: 18px;
   }
 }

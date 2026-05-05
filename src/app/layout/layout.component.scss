@@ -15,8 +15,8 @@
     flex: 1 1 auto;
     flex-direction: column;
     min-width: 0;
-    margin-left: 240px;
-    transition: margin-left var(--transition-slow);
+    margin-inline-start: 240px;
+    transition: margin-inline-start var(--transition-slow);
   }
 
   &__main-content {

@@ -34,6 +34,12 @@ function toGoogleMapsLink({ lat, lng }: LatLng): string {
 export class LocationMapPickerComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly geolocation = inject(GeolocationService);
+  private readonly markerIcon = L.icon({
+    iconUrl: '/icons/map_pin.svg',
+    iconSize: [30, 30],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+  });
 
   @Input({ required: true }) form!: FormGroup;
   @Input() heightPx = 220;
@@ -47,7 +53,7 @@ export class LocationMapPickerComponent implements AfterViewInit {
   private marker?: L.Marker;
 
   ngAfterViewInit(): void {
-    this.configureLeafletIcons();
+    // this.configureLeafletIcons();
     this.initMap();
     this.bindForm();
   }
@@ -130,7 +136,10 @@ export class LocationMapPickerComponent implements AfterViewInit {
     }
 
     if (!this.marker) {
-      this.marker = L.marker([latLng.lat, latLng.lng], { draggable: true }).addTo(this.map);
+      this.marker = L.marker([latLng.lat, latLng.lng], {
+        draggable: true,
+        icon: this.markerIcon,
+      }).addTo(this.map);
       this.marker.on('dragend', () => {
         const p = this.marker?.getLatLng();
         if (!p) {
@@ -171,12 +180,12 @@ export class LocationMapPickerComponent implements AfterViewInit {
     );
   }
 
-  private configureLeafletIcons(): void {
-    // Fix default marker icons in bundlers (Angular builder doesn't auto-resolve Leaflet image URLs).
-    const iconRetinaUrl = new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).toString();
-    const iconUrl = new URL('leaflet/dist/images/marker-icon.png', import.meta.url).toString();
-    const shadowUrl = new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).toString();
-    L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl });
-  }
+  // private configureLeafletIcons(): void {
+  //   // Fix default marker icons in bundlers (Angular builder doesn't auto-resolve Leaflet image URLs).
+  //   const iconRetinaUrl = new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).toString();
+  //   const iconUrl = new URL('leaflet/dist/images/marker-icon.png', import.meta.url).toString();
+  //   const shadowUrl = new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).toString();
+  //   L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl });
+  // }
 }
 

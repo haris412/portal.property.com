@@ -16,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { CounterFieldComponent } from '../../../../shared/ui/counter-field/counter-field';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatIconModule } from '@angular/material/icon';
 
 interface PricingField {
   id: string;
@@ -39,6 +40,7 @@ interface CounterItem {
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
+    MatIconModule,
     SectionCardComponent,
     CounterFieldComponent
   ],
@@ -133,5 +135,16 @@ export class PricingDetailsSectionComponent implements OnInit {
     const current = Number(control.value) || 0;
     const next = current + 1;
     control.setValue(next);
+  }
+  stepNumberControl(controlName: string, direction: 1 | -1): void {
+    const control = this.form.get(controlName);
+    if (!control) return;
+
+    const current = Number(control.value ?? 0);
+    const next = Math.max(0, current + direction);
+
+    control.setValue(next);
+    control.markAsDirty();
+    control.markAsTouched();
   }
 }

@@ -18,7 +18,7 @@ export interface PageHeaderAction {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PageHeaderComponent {
-  readonly title = input.required<string>();
+  readonly title = input<string>();
   readonly subtitle = input<string>('');
   readonly meta = input<string>('');
   readonly actions = input<readonly PageHeaderAction[]>([]);

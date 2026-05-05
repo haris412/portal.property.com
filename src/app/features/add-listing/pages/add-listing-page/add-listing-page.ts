@@ -53,6 +53,7 @@ import {
   FEATURE_SLUG_TO_AMENITY_KEY,
   normalizeFeatureSlug,
 } from '../../../../core/constants/listing-payload.constants';
+import { CdkAutofill } from "@angular/cdk/text-field";
 
 interface UploadedMediaPayload {
   images: ListingImagePayload[];
@@ -94,7 +95,8 @@ function locationCityFormValueToString(city: unknown): string {
     PropertyLocationStepComponent,
     ContactInformationStepComponent,
     PropertyDescriptionStepComponent,
-  ],
+    CdkAutofill
+],
   templateUrl: './add-listing-page.html',
   styleUrl: './add-listing-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -694,5 +696,8 @@ export class AddListingPageComponent {
         numFloors: pricing.numFloors,
       } as unknown as Record<string, unknown>),
     } as AddListingModel;
+  }
+  scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }

@@ -1,8 +1,8 @@
 @use '@angular/material' as mat;
 @use './styles/theme-colors' as theme;
 
-@import "ag-grid-community/styles/ag-grid.css";
-@import "ag-grid-community/styles/ag-theme-material.css";
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-material.css';
 
 html {
   color-scheme: light dark;
@@ -13,14 +13,14 @@ html {
         primary: theme.$primary-palette,
         tertiary: theme.$tertiary-palette,
       ),
-      typography: "Plus Jakarta Sans",
+      typography: 'Plus Jakarta Sans',
       density: 0,
     )
   );
 }
 
 :root {
-  --font-family: "Plus Jakarta Sans", "Segoe UI", Roboto, sans-serif;
+  --font-family: 'Plus Jakarta Sans', 'Segoe UI', Roboto, sans-serif;
 
   /* Brand */
   --primary: rgb(124, 58, 237); /* #7C3AED */
@@ -84,7 +84,7 @@ html {
   --mat-form-field-outlined-focus-outline-color: var(--primary);
   --mat-option-selected-state-label-text-color: var(--primary);
   --mat-form-field-outlined-container-shape: var(--radius-field);
-  --mat-button-filled-label-text-font: "Plus Jakarta Sans";
+  --mat-button-filled-label-text-font: 'Plus Jakarta Sans';
   --mat-button-outlined-container-shape: var(--radius-field);
 
   --overlay-backdrop: rgba(16, 32, 28, 0.6);
@@ -186,11 +186,7 @@ textarea,
 }
 
 .app-shell-bg {
-  background: linear-gradient(
-    to top,
-    var(--tertiary) 0%,
-    var(--secondary) 100%
-  );
+  background: linear-gradient(to top, var(--tertiary) 0%, var(--secondary) 100%);
   padding: 2rem;
 }
 
@@ -234,16 +230,12 @@ textarea,
   color: var(--font-secondary) !important;
 }
 
-.mat-mdc-raised-button.auth-primary-btn:not(:disabled):not(
-    .mat-mdc-button-disabled
-  ) {
+.mat-mdc-raised-button.auth-primary-btn:not(:disabled):not(.mat-mdc-button-disabled) {
   background: var(--primary);
   color: var(--surface);
 }
 
-.mat-mdc-raised-button.auth-primary-btn:not(:disabled):not(
-    .mat-mdc-button-disabled
-  ):hover {
+.mat-mdc-raised-button.auth-primary-btn:not(:disabled):not(.mat-mdc-button-disabled):hover {
   background: var(--primary-hover);
 }
 
@@ -270,7 +262,7 @@ textarea,
 
 .visually-divider::before,
 .visually-divider::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 50%;
   width: calc(50% - 72px);
@@ -426,6 +418,11 @@ textarea,
     margin-top: 0;
   }
 
+  .ag-cell {
+    display: flex;
+    align-items: center;
+  }
+
   .ag-row {
     background-color: transparent;
     border-bottom: none;
@@ -476,9 +473,7 @@ textarea,
     }
   }
 
-  &:has(.ag-pinned-left-cols-container.ag-hidden):has(
-      .ag-pinned-right-cols-container.ag-hidden
-    ) {
+  &:has(.ag-pinned-left-cols-container.ag-hidden):has(.ag-pinned-right-cols-container.ag-hidden) {
     .ag-center-cols-viewport {
       .ag-row {
         border-radius: var(--radius-sm);
@@ -540,12 +535,8 @@ textarea,
 
   .ag-pinned-right-header,
   .ag-pinned-left-header,
-  .ag-cell.ag-cell-first-right-pinned:not(.ag-cell-range-left):not(
-      .ag-cell-range-single-cell
-    ),
-  .ag-cell.ag-cell-last-left-pinned:not(.ag-cell-range-right):not(
-      .ag-cell-range-single-cell
-    ) {
+  .ag-cell.ag-cell-first-right-pinned:not(.ag-cell-range-left):not(.ag-cell-range-single-cell),
+  .ag-cell.ag-cell-last-left-pinned:not(.ag-cell-range-right):not(.ag-cell-range-single-cell) {
     border: transparent;
   }
 
@@ -559,10 +550,6 @@ textarea,
 
   .tickets-grid .ag-root-wrapper {
     height: calc(100vh - 283px);
-  }
-
-  .ag-checkbox {
-    margin-top: 4px;
   }
 
   .ag-filter-apply-panel {
@@ -612,29 +599,36 @@ textarea,
   .ag-rtl .ag-cell-range-single-cell.ag-cell-range-handle {
     border-color: transparent;
   }
-
-  .ag-filter {
-    .ag-filter-body-wrapper {
-      .ag-filter-body {
-        .ag-text-field-input-wrapper {
-          input {
-            outline: none;
-            height: 40px;
-            width: 100%;
-            border: 1px solid var(--border-soft);
-            border-radius: var(--radius-sm);
-            color: var(--font-main);
-            font-family: var(--font-family);
-            background: var(--surface);
-
-            &::placeholder {
-              color: var(--font-secondary);
-              font-size: 14px;
+  .ag-menu {
+    border-radius: var(--radius-field);
+    .ag-filter {
+      .ag-filter-body-wrapper {
+        .ag-picker-field {
+          .ag-picker-field-wrapper {
+            height: 35px;
+          }
+        }
+        .ag-filter-body {
+          .ag-text-field-input-wrapper {
+            input {
+              outline: none;
+              height: 40px;
+              width: 100%;
+              border: 1px solid var(--border-soft);
+              border-radius: var(--radius-sm);
+              color: var(--font-main);
               font-family: var(--font-family);
-            }
+              background: var(--surface);
 
-            &:focus {
-              border-color: var(--primary);
+              &::placeholder {
+                color: var(--font-secondary);
+                font-size: 14px;
+                font-family: var(--font-family);
+              }
+
+              &:focus {
+                border-color: var(--primary);
+              }
             }
           }
         }

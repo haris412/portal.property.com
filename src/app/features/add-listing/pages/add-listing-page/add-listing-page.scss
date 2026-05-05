@@ -18,5 +18,21 @@
     display: grid;
     gap: 1.5rem;
     align-content: start;
+    .back-to-top {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+      button {
+        width: fit-content;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        border-radius: var(--radius-md);
+        background: var(--primary);
+        color: var(--surface);
+      }
+    }
   }
 }

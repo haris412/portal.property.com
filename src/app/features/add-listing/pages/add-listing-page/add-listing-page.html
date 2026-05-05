@@ -1,18 +1,20 @@
 <div class="add-listing-page">
   <div class="container-fluid add-listing-page__container p-0">
-    <app-page-header
-      [title]="(editingId() ? 'addListing.titleEdit' : 'addListing.title') | translate"
-      [subtitle]="'addListing.subtitle' | translate"
-      [actions]="pageActions()"
-      (actionClicked)="onHeaderAction($event)"
-    />
+    <app-page-header [title]="(editingId() ? 'addListing.titleEdit' : 'addListing.title') | translate"
+                     [subtitle]="'addListing.subtitle' | translate"
+                     [actions]="pageActions()"
+                     (actionClicked)="onHeaderAction($event)" />
 
     @if (editingId()) {
-      @if (editLoading()) {
-        <app-info-banner class="d-block mb-3" icon="hourglass_empty" [text]="'addListing.loading' | translate" />
-      } @else if (editLoadError(); as err) {
-        <app-info-banner class="d-block mb-3" icon="error_outline" [text]="err" />
-      }
+    @if (editLoading()) {
+    <app-info-banner class="d-block mb-3"
+                     icon="hourglass_empty"
+                     [text]="'addListing.loading' | translate" />
+    } @else if (editLoadError(); as err) {
+    <app-info-banner class="d-block mb-3"
+                     icon="error_outline"
+                     [text]="err" />
+    }
     }
 
     <div class="row g-4">
@@ -22,6 +24,11 @@
           <app-pricing-details-section [form]="pricingForm" />
           <app-features-amenities-section [form]="amenitiesForm" />
           <app-property-media-section [form]="mediaForm" />
+          <div class="back-to-top">
+            <button type="button"
+                     (click)="scrollToTop()">Back to Top</button>
+          </div>
+
         </div>
       </div>
 
@@ -29,13 +36,12 @@
         <div class="add-listing-page__right">
           <app-property-location-step [form]="locationForm" />
           <app-contact-information-step [form]="contactForm" />
-          <app-property-description-step
-            [form]="descriptionForm"
-            [aiDescriptionEnabled]="aiDescriptionContextReady()"
-            [aiDescriptionLoading]="isGeneratingDescription()"
-            (generateDescription)="onGenerateDescription()"
-          />
+          <app-property-description-step [form]="descriptionForm"
+                                         [aiDescriptionEnabled]="aiDescriptionContextReady()"
+                                         [aiDescriptionLoading]="isGeneratingDescription()"
+                                         (generateDescription)="onGenerateDescription()" />
         </div>
+
       </div>
     </div>
   </div>
