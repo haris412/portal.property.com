@@ -30,16 +30,16 @@ jobs:
 
       - name: Install dependencies
         shell: cmd
-        run: cd /d repo\property.portal.com && npm install --legacy-peer-deps
+        run: cd /d repo && npm install --legacy-peer-deps
 
       - name: Build
         shell: cmd
-        run: cd /d repo\property.portal.com && npm run build -- --configuration production
+        run: cd /d repo && npm run build -- --configuration production
 
       - name: Patch base href
         shell: powershell
         run: |
-          $index = "$env:GITHUB_WORKSPACE\repo\PORTAL.PROPERTY.COM\dist\frontend\browser\index.html"
+          $index = "$env:GITHUB_WORKSPACE\repo\dist\portal-dashboard\browser\index.html"
           (Get-Content $index -Raw) -replace '<base href="/">', '<base href="/property.admin/">' |
             Set-Content $index -Encoding utf8
           Write-Host "base href patched"
@@ -49,7 +49,7 @@ jobs:
         run: |
           Import-Module WebAdministration
 
-          $source  = "$env:GITHUB_WORKSPACE\repo\PORTAL.PROPERTY.COM\dist\frontend\browser"
+          $source  = "$env:GITHUB_WORKSPACE\repo\dist\portal-dashboard\browser"
           $pathA   = "C:\inetpub\property.admin\browser"
           $pathB   = "C:\admin-frontend-dev-temp"
           $appPath = "IIS:\Sites\Default Web Site\property.admin"
