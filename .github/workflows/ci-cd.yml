@@ -30,11 +30,11 @@ jobs:
 
       - name: Install dependencies
         shell: cmd
-        run: cd /d repo\frontend && npm install --legacy-peer-deps
+        run: cd /d repo\property.portal.com && npm install --legacy-peer-deps
 
       - name: Build
         shell: cmd
-        run: cd /d repo\frontend && npm run build -- --configuration production
+        run: cd /d repo\property.portal.com && npm run build -- --configuration production
 
       - name: Patch base href
         shell: powershell
