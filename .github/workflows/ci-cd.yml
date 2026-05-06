@@ -1,9 +1,7 @@
-name: CI/CD
+name: Admin DEV CI/CD
 
 on:
   push:
-    branches: [Development]
-  pull_request:
     branches: [Development]
 
 concurrency:
@@ -11,73 +9,59 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test
+  build-and-deploy:
+    name: Build & Deploy
     runs-on: [self-hosted, windows, property-admin-self-hosted]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - run: npm ci
-
-      - run: npm test -- --watch=false
-
-  build:
-    name: Build
-    runs-on: [self-hosted, windows, property-admin-self-hosted]
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - run: npm ci
-
-      - run: npm run build
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ github.sha }}
-          path: dist/portal-dashboard/browser/
-          retention-days: 3
-          if-no-files-found: error
-
-  deploy:
-    name: Deploy to Production
-    runs-on: [self-hosted, windows, property-admin-self-hosted]
-    needs: build
-    if: github.event_name == 'push'
-    environment:
-      name: production
-      url: https://soletechs.net/property.admin
 
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist-${{ github.sha }}
-          path: dist/portal-dashboard/browser/
+      - name: Clean and clone
+        shell: cmd
+        run: |
+          git config --global core.sshCommand ""
+          git config --global submodule.recurse false
+          git config --global credential.helper ""
+          if exist repo rd /s /q repo
+          git clone --branch Development --depth 1 --single-branch https://x-access-token:${{ secrets.GH_TOKEN_PROP_ADMIN }}@github.com/haris412/portal.property.com.git repo
 
-      # Required GitHub Secrets (Settings → Secrets → Actions):
-      #   FTP_SERVER      e.g. ftp.soletechs.net
-      #   FTP_USERNAME    your FTP username
-      #   FTP_PASSWORD    your FTP password
-      #   FTP_SERVER_DIR  remote path, e.g. /public_html/property.admin/
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: dist/portal-dashboard/browser/
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
+          node-version: 20
+
+      - name: Install dependencies
+        shell: cmd
+        run: cd /d repo\frontend && npm install --legacy-peer-deps
+
+      - name: Build
+        shell: cmd
+        run: cd /d repo\frontend && npm run build -- --configuration production
+
+      - name: Patch base href
+        shell: powershell
+        run: |
+          $index = "$env:GITHUB_WORKSPACE\repo\PORTAL.PROPERTY.COM\dist\frontend\browser\index.html"
+          (Get-Content $index -Raw) -replace '<base href="/">', '<base href="/property.admin/">' |
+            Set-Content $index -Encoding utf8
+          Write-Host "base href patched"
+
+      - name: Deploy (blue-green swap)
+        shell: powershell
+        run: |
+          Import-Module WebAdministration
+
+          $source  = "$env:GITHUB_WORKSPACE\repo\PORTAL.PROPERTY.COM\dist\frontend\browser"
+          $pathA   = "C:\inetpub\property.admin\browser"
+          $pathB   = "C:\admin-frontend-dev-temp"
+          $appPath = "IIS:\Sites\Default Web Site\property.admin"
+
+          $current = (Get-ItemProperty $appPath).physicalPath.TrimEnd('\')
+          $target  = if ($current -eq $pathA) { $pathB } else { $pathA }
+          Write-Host "Current: $current -> Deploying to: $target"
+
+          if (!(Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force }
+          Remove-Item "$target\*" -Recurse -Force -ErrorAction SilentlyContinue
+          Copy-Item "$source\*" $target -Recurse -Force
+
+          Set-ItemProperty $appPath -Name physicalPath -Value $target
+          Restart-WebAppPool -Name (Get-WebApplication -Site "Default Web Site" -Name "property.admin").applicationPool
+          Write-Host "Done -> IIS now points to $target"
