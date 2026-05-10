@@ -55,7 +55,7 @@
   .mat-icon {
     width: 40px;
     height: 40px;
-    font-size: 40px;
+    font-size: var(--font-size-display);
   }
 
   &--success {
@@ -81,13 +81,13 @@
 
 .verify-hint {
   margin: 0 0 1.25rem;
-  font-size: 0.9rem;
+  font-size: var(--font-size-body-sm);
 }
 
 .verify-error-msg {
   margin: 0 0 1.25rem;
   padding: 0.75rem 1rem;
-  font-size: 0.9rem;
+  font-size: var(--font-size-body-sm);
   color: var(--font-main);
   background: var(--surface-muted);
   border-left: 4px solid var(--primary);
@@ -123,7 +123,7 @@
       padding: 1.5rem 1.25rem;
 
       .auth-card-title {
-        font-size: 1.65rem;
+        font-size: var(--font-size-h3);
       }
     }
   }

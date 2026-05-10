@@ -24,7 +24,7 @@
   }
 
   &__room-label {
-    font-size: 0.75rem;
+    font-size: var(--font-size-overline);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -32,7 +32,7 @@
   }
 
   &__room-name {
-    font-size: 1rem;
+    font-size: var(--font-size-body);
     word-break: break-all;
     color: var(--font-main, #111827);
   }
@@ -47,7 +47,7 @@
     margin-bottom: 10px;
     padding: 10px 14px;
     border-radius: 10px;
-    font-size: 0.9rem;
+    font-size: var(--font-size-body-sm);
     font-weight: 500;
 
     &--info {
@@ -95,7 +95,7 @@
     z-index: 2;
     padding: 6px 12px;
     border-radius: 8px;
-    font-size: 0.8rem;
+    font-size: var(--font-size-caption);
     font-weight: 600;
     color: #fff;
     background: rgba(0, 0, 0, 0.55);
@@ -112,7 +112,7 @@
     z-index: 1;
     background: rgba(10, 14, 18, 0.92);
     color: #e5e7eb;
-    font-size: 1rem;
+    font-size: var(--font-size-body);
     font-weight: 500;
     text-align: center;
     padding: 24px;
@@ -173,7 +173,7 @@
     z-index: 1;
     padding: 3px 8px;
     border-radius: 6px;
-    font-size: 0.7rem;
+    font-size: var(--font-size-overline);
     font-weight: 700;
     letter-spacing: 0.02em;
     color: #fff;

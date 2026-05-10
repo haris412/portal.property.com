@@ -8,14 +8,14 @@
 }
 
 .brand-logo-icon .mat-icon {
-  font-size: 16px;
+  font-size: var(--font-size-body);
   width: 16px;
   height: 16px;
 }
 
 .brand-logo-text {
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: var(--font-size-h5);
   color: var(--surface);
   letter-spacing: -0.02em;
 }

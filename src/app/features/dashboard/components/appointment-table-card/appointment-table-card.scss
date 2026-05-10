@@ -12,7 +12,7 @@
     h3 {
       margin: 0 0 8px;
       color: var(--font-main);
-      font-size: 1.5rem;
+      font-size: var(--font-size-h3);
       font-weight: 800;
     }
 
@@ -34,7 +34,7 @@
   &__table-header {
     padding: 0 16px 12px;
     color: var(--font-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-body-sm);
     font-weight: 600;
   }
 
@@ -54,7 +54,7 @@
     strong {
       display: block;
       color: var(--font-main);
-      font-size: 0.95rem;
+      font-size: var(--font-size-body-sm);
       font-weight: 700;
     }
 
@@ -62,7 +62,7 @@
       display: block;
       margin-top: 4px;
       color: var(--font-secondary);
-      font-size: 0.875rem;
+      font-size: var(--font-size-body-sm);
     }
   }
 
@@ -70,7 +70,7 @@
     display: block;
     margin-top: 4px;
     color: var(--font-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-body-sm);
   }
 
   &__arrow {
@@ -100,7 +100,7 @@
     strong {
       display: block;
       color: var(--font-main);
-      font-size: 0.95rem;
+      font-size: var(--font-size-body-sm);
       font-weight: 700;
     }
   }

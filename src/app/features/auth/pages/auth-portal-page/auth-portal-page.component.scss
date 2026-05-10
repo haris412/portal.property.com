@@ -71,7 +71,7 @@
 
   &__eyebrow {
     margin: 0 0 6px;
-    font-size: 0.75rem;
+    font-size: var(--font-size-overline);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -80,14 +80,14 @@
 
   &__title {
     margin: 0 0 8px;
-    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    font-size: var(--font-size-h2);
     font-weight: 800;
     color: var(--font-main);
   }
 
   &__sub {
     margin: 0;
-    font-size: 0.92rem;
+    font-size: var(--font-size-body-sm);
     line-height: 1.55;
     color: color-mix(in srgb, var(--surface-black) 55%, transparent);
   }
@@ -95,7 +95,7 @@
 
 .admin-portal-link {
   text-align: center;
-  font-size: 0.88rem;
+  font-size: var(--font-size-body-sm);
   color: var(--font-secondary);
 
   &__anchor {

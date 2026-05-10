@@ -9,7 +9,7 @@
 
   .auth-card-title {
     margin: 0 0 8px;
-    font-size: 2rem;
+    font-size: var(--font-size-h1);
     line-height: 1.1;
     font-weight: 800;
     color: var(--font-main);
@@ -17,14 +17,14 @@
 
   .auth-card-copy {
     margin: 0 0 18px;
-    font-size: 0.95rem;
+    font-size: var(--font-size-body-sm);
     line-height: 1.55;
   }
 
   .form-label-auth {
     display: inline-block;
     margin-bottom: 6px;
-    font-size: 0.82rem;
+    font-size: var(--font-size-caption);
     font-weight: 700;
     color: var(--font-main);
   }
@@ -36,7 +36,7 @@
     border-radius: var(--radius-md);
     background: var(--tertiary);
     color: var(--font-main);
-    font-size: 0.82rem;
+    font-size: var(--font-size-caption);
     font-weight: 600;
 
     &--active {
@@ -55,7 +55,7 @@
   .form-error {
     margin: 0 0 0 16px;
     padding: 4px 0 0;
-    font-size: 0.82rem;
+    font-size: var(--font-size-caption);
     font-weight: 600;
     color: var(--font-main);
     border-left: 3px solid var(--primary);
@@ -72,7 +72,7 @@
     }
 
     .auth-card-title {
-      font-size: 1.65rem;
+      font-size: var(--font-size-h3);
     }
   }
 }

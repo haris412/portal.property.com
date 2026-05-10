@@ -34,7 +34,7 @@
       justify-content: center;
       color: var(--primary);
       font-weight: 800;
-      font-size: 1.2rem;
+      font-size: var(--font-size-h4);
       border: 1px solid var(--border-soft);
     }
   }
@@ -42,7 +42,7 @@
   &__title {
     margin: 0 0 0.2rem;
     color: var(--font-main);
-    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    font-size: var(--font-size-h2);
     font-weight: 800;
   }
 

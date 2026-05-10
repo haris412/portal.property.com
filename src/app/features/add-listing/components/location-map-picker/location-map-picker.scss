@@ -31,7 +31,7 @@
 
 .map-toolbar__icon {
   margin-right: 4px;
-  font-size: 18px;
+  font-size: var(--font-size-h5);
   width: 18px;
   height: 18px;
   vertical-align: middle;
@@ -39,7 +39,7 @@
 
 .map-error {
   margin: 8px 0 0;
-  font-size: 0.875rem;
+  font-size: var(--font-size-body-sm);
   color: var(--mat-sys-error, var(--error-strong));
 }
 

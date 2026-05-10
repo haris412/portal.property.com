@@ -8,12 +8,12 @@
   border-color: var(--border-soft);
   color: var(--font-main);
   background: var(--tertiary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-body-sm);
   font-weight: 500;
 
   .mat-icon {
     margin-right: 8px;
-    font-size: 18px;
+    font-size: var(--font-size-h5);
     width: 18px;
     height: 18px;
   }

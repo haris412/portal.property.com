@@ -5,7 +5,7 @@
   min-height: 32px;
   padding: 6px 12px;
   border-radius: 999px;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-caption);
   font-weight: 700;
 
   &--confirmed {

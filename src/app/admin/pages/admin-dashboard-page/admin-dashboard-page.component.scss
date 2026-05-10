@@ -9,15 +9,15 @@
 
 .admin-dashboard__heading {
   margin: 0 0 0.5rem;
-  font-size: 1.25rem;
+  font-size: var(--font-size-h4);
   font-weight: 800;
 }
 
 .admin-dashboard__lead {
-  font-size: 0.98rem;
+  font-size: var(--font-size-body);
   line-height: 1.55;
 }
 
 .admin-dashboard__meta {
-  font-size: 0.92rem;
+  font-size: var(--font-size-body-sm);
 }

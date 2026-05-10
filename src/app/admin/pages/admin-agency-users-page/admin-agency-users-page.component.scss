@@ -15,7 +15,7 @@
   &__filter-label {
     display: inline-block;
     margin-bottom: 0.4rem;
-    font-size: 0.8rem;
+    font-size: var(--font-size-caption);
     font-weight: 600;
     color: var(--font-secondary);
     text-transform: uppercase;
@@ -47,7 +47,7 @@
     .mat-icon {
       width: 3rem;
       height: 3rem;
-      font-size: 3rem;
+      font-size: var(--font-size-display);
       opacity: 0.35;
       margin-bottom: 0.5rem;
     }
@@ -55,7 +55,7 @@
 
   &__empty-title {
     margin: 0 0 0.35rem;
-    font-size: 1.15rem;
+    font-size: var(--font-size-h4);
     font-weight: 800;
     color: var(--font-main);
   }
@@ -64,7 +64,7 @@
     margin: 0;
     max-width: 22rem;
     line-height: 1.5;
-    font-size: 0.92rem;
+    font-size: var(--font-size-body-sm);
   }
 
   &__pager {
@@ -78,7 +78,7 @@
   }
 
   &__pager-meta {
-    font-size: 0.88rem;
+    font-size: var(--font-size-body-sm);
     color: var(--font-secondary);
   }
 
