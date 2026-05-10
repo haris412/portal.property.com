@@ -79,7 +79,7 @@
   &__title {
     margin: 0 0 0.2rem;
     color: var(--font-main);
-    font-size: var(--font-size-h2);
+    font-size: var(--font-size-h3);
     font-weight: 800;
   }
 
@@ -99,10 +99,10 @@
   &__card-header {
     margin-bottom: 1rem;
 
-    h2 {
+    h3 {
       margin: 0 0 0.25rem;
       color: var(--font-main);
-      font-size: var(--font-size-h3);
+      font-size: var(--font-size-h4);
       font-weight: 800;
     }
 
@@ -219,10 +219,10 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
 
-  h3 {
+  h4 {
     margin: 0 0 0.25rem;
     color: var(--font-main);
-    font-size: var(--font-size-h4);
+    font-size: var(--font-size-body-lg);
     font-weight: 700;
   }
 

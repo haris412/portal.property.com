@@ -12,7 +12,7 @@
     h3 {
       margin: 0 0 4px;
       color: var(--font-main);
-      font-size: var(--font-size-h4);
+      font-size: var(--font-size-body-lg);
       font-weight: 800;
       line-height: 1.2;
     }
@@ -62,7 +62,7 @@
 
   &__summary-value {
     color: var(--font-main);
-    font-size: var(--font-size-display);
+    font-size: var(--font-size-h1);
     line-height: 1;
     font-weight: 800;
     margin-bottom: 10px;
@@ -89,7 +89,7 @@
 
     strong {
       color: var(--font-main);
-      font-size: var(--font-size-h5);
+      font-size: var(--font-size-body);
       line-height: 1.2;
     }
   }

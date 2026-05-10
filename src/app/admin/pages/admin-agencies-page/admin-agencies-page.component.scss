@@ -62,7 +62,7 @@
     .mat-icon {
       width: 3rem;
       height: 3rem;
-      font-size: var(--font-size-display);
+      font-size: var(--font-size-h2);
       opacity: 0.35;
       margin-bottom: 0.5rem;
     }
@@ -70,7 +70,7 @@
 
   &__empty-title {
     margin: 0 0 0.35rem;
-    font-size: var(--font-size-h4);
+    font-size: var(--font-size-body-lg);
     font-weight: 800;
     color: var(--font-main);
   }

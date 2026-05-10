@@ -12,9 +12,9 @@
   }
 
   &__heading {
-    h2 {
+    h1 {
       color: var(--font-main);
-      font-size: var(--font-size-h3);
+      font-size: var(--font-size-h4);
       font-weight: 700;
       line-height: 1.2;
     }
@@ -145,7 +145,7 @@
     gap: 0.75rem;
     margin-bottom: 0.25rem;
 
-    h3 {
+    h4 {
       margin: 0;
       color: var(--font-main);
       font-size: var(--font-size-body);
@@ -254,7 +254,7 @@
   &__info {
     min-width: 0;
 
-    h3 {
+    h4 {
       margin: 0;
       color: var(--font-main);
       font-size: var(--font-size-body);
@@ -374,7 +374,7 @@
   }
 
   .material-symbols-outlined {
-    font-size: var(--font-size-h4);
+    font-size: var(--font-size-body-lg);
   }
 }
 

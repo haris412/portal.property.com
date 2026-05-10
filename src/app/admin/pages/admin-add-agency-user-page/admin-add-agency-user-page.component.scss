@@ -67,7 +67,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-h4);
     font-weight: 800;
     letter-spacing: 1px;
   }
@@ -75,7 +75,7 @@
   &__title {
     margin: 0 0 0.2rem;
     color: var(--font-main);
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-h4);
     font-weight: 800;
   }
 
@@ -120,10 +120,10 @@
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-soft);
 
-    h2 {
+    h3 {
       margin: 0 0 0.2rem;
       color: var(--font-main);
-      font-size: var(--font-size-body-lg);
+      font-size: var(--font-size-body);
       font-weight: 700;
     }
 

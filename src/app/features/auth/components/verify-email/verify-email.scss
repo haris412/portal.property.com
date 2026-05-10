@@ -55,7 +55,7 @@
   .mat-icon {
     width: 40px;
     height: 40px;
-    font-size: var(--font-size-display);
+    font-size: var(--font-size-h2);
   }
 
   &--success {
@@ -123,7 +123,7 @@
       padding: 1.5rem 1.25rem;
 
       .auth-card-title {
-        font-size: var(--font-size-h3);
+        font-size: var(--font-size-h4);
       }
     }
   }
