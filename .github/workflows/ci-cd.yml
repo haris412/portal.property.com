@@ -1,0 +1,67 @@
+name: Admin DEV CI/CD
+
+on:
+  push:
+    branches: [Development]
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: [self-hosted, windows, property-admin-self-hosted]
+
+    steps:
+      - name: Clean and clone
+        shell: cmd
+        run: |
+          git config --global core.sshCommand ""
+          git config --global submodule.recurse false
+          git config --global credential.helper ""
+          if exist repo rd /s /q repo
+          git clone --branch Development --depth 1 --single-branch https://x-access-token:${{ secrets.GH_TOKEN_PROP_ADMIN }}@github.com/haris412/portal.property.com.git repo
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        shell: cmd
+        run: cd /d repo && npm install --legacy-peer-deps
+
+      - name: Build
+        shell: cmd
+        run: cd /d repo && npm run build -- --configuration production
+
+      - name: Patch base href
+        shell: powershell
+        run: |
+          $index = "$env:GITHUB_WORKSPACE\repo\dist\portal-dashboard\browser\index.html"
+          (Get-Content $index -Raw) -replace '<base href="/">', '<base href="/property.admin/">' |
+            Set-Content $index -Encoding utf8
+          Write-Host "base href patched"
+
+      - name: Deploy (blue-green swap)
+        shell: powershell
+        run: |
+          Import-Module WebAdministration
+
+          $source  = "$env:GITHUB_WORKSPACE\repo\dist\portal-dashboard\browser"
+          $pathA   = "C:\inetpub\property.admin\browser"
+          $pathB   = "C:\admin-frontend-dev-temp"
+          $appPath = "IIS:\Sites\Default Web Site\property.admin"
+
+          $current = (Get-ItemProperty $appPath).physicalPath.TrimEnd('\')
+          $target  = if ($current -eq $pathA) { $pathB } else { $pathA }
+          Write-Host "Current: $current -> Deploying to: $target"
+
+          if (!(Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force }
+          Remove-Item "$target\*" -Recurse -Force -ErrorAction SilentlyContinue
+          Copy-Item "$source\*" $target -Recurse -Force
+
+          Set-ItemProperty $appPath -Name physicalPath -Value $target
+          Restart-WebAppPool -Name (Get-WebApplication -Site "Default Web Site" -Name "property.admin").applicationPool
+          Write-Host "Done -> IIS now points to $target"
