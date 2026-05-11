@@ -13,6 +13,7 @@ import {
   tap,
   throwError,
 } from 'rxjs';
+import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
@@ -56,6 +57,7 @@ export interface RegisterPayload {
   roleName: string;
   phoneNumber: string;
   location?: string;
+  agencyName?: string;
 }
 
 interface AuthApiResponse {
@@ -298,6 +300,20 @@ export class AuthService {
       );
   }
 
+  // ── Agency ────────────────────────────────────────────────────────────────
+
+  checkAgencyNameAvailable(name: string): Observable<boolean> {
+    return this.http
+      .get<{ success?: boolean; data?: { available?: boolean } }>(
+        `${environment.apiUrl}/api/auth/check-agency-name`,
+        { params: { name: name.trim() } },
+      )
+      .pipe(
+        map((res) => res.data?.available ?? true),
+        catchError(() => of(true)),
+      );
+  }
+
   // ── Profile ────────────────────────────────────────────────────────────────
 
   fetchUserProfile(id: string): Observable<void> {
@@ -372,4 +388,25 @@ export class AuthService {
     const e = err as { error?: { message?: string; errors?: Array<{ msg?: string }> }; message?: string };
     return e.error?.message ?? e.error?.errors?.[0]?.msg ?? e.message ?? fallback;
   }
+}
+
+// ── Agency name availability validator ────────────────────────────────────────
+
+/**
+ * Debounced async validator — waits 500 ms after the user stops typing, then
+ * calls GET /api/auth/check-agency-name. Angular cancels the previous timer on
+ * each keystroke via switchMap, so only one request fires per pause.
+ * Fails open (returns null) on network errors so the user is never blocked by
+ * a transient API failure.
+ */
+export function agencyNameAvailableValidator(authService: AuthService): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    const name = (control.value ?? '').toString().trim();
+    if (name.length < 2) return of(null);
+
+    return authService.checkAgencyNameAvailable(name).pipe(
+      map((available) => (available ? null : { agencyNameTaken: true })),
+      catchError(() => of(null)),
+    );
+  };
 }
