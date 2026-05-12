@@ -1,5 +1,27 @@
-<app-section-card [title]="title()" [description]="subtitle()" density="compact">
-  <div class="chart-panel">
-    <div #chartEl class="chart-panel__chart"></div>
+<app-section-card
+  [title]="title()"
+  [description]="subtitle()"
+  density="compact"
+  variant="dashboard"
+  headerLayout="split"
+  icon="monitoring"
+  [fullHeight]="true"
+>
+  <details section-card-actions class="chart-panel__range">
+    <summary aria-label="Filter chart date range">
+      <span>Last 7 days</span>
+      <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">expand_more</mat-icon>
+    </summary>
+
+    <div class="chart-panel__range-menu" role="listbox" aria-label="Chart date range options">
+      <button type="button" role="option">Today</button>
+      <button type="button" role="option">Last 7 days</button>
+      <button type="button" role="option">Last 30 days</button>
+      <button type="button" role="option">This month</button>
+    </div>
+  </details>
+
+  <div class="chart-panel__body">
+    <div #chartEl class="chart-panel__chart" [style.height]="height()"></div>
   </div>
 </app-section-card>

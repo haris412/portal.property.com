@@ -1,14 +1,24 @@
-<app-section-card title="Hot Locations" description="Buyer demand by area" density="compact">
+<app-section-card
+  title="Hot Locations"
+  description="Buyer demand by area"
+  density="compact"
+  variant="dashboard"
+  icon="location_on"
+  [fullHeight]="true"
+>
   <div class="locations-demand-card">
     <div class="locations-demand-card__list">
-      @for (location of locations(); track location.name) {
+      @for (location of locations(); track location.name; let rank = $index) {
         <div class="locations-demand-card__item">
           <div class="locations-demand-card__row">
-            <strong>{{ location.name }}</strong>
-            <span>{{ location.percent }}%</span>
+            <div class="locations-demand-card__label">
+              <span class="locations-demand-card__rank">{{ rank + 1 }}</span>
+              <strong>{{ location.name }}</strong>
+            </div>
+            <span class="locations-demand-card__percent">{{ location.percent }}%</span>
           </div>
 
-          <div class="locations-demand-card__bar">
+          <div class="locations-demand-card__bar" [attr.aria-label]="location.name + ' demand ' + location.percent + '%'">
             <span [style.width.%]="location.percent"></span>
           </div>
         </div>

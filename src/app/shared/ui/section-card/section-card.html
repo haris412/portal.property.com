@@ -1,10 +1,24 @@
 <section class="section-card" [class]="classes()">
   <header class="section-card__header">
-    <h3 class="section-card__title"  [attr.title]="null">{{ title() }}</h3>
+    <div class="section-card__heading">
+      @if (icon()) {
+        <span class="section-card__icon">
+          <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">{{ icon() }}</mat-icon>
+        </span>
+      }
 
-    @if (description()) {
-      <p class="section-card__description">{{ description() }}</p>
-    }
+      <div class="section-card__copy">
+        <h3 class="section-card__title" [attr.title]="null">{{ title() }}</h3>
+
+        @if (description()) {
+          <p class="section-card__description">{{ description() }}</p>
+        }
+      </div>
+    </div>
+
+    <div class="section-card__actions">
+      <ng-content select="[section-card-actions]" />
+    </div>
   </header>
 
   <div class="section-card__body">

@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
-import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-dashboard-hero-card',
   standalone: true,
-  imports: [SectionCardComponent, ActionButtonComponent],
+  imports: [MatIconModule],
   templateUrl: './dashboard-hero-card.html',
   styleUrl: './dashboard-hero-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
