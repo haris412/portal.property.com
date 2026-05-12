@@ -390,7 +390,7 @@
       color: var(--surface);
       border-top-right-radius: 6px;
 
-      span {
+      span,p {
         color: color-mix(in srgb, var(--surface) 88%, transparent);
       }
     }

@@ -21,25 +21,26 @@ html {
 
 :root {
   --font-family: 'Plus Jakarta Sans', 'Segoe UI', Roboto, sans-serif;
-  
-  --font-size-display: clamp(2rem, 2.8vw, 2.625rem);
-  --font-size-h1: clamp(1.875rem, 2.4vw, 2.25rem);
-  --font-size-h2: clamp(1.625rem, 2vw, 1.875rem);
-  --font-size-h3: clamp(1.375rem, 1.6vw, 1.5rem);
-  --font-size-h4: clamp(1.125rem, 1.3vw, 1.25rem);
-  --font-size-h5: 1.0625rem;
-  --font-size-h6: 1rem;
 
-  --font-size-body-lg: 1.0625rem;
-  --font-size-body: 1rem;
-  --font-size-body-sm: 0.9375rem;
-  --font-size-caption: 0.8125rem;
-  --font-size-overline: 0.75rem;
+  /* Typography */
+  --font-size-display: clamp(1.75rem, 2.4vw, 2.25rem); /* 28px → 36px */
+  --font-size-h1: clamp(1.625rem, 2.1vw, 2rem); /* 26px → 32px */
+  --font-size-h2: clamp(1.375rem, 1.8vw, 1.625rem); /* 22px → 26px */
+  --font-size-h3: clamp(1.1875rem, 1.5vw, 1.375rem); /* 19px → 22px */
+  --font-size-h4: clamp(1rem, 1.2vw, 1.125rem); /* 16px → 18px */
+  --font-size-h5: 0.9375rem; /* 15px */
+  --font-size-h6: 0.875rem; /* 14px */
 
-  --line-height-display: 1.05;
-  --line-height-heading: 1.15;
-  --line-height-body: 1.6;
-  --line-height-compact: 1.35;
+  --font-size-body-lg: 0.9375rem; /* 15px */
+  --font-size-body: 0.875rem; /* 14px */
+  --font-size-body-sm: 0.8125rem; /* 13px */
+  --font-size-caption: 0.75rem; /* 12px */
+  --font-size-overline: 0.6875rem; /* 11px */
+
+  --line-height-display: 1.08;
+  --line-height-heading: 1.18;
+  --line-height-body: 1.5;
+  --line-height-compact: 1.3;
 
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -111,6 +112,8 @@ html {
   --mat-form-field-outlined-container-shape: var(--radius-field);
   --mat-button-filled-label-text-font: 'Plus Jakarta Sans';
   --mat-button-outlined-container-shape: var(--radius-field);
+  --mat-form-field-container-vertical-padding: 11px;
+  --mat-form-field-container-height: 48px;
 
   --overlay-backdrop: rgba(18, 24, 33, 0.58);
 
@@ -306,7 +309,15 @@ textarea,
 
 .mat-mdc-form-field {
   width: 100%;
+  .mat-mdc-text-field-wrapper:not(:has(textarea)) {
+    height: var(--mat-form-field-container-height);
+  }
 }
+
+.mdc-text-field--no-label:not(.mdc-text-field--textarea) .mat-mdc-form-field-input-control.mdc-text-field__input,
+      .mat-mdc-text-field-wrapper .mat-mdc-form-field-input-control {
+        font-size: var(--font-size-body-lg);
+      }
 
 .mat-mdc-raised-button.auth-primary-btn {
   border-radius: var(--radius-field);
@@ -327,6 +338,19 @@ textarea,
 
 .mat-mdc-raised-button.auth-primary-btn:not(:disabled):not(.mat-mdc-button-disabled):hover {
   background: var(--primary-hover);
+}
+
+.mat-mdc-option .mdc-list-item__primary-text {
+  font-size: var(--font-size-body-lg) !important;
+}
+
+div.mat-mdc-autocomplete-panel {
+  border-radius: var(--radius-md) !important;
+  margin-top: 0.25rem;
+}
+
+.mat-mdc-option:focus.mdc-list-item, .mat-mdc-option.mat-mdc-option-active.mdc-list-item, .mat-mdc-option:hover:not(.mdc-list-item--disabled) {
+  background: var(--primary-soft)
 }
 
 .text-muted-auth {
