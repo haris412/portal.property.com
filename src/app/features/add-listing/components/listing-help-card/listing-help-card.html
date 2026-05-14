@@ -1,0 +1,15 @@
+<app-section-card [title]="title()"
+                  [description]="description()"
+                  icon="tips_and_updates"
+                  variant="dashboard"
+                  density="compact">
+  <button type="button"
+          class="listing-help-card__action"
+          (click)="actionClicked.emit()">
+    <mat-icon fontSet="material-symbols-outlined"
+              inline
+              aria-hidden="true">{{ actionIcon() }}</mat-icon>
+    {{ actionLabel() }}
+  </button>
+</app-section-card>
+

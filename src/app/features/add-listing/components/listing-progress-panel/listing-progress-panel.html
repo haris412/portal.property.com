@@ -1,0 +1,111 @@
+<aside class="listing-progress-panel__aside"
+       aria-label="Listing progress">
+  <section class="listing-progress-panel__card"
+           aria-label="Listing progress details">
+    <h2>Listing Progress</h2>
+
+    <div class="listing-progress-panel__summary">
+      <div class="listing-progress-panel__ring"
+           [style.--progress-degrees]="progressDegrees()"
+           aria-hidden="true">
+        <strong>{{ progressPercent() }}%</strong>
+        <span>Complete</span>
+      </div>
+
+      <div>
+        <strong>You're on step {{ activeStepCountLabel() }}</strong>
+        <p>Keep going. You're building a complete listing profile.</p>
+      </div>
+    </div>
+
+    <ol class="listing-progress-panel__list">
+      @for (step of steps(); track step.key; let index = $index) {
+        <li class="listing-progress-panel__item"
+            [class.listing-progress-panel__item--active]="step.state === 'active'"
+            [class.listing-progress-panel__item--complete]="step.state === 'completed'"
+            [class.listing-progress-panel__item--ready]="step.readiness === 'complete'"
+            [class.listing-progress-panel__item--attention]="step.readiness === 'attention'">
+          <span class="listing-progress-panel__number">{{ index + 1 }}</span>
+          <span class="listing-progress-panel__name">{{ step.label }}</span>
+          <span class="listing-progress-panel__status">
+            <mat-icon fontSet="material-symbols-outlined"
+                      inline
+                      aria-hidden="true">{{ step.readiness === 'complete' ? 'check_circle' : 'error' }}</mat-icon>
+            {{ step.readinessLabel }}
+          </span>
+        </li>
+      }
+    </ol>
+  </section>
+</aside>
+
+<div class="listing-progress-panel__cookie-wrap"
+     aria-label="Listing progress (mobile)">
+  <button type="button"
+          class="listing-progress-panel__cookie"
+          aria-controls="add-listing-progress-tray"
+          [attr.aria-expanded]="trayOpen()"
+          (click)="toggleTray.emit()">
+    <span class="listing-progress-panel__cookie-ring"
+          [style.--progress-degrees]="progressDegrees()"
+          aria-hidden="true"></span>
+    <span class="listing-progress-panel__cookie-text">
+      <strong>{{ progressPercent() }}%</strong>
+      <span>{{ completedStepCount() }} of {{ steps().length }} steps ready</span>
+    </span>
+    <mat-icon fontSet="material-symbols-outlined"
+              inline
+              aria-hidden="true">{{ trayOpen() ? 'expand_more' : 'expand_less' }}</mat-icon>
+  </button>
+</div>
+
+@if (trayOpen()) {
+  <button type="button"
+          class="listing-progress-panel__backdrop"
+          aria-label="Close listing progress"
+          (click)="closeTray.emit()"></button>
+}
+
+<section id="add-listing-progress-tray"
+         class="listing-progress-panel__tray"
+         [class.listing-progress-panel__tray--open]="trayOpen()"
+         [attr.aria-hidden]="!trayOpen()"
+         role="dialog"
+         aria-modal="true"
+         aria-label="Listing progress details">
+  <header class="listing-progress-panel__tray-header">
+    <div>
+      <strong>Listing Progress</strong>
+      <span>{{ completedStepCount() }} of {{ steps().length }} steps ready</span>
+    </div>
+    <button type="button"
+            class="listing-progress-panel__tray-close"
+            aria-label="Close"
+            (click)="closeTray.emit()">
+      <mat-icon fontSet="material-symbols-outlined"
+                inline
+                aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <div class="listing-progress-panel__tray-body">
+    <ol class="listing-progress-panel__list listing-progress-panel__list--tray">
+      @for (step of steps(); track step.key; let index = $index) {
+        <li class="listing-progress-panel__item"
+            [class.listing-progress-panel__item--active]="step.state === 'active'"
+            [class.listing-progress-panel__item--complete]="step.state === 'completed'"
+            [class.listing-progress-panel__item--ready]="step.readiness === 'complete'"
+            [class.listing-progress-panel__item--attention]="step.readiness === 'attention'">
+          <span class="listing-progress-panel__number">{{ index + 1 }}</span>
+          <span class="listing-progress-panel__name">{{ step.label }}</span>
+          <span class="listing-progress-panel__status">
+            <mat-icon fontSet="material-symbols-outlined"
+                      inline
+                      aria-hidden="true">{{ step.readiness === 'complete' ? 'check_circle' : 'error' }}</mat-icon>
+            {{ step.readinessLabel }}
+          </span>
+        </li>
+      }
+    </ol>
+  </div>
+</section>

@@ -1136,6 +1136,48 @@ Scope:
 - Run build/lint/typecheck if available.
 - Update markdown with final result.
 
+### Phase 10 Progress Notes - 2026-05-14
+
+- Fixed Add Listing progress panel responsiveness by moving it to a fixed mobile "progress cookie" + expandable tray.
+- Merged the previous "Checklist before publish" into the same progress list (requirements render as list items with completion icons).
+- Removed the separate checklist card/section to avoid redundant UI.
+- Extracted UI into dedicated Add Listing components to keep the page template and SCSS smaller and more maintainable:
+  - `ListingProgressPanelComponent` (desktop aside + mobile cookie/tray)
+  - `ListingHelpCardComponent` (Need help / AI tools CTA)
+- Updated Add Listing page to consume these components and kept all form/data-flow logic in the page component.
+
+Changed files:
+
+- `src/app/features/add-listing/pages/add-listing-page/add-listing-page.ts`
+- `src/app/features/add-listing/pages/add-listing-page/add-listing-page.html`
+- `src/app/features/add-listing/pages/add-listing-page/add-listing-page.scss`
+- `src/app/features/add-listing/components/listing-progress-panel/listing-progress-panel.ts`
+- `src/app/features/add-listing/components/listing-progress-panel/listing-progress-panel.html`
+- `src/app/features/add-listing/components/listing-progress-panel/listing-progress-panel.scss`
+- `src/app/features/add-listing/components/listing-help-card/listing-help-card.ts`
+- `src/app/features/add-listing/components/listing-help-card/listing-help-card.html`
+- `src/app/features/add-listing/components/listing-help-card/listing-help-card.scss`
+- `angular.json` (production build: disabled fonts inlining to prevent offline build failures)
+- `docs/add-listing-stepper-redesign-tasks.md`
+
+Preserved bindings/handlers:
+
+- Progress UI remains derived from existing wizard steps and `publishRequirements()` computed values.
+- Mobile tray open/close continues to use `progressTrayOpen` with `toggleProgressTray()` / `closeProgressTray()` in the page.
+- The help card action continues to call `goToAiDescriptionStep()`.
+- No form controls, validators, or submit/save/publish/update flows were changed.
+
+Checks run:
+
+- `npm run build` - passed.
+- Follow-up polish: wrapped the progress panel and help card into a single page-level aside column so the help card stays under the progress rail on desktop and no longer sits behind the fixed mobile cookie.
+- Follow-up polish: tightened merged requirement rows in the progress list so the combined step/check state takes less vertical space.
+
+Notes/risks:
+
+- Production builds previously failed in environments without internet access due to Google Fonts inlining; `angular.json` now disables font inlining in production.
+- New component styles exceed the 4 kB warning budget in a couple places, but remain under the 8 kB error budget.
+
 ## Phase Completion Log
 
 ### Phase 9 Completion Notes - 2026-05-14
