@@ -17,32 +17,210 @@
     }
     }
 
-    <div class="row g-4">
-      <div class="col-12 col-xl-8">
-        <div class="add-listing-page__left">
+    <div class="add-listing-page__stepper">
+      <app-wizard-stepper [steps]="listingSteps()"
+                          [activeKey]="activeStepKey()"
+                          [ariaLabel]="'Add listing progress'"
+                          (stepSelected)="onWizardStepSelected($event)" />
+    </div>
+
+    <div class="add-listing-page__content">
+      <div class="add-listing-page__wizard"
+           [attr.aria-label]="activeStepLabel()">
+        @switch (activeStepKey()) {
+        @case ('basic-info') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-basic-information-section [form]="basicInfoForm" />
+        </div>
+        }
+        @case ('pricing') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-pricing-details-section [form]="pricingForm" />
+        </div>
+        }
+        @case ('location') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
+          <app-property-location-step [form]="locationForm" />
+        </div>
+        }
+        @case ('features-media') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-features-amenities-section [form]="amenitiesForm" />
           <app-property-media-section [form]="mediaForm" />
-          <div class="back-to-top">
-            <button type="button"
-                     (click)="scrollToTop()">Back to Top</button>
-          </div>
-
         </div>
-      </div>
-
-      <div class="col-12 col-xl-4">
-        <div class="add-listing-page__right">
-          <app-property-location-step [form]="locationForm" />
+        }
+        @case ('contact-description') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-contact-information-step [form]="contactForm" />
           <app-property-description-step [form]="descriptionForm"
                                          [aiDescriptionEnabled]="aiDescriptionContextReady()"
                                          [aiDescriptionLoading]="isGeneratingDescription()"
                                          (generateDescription)="onGenerateDescription()" />
         </div>
+        }
+        @case ('review-publish') {
+        <div class="add-listing-page__review">
+          <section class="add-listing-page__review-hero">
+            <div>
+              <span class="add-listing-page__review-eyebrow">Final check</span>
+              <h2>Review & Publish</h2>
+              <p>
+                Confirm the listing details below, then save a draft or publish when everything is ready.
+              </p>
+            </div>
 
+            <div class="add-listing-page__review-status"
+                 [class.add-listing-page__review-status--ready]="canSubmitListing()">
+              <mat-icon fontSet="material-symbols-outlined"
+                        inline
+                        aria-hidden="true">
+                {{ canSubmitListing() ? 'task_alt' : 'error_outline' }}
+              </mat-icon>
+              <span>{{ completedRequirementCount() }} of {{ publishRequirements().length }} items complete</span>
+            </div>
+          </section>
+
+          <div class="add-listing-page__review-grid">
+            @for (section of reviewSummarySections(); track section.title) {
+            <section class="add-listing-page__review-section">
+              <div class="add-listing-page__review-section-header">
+                <span class="add-listing-page__review-icon">
+                  <mat-icon fontSet="material-symbols-outlined"
+                            inline
+                            aria-hidden="true">{{ section.icon }}</mat-icon>
+                </span>
+                <h3>{{ section.title }}</h3>
+              </div>
+
+              <dl class="add-listing-page__review-list">
+                @for (item of section.items; track item.label) {
+                <div class="add-listing-page__review-row">
+                  <dt>{{ item.label }}</dt>
+                  <dd>{{ item.value }}</dd>
+                </div>
+                }
+              </dl>
+            </section>
+            }
+          </div>
+
+          <div class="add-listing-page__review-actions"
+               aria-label="Review actions">
+            @if (!editingId()) {
+            <button type="button"
+                    class="add-listing-page__nav-button add-listing-page__nav-button--secondary"
+                    [disabled]="isSubmitting()"
+                    (click)="onReviewSaveDraft()">
+              Save Draft
+            </button>
+            }
+
+            <button type="button"
+                    class="add-listing-page__nav-button add-listing-page__nav-button--primary"
+                    [disabled]="isSubmitting()"
+                    (click)="onReviewPrimaryAction()">
+              {{ reviewPrimaryActionLabel() }}
+            </button>
+          </div>
+        </div>
+        }
+        }
+
+        <div class="add-listing-page__navigation">
+          <button class="add-listing-page__nav-button add-listing-page__nav-button--secondary"
+                  type="button"
+                  [disabled]="isFirstStep()"
+                  (click)="goToPreviousStep()">
+            Previous
+          </button>
+          <button class="add-listing-page__nav-button add-listing-page__nav-button--primary"
+                  type="button"
+                  [disabled]="isLastStep()"
+                  (click)="goToNextStep()">
+            Continue
+          </button>
+        </div>
+
+        <div class="back-to-top">
+          <button type="button"
+                  (click)="scrollToTop()">Back to Top</button>
+        </div>
       </div>
+
+      <aside class="add-listing-page__aside"
+             aria-label="Listing progress">
+        <section class="add-listing-page__side-card add-listing-page__progress-card">
+          <h2>Listing Progress</h2>
+
+          <div class="add-listing-page__progress-summary">
+            <div class="add-listing-page__progress-ring"
+                 [style.--progress-degrees]="progressDegrees()"
+                 aria-hidden="true">
+              <strong>{{ progressPercent() }}%</strong>
+              <span>Complete</span>
+            </div>
+
+            <div>
+              <strong>You're on step {{ activeStepCountLabel() }}</strong>
+              <p>Keep going. You're building a complete listing profile.</p>
+            </div>
+          </div>
+
+          <ol class="add-listing-page__progress-list">
+            @for (step of listingSteps(); track step.key; let index = $index) {
+            <li class="add-listing-page__progress-item"
+                [class.add-listing-page__progress-item--active]="step.state === 'active'"
+                [class.add-listing-page__progress-item--complete]="step.state === 'completed'">
+              <span class="add-listing-page__progress-number">{{ index + 1 }}</span>
+              <span class="add-listing-page__progress-name">{{ step.label }}</span>
+              @if (step.state === 'active') {
+              <span class="add-listing-page__progress-status">In progress</span>
+              } @else if (step.state === 'completed') {
+              <span class="add-listing-page__progress-status">Complete</span>
+              } @else {
+              <span class="add-listing-page__progress-status">Pending</span>
+              }
+            </li>
+            }
+          </ol>
+        </section>
+
+        <section class="add-listing-page__side-card">
+          <h2>Checklist before publish</h2>
+
+          <ul class="add-listing-page__requirement-list">
+            @for (item of publishRequirements(); track item.label) {
+            <li [class.add-listing-page__requirement-item--complete]="item.complete"
+                class="add-listing-page__requirement-item">
+              <mat-icon fontSet="material-symbols-outlined"
+                        inline
+                        aria-hidden="true">{{ item.complete ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              <span>{{ item.label }}</span>
+            </li>
+            }
+          </ul>
+        </section>
+
+        <section class="add-listing-page__side-card add-listing-page__help-card">
+          <div class="add-listing-page__help-icon">
+            <mat-icon fontSet="material-symbols-outlined"
+                      inline
+                      aria-hidden="true">tips_and_updates</mat-icon>
+          </div>
+          <div>
+            <h2>Need help?</h2>
+            <p>Use AI tools to generate titles, descriptions, and cleaner listing copy faster.</p>
+            <button type="button"
+                    class="add-listing-page__help-action"
+                    (click)="goToAiDescriptionStep()">
+              <mat-icon fontSet="material-symbols-outlined"
+                        inline
+                        aria-hidden="true">auto_awesome</mat-icon>
+              Explore AI Tools
+            </button>
+          </div>
+        </section>
+      </aside>
     </div>
   </div>
 </div>

@@ -11,12 +11,28 @@
     border-radius: var(--radius-md);
     background: var(--surface);
     color: var(--font-main);
+    font-size: var(--font-size-body-sm);
     font-weight: 600;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
 
     &--selected {
       border-color: var(--primary);
-      background: var(--primary);
-      color: var(--surface);
+      background: var(--primary-soft);
+      color: var(--primary);
     }
   }
 

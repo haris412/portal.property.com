@@ -1,15 +1,24 @@
 <app-section-card
   [title]="'addListing.features.title' | translate"
   [description]="'addListing.features.description' | translate"
+  icon="tune"
+  variant="dashboard"
 >
   @if (featuresError()) {
-    <app-info-banner icon="error_outline" [text]="'addListing.features.error' | translate" />
-    <button type="button" mat-stroked-button class="mt-2" (click)="retryLoadFeatures()">
-      {{ 'addListing.retry' | translate }}
-    </button>
+    <div class="features-amenities__state">
+      <app-info-banner icon="error_outline" [text]="'addListing.features.error' | translate" />
+      <button type="button" mat-stroked-button class="features-amenities__retry" (click)="retryLoadFeatures()">
+        {{ 'addListing.retry' | translate }}
+      </button>
+    </div>
   } @else if (featuresLoading()) {
-    <p class="text-muted mb-0">{{ 'addListing.features.loading' | translate }}</p>
+    <div class="features-amenities__loading" role="status">
+      {{ 'addListing.features.loading' | translate }}
+    </div>
   } @else {
-    <app-selectable-chip-grid [items]="chipItems()" (toggled)="toggleAmenity($event)" />
+    <div class="features-amenities__content">
+      <p class="features-amenities__hint">Choose every amenity that applies so the listing can be filtered accurately.</p>
+      <app-selectable-chip-grid [items]="chipItems()" (toggled)="toggleAmenity($event)" />
+    </div>
   }
 </app-section-card>

@@ -14,7 +14,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { merge } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { StepCardComponent } from '../../../../shared/ui/step-card/step-card';
+import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
 import { ActionChipData } from '../../../../core/models/ui.models';
@@ -27,7 +27,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    StepCardComponent,
+    SectionCardComponent,
     InfoBannerComponent,
     ActionChipListComponent,
   ],

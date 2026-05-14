@@ -1,15 +1,35 @@
 .field-label {
   display: inline-block;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
   color: var(--font-main);
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
 }
 
-.property-description-step__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.625rem;
-  flex-wrap: wrap;
+.property-description-step {
+  display: grid;
+  gap: 1.25rem;
+
+  &__editor {
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  &__field {
+    textarea {
+      line-height: 1.65;
+    }
+  }
+
+  &__ai-panel {
+    border-radius: var(--radius-md);
+  }
 }

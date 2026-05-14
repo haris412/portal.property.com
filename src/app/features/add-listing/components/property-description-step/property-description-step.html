@@ -1,16 +1,23 @@
-<app-step-card [step]="3" [title]="'addListing.description.title' | translate">
-  <div class="d-grid gap-4" [formGroup]="form()">
+<app-section-card [title]="'addListing.description.title' | translate"
+                  description="Write clear listing copy that highlights the property, location, and lifestyle fit."
+                  icon="description"
+                  variant="dashboard">
+  <div class="property-description-step" [formGroup]="form()">
     <app-info-banner icon="subject" [text]="descriptionBanner()" />
 
-    <div>
+    <div class="property-description-step__editor">
       <div class="property-description-step__header">
         <label class="field-label mb-0">{{ 'addListing.description.label' | translate }}</label>
         <app-action-chip-list [items]="descriptionActions()" (actionClicked)="onDescriptionAction($event)" />
       </div>
-      <mat-form-field appearance="outline" class="w-100">
-        <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="4" cdkAutosizeMaxRows="12"
-          formControlName="propertyDescription"
-          [placeholder]="'addListing.description.placeholder' | translate"></textarea>
+
+      <mat-form-field appearance="outline" class="w-100 property-description-step__field">
+        <textarea matInput
+                  cdkTextareaAutosize
+                  cdkAutosizeMinRows="6"
+                  cdkAutosizeMaxRows="14"
+                  formControlName="propertyDescription"
+                  [placeholder]="'addListing.description.placeholder' | translate"></textarea>
         <mat-error>
           @if (form().get('propertyDescription')?.hasError('server')) {
             {{ form().get('propertyDescription')?.getError('server') }}
@@ -21,7 +28,10 @@
           }
         </mat-error>
       </mat-form-field>
-      <app-info-banner icon="smart_toy" [text]="'addListing.description.aiBanner' | translate" />
+
+      <div class="property-description-step__ai-panel">
+        <app-info-banner icon="smart_toy" [text]="'addListing.description.aiBanner' | translate" />
+      </div>
     </div>
   </div>
-</app-step-card>
+</app-section-card>

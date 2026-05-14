@@ -13,7 +13,7 @@
   width: 100%;
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: var(--secondary);
+  background: var(--surface-muted);
 }
 
 .map-toolbar {
@@ -27,6 +27,9 @@
 .map-toolbar__btn {
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(4px);
+  border-color: var(--border-soft);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .map-toolbar__icon {
