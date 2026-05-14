@@ -24,6 +24,12 @@ import {
   WizardStepperComponent,
   WizardStepperItem,
 } from '../../../../shared/ui/wizard-stepper/wizard-stepper';
+import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
+import {
+  ListingProgressPanelComponent,
+  ListingProgressStep,
+} from '../../components/listing-progress-panel/listing-progress-panel';
+import { ListingHelpCardComponent } from '../../components/listing-help-card/listing-help-card';
 import { BasicInformationSectionComponent } from '../../components/basic-information-section/basic-information-section';
 import { PricingDetailsSectionComponent } from '../../components/pricing-details-section/pricing-details-section';
 import { FeaturesAmenitiesSectionComponent } from '../../components/features-amenities-section/features-amenities-section';
@@ -125,6 +131,9 @@ function locationCityFormValueToString(city: unknown): string {
     PageHeaderComponent,
     InfoBannerComponent,
     WizardStepperComponent,
+    SectionCardComponent,
+    ListingProgressPanelComponent,
+    ListingHelpCardComponent,
     BasicInformationSectionComponent,
     PricingDetailsSectionComponent,
     FeaturesAmenitiesSectionComponent,
@@ -232,6 +241,39 @@ export class AddListingPageComponent {
   readonly completedRequirementCount = computed(
     () => this.publishRequirements().filter((item) => item.complete).length
   );
+  readonly progressPanelSteps = computed<readonly ListingProgressStep[]>(() => {
+    this.listingFormsTick();
+
+    const amenities = this.amenitiesForm.getRawValue();
+    const media = this.mediaForm.getRawValue();
+    const hasFeaturesOrMedia = Boolean(
+      (amenities.selectedFeatureIds ?? []).length ||
+      (media.images ?? []).length ||
+      (media.videoFiles ?? []).length
+    );
+
+    const readinessByStep: Record<AddListingStepKey, boolean> = {
+      'basic-info': this.basicInfoForm.valid,
+      pricing: this.pricingForm.valid,
+      location: this.locationForm.valid,
+      'features-media': hasFeaturesOrMedia,
+      'contact-description': this.contactForm.valid && this.descriptionForm.valid,
+      'review-publish': this.canSubmitListing(),
+    };
+
+    return this.listingSteps().map((step) => {
+      const ready = readinessByStep[step.key as AddListingStepKey];
+      return {
+        ...step,
+        readiness: ready ? 'complete' : 'attention',
+        readinessLabel: ready ? 'Ready' : 'Needs input',
+      };
+    });
+  });
+  readonly completedProgressStepCount = computed(
+    () => this.progressPanelSteps().filter((step) => step.readiness === 'complete').length
+  );
+  readonly progressTrayOpen = signal(false);
   readonly canSubmitListing = computed(() =>
     this.publishRequirements()
       .filter((item) => item.label !== 'Add media')
@@ -662,6 +704,14 @@ export class AddListingPageComponent {
 
   goToAiDescriptionStep(): void {
     this.activeStepKey.set('contact-description');
+  }
+
+  toggleProgressTray(): void {
+    this.progressTrayOpen.update((open) => !open);
+  }
+
+  closeProgressTray(): void {
+    this.progressTrayOpen.set(false);
   }
 
   async onReviewPrimaryAction(): Promise<void> {
