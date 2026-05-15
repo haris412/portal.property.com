@@ -1,9 +1,13 @@
 <section class="section-card auth-card h-100" aria-labelledby="login-title">
   <div class="card-inner">
-    <h2 id="login-title" class="auth-card-title">{{ 'public.signIn.heading' | translate }}</h2>
-    <p class="auth-card-copy text-muted-auth">
-      {{ 'public.signIn.description' | translate }}
-    </p>
+    @if (showIntro()) {
+      <h2 id="login-title" class="auth-card-title">{{ 'public.signIn.heading' | translate }}</h2>
+      <p class="auth-card-copy text-muted-auth">
+        {{ 'public.signIn.description' | translate }}
+      </p>
+    } @else {
+      <h2 id="login-title" class="visually-hidden">{{ 'public.signIn.heading' | translate }}</h2>
+    }
 
     @if (error()) {
       <div class="alert alert-danger mb-3" role="alert">
@@ -119,11 +123,11 @@
       <div class="visually-divider my-3">{{ 'public.signIn.quickAccess' | translate }}</div>
 
       <div class="row g-3">
-        <div class="col-12 col-sm-6">
-          <app-social-button label="Sign in with Google" icon="google" />
+        <div class="col-12">
+          <app-social-button label="Google" icon="google" />
         </div>
-        <div class="col-12 col-sm-6">
-          <app-social-button label="Sign in with Microsoft" icon="microsoft" />
+        <div class="col-12">
+          <app-social-button label="Microsoft" icon="microsoft" />
         </div>
       </div>
     }

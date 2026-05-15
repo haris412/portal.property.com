@@ -4,6 +4,7 @@ import {
   computed,
   DestroyRef,
   inject,
+  input,
   OnInit,
   signal
 } from '@angular/core';
@@ -96,6 +97,7 @@ interface SignupFormControls {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SignupCardComponent implements OnInit {
+  readonly showIntro = input(true);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);

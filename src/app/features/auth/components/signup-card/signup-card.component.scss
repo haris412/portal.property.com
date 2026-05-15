@@ -1,37 +1,39 @@
 .auth-card {
   min-height: 100%;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 
   .card-inner {
-    padding: 20px;
+    padding: 0;
     height: 100%;
-    overflow-y: auto;
   }
 
   .auth-card-title {
-    margin: 0 0 8px;
-    font-size: var(--font-size-h2);
-    line-height: 1.1;
-    font-weight: 800;
+    margin: 0 0 0.625rem;
     color: var(--font-main);
+    font-size: var(--font-size-h2);
+    font-weight: 800;
+    line-height: 1.08;
   }
 
   .auth-card-copy {
-    margin: 0 0 18px;
+    margin: 0 0 1.25rem;
     font-size: var(--font-size-body-sm);
-    line-height: 1.55;
+    line-height: 1.6;
   }
 
   .form-label-auth {
     display: inline-block;
-    margin-bottom: 6px;
-    font-size: var(--font-size-caption);
-    font-weight: 700;
+    margin-bottom: 0.5rem;
     color: var(--font-main);
+    font-size: var(--font-size-body-sm);
+    font-weight: 700;
   }
 
   .user-type-pill {
-    min-height: 38px;
-    padding: 8px 14px;
+    min-height: 42px;
+    padding: 0.625rem 1rem;
     border: 1px solid var(--border-soft);
     border-radius: var(--radius-md);
     background: var(--tertiary);
@@ -65,18 +67,31 @@
     margin-top: -8px;
     margin-bottom: 8px;
   }
-
-  @media (max-width: 575.98px) {
-    .card-inner {
-      padding: 18px;
-    }
-
-    .auth-card-title {
-      font-size: var(--font-size-h4);
-    }
-  }
 }
 
 .mat-icon {
   color: var(--font-secondary);
+}
+
+@media (min-width: 991.98px) {
+  .section-card.auth-card {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .auth-card {
+    .auth-card-title {
+      font-size: var(--font-size-h3);
+    }
+
+    .phone-row {
+      flex-direction: column;
+
+      .phone-country {
+        flex: 1 1 auto;
+      }
+    }
+  }
 }
