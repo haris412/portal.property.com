@@ -50,7 +50,7 @@
                   <div class="auth-card-anim"
                        animate.enter="auth-card-enter"
                        animate.leave="auth-card-leave">
-                    <app-signup-card />
+                    <app-signup-card [prefill]="prefill()" />
                   </div>
                 } @else {
                   <div class="auth-card-anim"

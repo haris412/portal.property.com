@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuthHeroPanelComponent } from '../../components/auth-hero-panel/auth-hero-panel.component';
 import { SignupCardComponent } from '../../components/signup-card/signup-card.component';
 import { LoginCardComponent } from '../../components/login-card/login-card.component';
 import { SegmentedTabsComponent, SegmentedTabItem } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { SignupPrefill } from '../../../../core/models/auth.models';
 
 @Component({
   selector: 'app-auth-portal-page',
@@ -23,11 +25,10 @@ import { TranslateModule } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthPortalPageComponent {
-  private readonly router = inject(Router);
-  private readonly route  = inject(ActivatedRoute);
-  private readonly auth   = inject(AuthService);
+  private readonly location = inject(Location);
+  private readonly route    = inject(ActivatedRoute);
+  private readonly auth     = inject(AuthService);
 
-  /** True when route data carries { mode: 'admin' } — drives the admin layout branch. */
   readonly isAdminMode = this.route.snapshot.data['mode'] === 'admin';
 
   readonly authTabs: SegmentedTabItem[] = [
@@ -37,15 +38,28 @@ export class AuthPortalPageComponent {
 
   readonly activeSegment  = signal<'signup' | 'login'>('login');
   readonly successMessage = signal<string | null>(null);
+  readonly prefill        = signal<SignupPrefill | null>(null);
 
   constructor() {
-    if (!this.isAdminMode) {
-      const msg = this.auth.getAndClearRedirectMessage();
-      if (msg) this.successMessage.set(msg);
-      if (this.route.snapshot.queryParamMap.keys.length > 0) {
-        void this.router.navigate(['/auth'], { replaceUrl: true });
-      }
+    if (this.isAdminMode) return;
+
+    const msg = this.auth.getAndClearRedirectMessage();
+    if (msg) this.successMessage.set(msg);
+
+    const qp = this.route.snapshot.queryParamMap;
+    if (qp.keys.length === 0) return;
+
+    if (qp.get('ref') === 'inquiry' || qp.has('roleName')) {
+      this.prefill.set({
+        email:     qp.get('email')     ?? undefined,
+        firstName: qp.get('firstName') ?? undefined,
+        rawPhone:  qp.get('phone')     ?? undefined,
+        roleName:  qp.get('roleName')  ?? undefined,
+      });
+      this.activeSegment.set('signup');
     }
+
+    this.location.replaceState('/auth');
   }
 
   onTabChanged(tab: string): void {
