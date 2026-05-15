@@ -15,22 +15,23 @@ export interface UserTypeOption {
   label: string;
 }
 
-/** Maps backend roles (e.g. ["Admin", "Buyer"]) to options; use as-is for register API. */
+const SIGNUP_EXCLUDED_ROLES = new Set(['Admin', 'Buyer', 'PrimaryAgencyAdmin']);
+
+/** Maps backend roles to signup options, excluding roles not available for self-registration. */
 export function rolesToUserTypeOptions(roleNames: string[]): UserTypeOption[] {
   return roleNames
     .filter((r): r is string => typeof r === 'string' && r.trim().length > 0)
+    .filter((r) => !SIGNUP_EXCLUDED_ROLES.has(r.trim()))
     .map((r) => {
       const trimmed = r.trim();
       return { value: trimmed, label: trimmed };
     });
 }
 
-/** Fallback when roles API fails or returns empty; same format as backend. */
+/** Fallback when roles API fails or returns empty. */
 export function getDefaultUserTypeOptions(): UserTypeOption[] {
   return [
-    { value: 'Admin', label: 'Admin' },
     { value: 'Agent', label: 'Agent' },
-    { value: 'Buyer', label: 'Buyer' },
     { value: 'Seller', label: 'Seller' }
   ];
 }
