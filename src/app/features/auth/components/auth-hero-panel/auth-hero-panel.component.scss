@@ -1,10 +1,8 @@
 .hero-panel {
   position: relative;
   isolation: isolate;
-  height: 100%;
-  min-height: 100%;
+  height: 100dvh;
   overflow: hidden;
-  border-radius: 18px;
 }
 
 .hero-image {
@@ -18,70 +16,37 @@
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(31, 22, 48, 0.18) 0%,
-    rgba(31, 22, 48, 0.82) 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 29, 62, 0.22) 0%,
+      rgba(18, 29, 62, 0.62) 48%,
+      rgba(11, 16, 35, 0.88) 100%
+    ),
+    linear-gradient(135deg, rgba(69, 87, 178, 0.18) 0%, rgba(23, 33, 72, 0.7) 100%);
 }
 
 .hero-content {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 28px 22px 22px;
+  padding: clamp(2rem, 3vw, 3rem);
 }
 
-.hero-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--surface);
-  font-size: var(--font-size-overline);
-  backdrop-filter: blur(8px);
-
-  .mat-icon {
-    width: 15px;
-    height: 15px;
-    font-size: var(--font-size-body-sm);
-  }
+.hero-copy {
+  max-width: 30rem;
 }
 
 .hero-title {
-  max-width: 520px;
-  margin: 18px 0 14px;
+  margin: 0;
   color: var(--surface);
-  font-size: var(--font-size-display);
+  font-size: clamp(2.25rem, 3.8vw, 4rem);
   font-weight: 800;
-  line-height: 0.98;
+  line-height: 1.02;
 }
 
 .hero-description {
-  max-width: 560px;
-  margin: 0 0 18px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: var(--font-size-body);
-  line-height: 1.65;
-}
-
-@media (max-width: 991.98px) {
-  .hero-panel {
-    min-height: 620px;
-    height: auto;
-  }
-
-  .hero-content {
-    min-height: 620px;
-  }
-
-  .hero-title,
-  .hero-description {
-    max-width: 100%;
-  }
+  margin: 1.5rem 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: var(--font-size-h5);
+  line-height: 1.7;
 }

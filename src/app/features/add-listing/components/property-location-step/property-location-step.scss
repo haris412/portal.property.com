@@ -1,7 +1,8 @@
 .field-label {
   display: inline-block;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
   color: var(--font-main);
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
 }
 
@@ -16,12 +17,51 @@
   font-weight: 400;
 }
 
+.location-step {
+  display: grid;
+  gap: 1.25rem;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  &__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1rem;
+  }
+
+  &__wide-field {
+    grid-column: 1 / -1;
+  }
+}
+
 .location-preview {
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-soft);
+  display: grid;
+  gap: 0.875rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+
+  &__header {
+    display: grid;
+    gap: 0.25rem;
+
+    p {
+      margin: 0;
+      color: var(--font-secondary);
+      font-size: var(--font-size-body-sm);
+      line-height: 1.45;
+    }
+  }
 
   &__title {
-    margin: 0 0 0.875rem;
+    margin: 0;
     color: var(--font-main);
     font-size: var(--font-size-body);
     font-weight: 700;
@@ -29,11 +69,36 @@
 
   &__map {
     display: block;
-    min-height: 14rem;
+    min-height: 22rem;
+    border: 1px solid var(--border-soft);
     border-radius: var(--radius-md);
     background: var(--secondary);
     overflow: hidden;
   }
 
   // Leaflet map provides its own visual; keep container styling only.
+}
+
+@media (max-width: 1199.98px) {
+  .location-step {
+    &__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 767.98px) {
+  .location-step {
+    &__fields {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .location-preview {
+    padding: 0.875rem;
+
+    &__map {
+      min-height: 18rem;
+    }
+  }
 }

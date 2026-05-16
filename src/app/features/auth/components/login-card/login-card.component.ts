@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  input,
   Input,
   signal,
 } from '@angular/core';
@@ -15,7 +16,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { FeatureCardComponent } from '../../../../shared/ui/feature-card/feature-card.component';
 import { SocialButtonComponent } from '../../../../shared/ui/social-button/social-button.component';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -36,7 +36,6 @@ interface LoginFeatureItem { icon: string; titleKey: string; descriptionKey: str
     MatCheckboxModule,
     MatIconModule,
     MatButtonModule,
-    FeatureCardComponent,
     SocialButtonComponent,
     FormFieldErrorComponent,
   ],
@@ -47,6 +46,7 @@ interface LoginFeatureItem { icon: string; titleKey: string; descriptionKey: str
 export class LoginCardComponent {
   /** Pass true from admin portal — enables OTP flow via AdminAuthService */
   @Input() isAdmin = false;
+  readonly showIntro = input(true);
 
   private readonly fb        = inject(FormBuilder);
   private readonly auth      = inject(AuthService);

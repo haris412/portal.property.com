@@ -1,8 +1,10 @@
 <app-section-card [title]="'addListing.pricing.title' | translate"
-                  [description]="'addListing.pricing.description' | translate">
-  <div class="row"
+                  [description]="'addListing.pricing.description' | translate"
+                  icon="payments"
+                  variant="dashboard">
+  <div class="row g-4 pricing-details-form"
        [formGroup]="form">
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-6 col-xl-4">
       <label class="field-label">
         {{ 'addListing.pricing.price.label' | translate }}
         <span class="field-hint">{{ 'addListing.pricing.price.hint' | translate }}</span>
@@ -52,7 +54,7 @@
       </mat-form-field>
     </div>
 
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-6 col-xl-4">
       <label class="field-label">{{ 'addListing.pricing.areaSize.label' | translate }}</label>
       <mat-form-field appearance="outline"
                       class="w-100 number-stepper-field">

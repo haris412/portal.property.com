@@ -1,10 +1,12 @@
 <section class="hero-panel position-relative overflow-hidden">
-  <img ngSrc="images/hero-img.png"
-       width="900"
-       height="1200"
-       priority
-       alt="Luxury residential property with pool during sunset"
-       class="hero-image" />
+  <img
+    ngSrc="images/hero-img.png"
+    width="900"
+    height="1200"
+    priority
+    alt="Luxury residential property with pool during sunset"
+    class="hero-image"
+  />
 
   <div class="hero-overlay"></div>
 
@@ -13,16 +15,7 @@
       <app-brand-logo />
     </div>
 
-    <div class="hero-bottom mt-auto">
-      <div class="hero-chip">
-        <mat-icon fontSet="material-symbols-outlined"
-                  inline
-                  aria-hidden="true">
-          key
-        </mat-icon>
-        <span>{{ 'public.hero.chip' | translate }}</span>
-      </div>
-
+    <div class="hero-copy mt-auto">
       <h1 class="hero-title">
         {{ 'public.hero.title' | translate }}
       </h1>
@@ -30,15 +23,6 @@
       <p class="hero-description">
         {{ 'public.hero.description' | translate }}
       </p>
-
-      <div class="row g-3 mt-1">
-        @for (item of stats(); track item.labelKey) {
-        <div class="col-12 col-sm-4">
-          <app-stat-card [value]="item.value"
-                         [label]="item.labelKey | translate" />
-        </div>
-        }
-      </div>
     </div>
   </div>
 </section>

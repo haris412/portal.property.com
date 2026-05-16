@@ -17,7 +17,7 @@ import {
 } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { StepCardComponent } from '../../../../shared/ui/step-card/step-card';
+import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { LocationMapPickerComponent } from '../location-map-picker/location-map-picker';
 import { LocationCatalogService } from '../../../../core/services/location-catalog.service';
@@ -36,7 +36,7 @@ const LISTING_COUNTRY_CODE = 'PK';
     MatFormFieldModule,
     MatInputModule,
     MatAutocompleteModule,
-    StepCardComponent,
+    SectionCardComponent,
     InfoBannerComponent,
     LocationMapPickerComponent,
   ],
