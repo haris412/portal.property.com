@@ -4,9 +4,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  OnInit,
   ViewChild,
   computed,
   effect,
+  inject,
   signal
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +19,7 @@ import {
   INBOX_CONVERSATIONS,
   InboxTab
 } from '../../inbox.data';
+import { ConversationService } from '../../conversations.service';
 
 interface SegmentedTabItem {
   key: string;
@@ -31,7 +34,8 @@ interface SegmentedTabItem {
   styleUrl: './inbox-conversations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InboxConversations implements AfterViewChecked {
+export class InboxConversations implements AfterViewChecked, OnInit {
+  private readonly conversationService = inject(ConversationService);
   @ViewChild('messagesContainer') messagesContainer?: ElementRef<HTMLDivElement>;
 
   readonly replyText = signal('');
@@ -75,6 +79,17 @@ export class InboxConversations implements AfterViewChecked {
   });
 
   private shouldScrollToBottom = false;
+
+  ngOnInit(): void {
+    this.loadConversations();
+  }
+
+  loadConversations(): void {
+    this.conversationService.getConversations().subscribe({
+      next: (data) => console.log('Conversations:', data),
+      error: (err) => console.error('Failed to load conversations:', err),
+    });
+  }
 
   constructor() {
     effect(() => {
