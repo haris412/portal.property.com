@@ -4,6 +4,7 @@ import {
   Input,
   computed,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -44,7 +45,8 @@ interface LoginFeatureItem { icon: string; titleKey: string; descriptionKey: str
 })
 export class LoginCardComponent {
   /** Pass true from admin portal — enables OTP flow via AdminAuthService */
-  @Input() isAdmin = false;
+  @Input() isAdmin    = false;
+  readonly showIntro = input(true);
 
   private readonly fb        = inject(FormBuilder);
   private readonly auth      = inject(AuthService);
