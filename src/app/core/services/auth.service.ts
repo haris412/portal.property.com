@@ -32,14 +32,15 @@ export interface User {
   phoneNumber?: string;
   profileImageUrl?: string;
   location?: string;
-  role?: string;
+  role?: string;     // primary role (first in array) — kept for backward compat
+  roles: string[];   // full roles array from API
   agencyName?: string;
 }
 
 /** Stored in localStorage — no PII (no email, no phone). */
 interface StoredSession {
   _id: string;
-  role?: string;
+  roles: string[];
   firstName?: string;
   lastName?: string;
 }
@@ -78,11 +79,19 @@ interface VerifyPasswordResetOtpResponse extends SimpleApiResponse {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function extractRole(raw: Record<string, unknown>): string | undefined {
+/** Handles both new `roles: [{name}]` array and legacy `role: string | {name}` shapes. */
+function extractRoles(raw: Record<string, unknown>): string[] {
+  const arr = raw['roles'];
+  if (Array.isArray(arr) && arr.length > 0) {
+    return arr
+      .filter((r): r is Record<string, unknown> => typeof r === 'object' && r != null)
+      .map((r) => (r['name'] as string | undefined)?.trim() ?? '')
+      .filter(Boolean);
+  }
   const r = raw['role'];
-  return typeof r === 'object' && r != null && 'name' in r
-    ? (r as { name: string }).name
-    : (r as string | undefined);
+  if (typeof r === 'object' && r != null && 'name' in r) return [(r as { name: string }).name];
+  if (typeof r === 'string' && r.trim()) return [r.trim()];
+  return [];
 }
 
 /** Maps full API user payload to in-memory User. */
@@ -90,6 +99,7 @@ export function fromApiUser(raw: Record<string, unknown>): User {
   const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
   const lastName  = (raw['lastName']  as string | undefined)?.trim() || undefined;
   const agency    = raw['agency'];
+  const roles     = extractRoles(raw);
   return {
     _id:             ((raw['_id'] ?? raw['id']) as string) || '',
     email:           (raw['email'] as string | undefined) ?? '',
@@ -99,7 +109,8 @@ export function fromApiUser(raw: Record<string, unknown>): User {
     phoneNumber:     (raw['phoneNumber']     as string | undefined)?.trim() || undefined,
     profileImageUrl: (raw['profileImageUrl'] as string | undefined)        || undefined,
     location:        (raw['location']        as string | undefined)?.trim() || undefined,
-    role:            extractRole(raw),
+    role:            roles[0],
+    roles,
     agencyName:      typeof agency === 'object' && agency != null && 'name' in agency
                        ? (agency as { name: string }).name || undefined
                        : undefined,
@@ -109,7 +120,7 @@ export function fromApiUser(raw: Record<string, unknown>): User {
 function toStoredSession(raw: Record<string, unknown>): StoredSession {
   return {
     _id:       ((raw['_id'] ?? raw['id']) as string) || '',
-    role:      extractRole(raw),
+    roles:     extractRoles(raw),
     firstName: (raw['firstName'] as string | undefined)?.trim() || undefined,
     lastName:  (raw['lastName']  as string | undefined)?.trim() || undefined,
   };
@@ -153,6 +164,7 @@ export class AuthService {
   isLoggedIn():     boolean       { return !!this.accessToken; }
   getAccessToken(): string | null { return this.accessToken; }
   peekRefreshToken(): string | null { return this.storage?.getItem(REFRESH_KEY) ?? null; }
+  hasRole(role: string): boolean  { return this.getCurrentUser()?.roles?.includes(role) ?? false; }
 
   getRoles(): Observable<string[]> { return this.roles$; }
 
@@ -354,7 +366,8 @@ export class AuthService {
       this.userSubject.next({
         _id:       s._id,
         email:     '',
-        role:      s.role,
+        roles:     s.roles ?? [],
+        role:      (s.roles ?? [])[0],
         firstName: s.firstName,
         lastName:  s.lastName,
         name:      [s.firstName, s.lastName].filter(Boolean).join(' ') || undefined,
@@ -392,13 +405,7 @@ export class AuthService {
 
 // ── Agency name availability validator ────────────────────────────────────────
 
-/**
- * Debounced async validator — waits 500 ms after the user stops typing, then
- * calls GET /api/auth/check-agency-name. Angular cancels the previous timer on
- * each keystroke via switchMap, so only one request fires per pause.
- * Fails open (returns null) on network errors so the user is never blocked by
- * a transient API failure.
- */
+/** Fires on blur (control uses updateOn: 'blur') — one API call per focus-out. Fails open on network errors. */
 export function agencyNameAvailableValidator(authService: AuthService): AsyncValidatorFn {
   return (control: AbstractControl): Observable<ValidationErrors | null> => {
     const name = (control.value ?? '').toString().trim();
