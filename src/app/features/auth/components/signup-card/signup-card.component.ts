@@ -46,9 +46,17 @@ import { SocialButtonComponent } from '../../../../shared/ui/social-button/socia
 import {
   getDefaultUserTypeOptions,
   rolesToUserTypeOptions,
-  type SignupPrefill,
   type UserTypeOption
 } from '../../../../core/models/auth.models';
+
+export interface SignupPrefill {
+  email?: string;
+  /** Full name or first name from URL — component splits on first space. */
+  firstName?: string;
+  /** Raw international phone e.g. "+923001234567" — component parses country + local. */
+  rawPhone?: string;
+  roleName?: string;
+}
 import { AuthService, RegisterPayload, agencyNameAvailableValidator } from '../../../../core/services/auth.service';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
 import { TranslateModule } from '@ngx-translate/core';

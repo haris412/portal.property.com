@@ -9,15 +9,6 @@ export interface FeatureItem {
   description: string;
 }
 
-export interface SignupPrefill {
-  email?: string;
-  /** Full name or first name from URL — component splits on first space. */
-  firstName?: string;
-  /** Raw international phone e.g. "+923001234567" — component parses country + local. */
-  rawPhone?: string;
-  roleName?: string;
-}
-
 /** Option for user type; value and label match backend role (e.g. "Admin", "Buyer"). */
 export interface UserTypeOption {
   value: string;

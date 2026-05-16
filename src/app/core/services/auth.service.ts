@@ -32,8 +32,7 @@ export interface User {
   phoneNumber?: string;
   profileImageUrl?: string;
   location?: string;
-  role?: string;     // primary role (first in array) — kept for backward compat
-  roles: string[];   // full roles array from API
+  roles: string[];
   agencyName?: string;
 }
 
@@ -109,7 +108,6 @@ export function fromApiUser(raw: Record<string, unknown>): User {
     phoneNumber:     (raw['phoneNumber']     as string | undefined)?.trim() || undefined,
     profileImageUrl: (raw['profileImageUrl'] as string | undefined)        || undefined,
     location:        (raw['location']        as string | undefined)?.trim() || undefined,
-    role:            roles[0],
     roles,
     agencyName:      typeof agency === 'object' && agency != null && 'name' in agency
                        ? (agency as { name: string }).name || undefined
@@ -367,7 +365,6 @@ export class AuthService {
         _id:       s._id,
         email:     '',
         roles:     s.roles ?? [],
-        role:      (s.roles ?? [])[0],
         firstName: s.firstName,
         lastName:  s.lastName,
         name:      [s.firstName, s.lastName].filter(Boolean).join(' ') || undefined,

@@ -7,7 +7,7 @@ import { SignupCardComponent } from '../../components/signup-card/signup-card.co
 import { LoginCardComponent } from '../../components/login-card/login-card.component';
 import { SegmentedTabsComponent, SegmentedTabItem } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { SignupPrefill } from '../../../../core/models/auth.models';
+import { SignupPrefill } from '../../components/signup-card/signup-card.component';
 
 @Component({
   selector: 'app-auth-portal-page',
@@ -46,15 +46,15 @@ export class AuthPortalPageComponent {
     const msg = this.auth.getAndClearRedirectMessage();
     if (msg) this.successMessage.set(msg);
 
-    const qp = this.route.snapshot.queryParamMap;
-    if (qp.keys.length === 0) return;
+    const queryParams = this.route.snapshot.queryParamMap;
+    if (queryParams.keys.length === 0) return;
 
-    if (qp.get('ref') === 'inquiry' || qp.has('roleName')) {
+    if (queryParams.get('ref') === 'inquiry' || queryParams.has('roleName')) {
       this.prefill.set({
-        email:     qp.get('email')     ?? undefined,
-        firstName: qp.get('firstName') ?? undefined,
-        rawPhone:  qp.get('phone')     ?? undefined,
-        roleName:  qp.get('roleName')  ?? undefined,
+        email:     queryParams.get('email')     ?? undefined,
+        firstName: queryParams.get('firstName') ?? undefined,
+        rawPhone:  queryParams.get('phone')     ?? undefined,
+        roleName:  queryParams.get('roleName')  ?? undefined,
       });
       this.activeSegment.set('signup');
     }
