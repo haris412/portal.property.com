@@ -16,18 +16,18 @@ export interface LocationDemand {
 }
 
 export const HERO_CARD = {
-  title: 'Grow Your Portfolio',
+  title: 'Welcome back, Admin!',
   description:
-    'Ready to list a new property? Add details, upload media, and get it published directly on the home page for thousands of buyers and renters to see.',
+    'Manage your listings, track performance, and grow your real estate business.',
   ctaLabel: 'Add New Property'
 };
 
 export const PORTFOLIO_SUMMARY = {
   activePortfolio: 24,
-  monthlyHint: '3 new listings were published this month and 6 are ready for refresh.',
+  monthlyHint: '3 new listings were published this month and 6 are ready for review.',
   saleShare: 58,
   rentShare: 42,
-  footerText: 'This layout gives more breathing room while keeping all your key property counts in one place.'
+  footerText: 'Keep listing inventory balanced across sale, rent, hot, and featured properties.'
 };
 
 export const PORTFOLIO_METRICS: PortfolioMetric[] = [

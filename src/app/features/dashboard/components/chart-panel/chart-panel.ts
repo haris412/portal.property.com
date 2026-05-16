@@ -12,15 +12,15 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import * as echarts from 'echarts';
 import type { EChartsOption, EChartsType } from 'echarts';
-
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 
 @Component({
   selector: 'app-chart-panel',
   standalone: true,
-  imports: [SectionCardComponent],
+  imports: [MatIconModule, SectionCardComponent],
   templateUrl: './chart-panel.html',
   styleUrl: './chart-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

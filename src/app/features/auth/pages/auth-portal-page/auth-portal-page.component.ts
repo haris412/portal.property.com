@@ -32,8 +32,8 @@ export class AuthPortalPageComponent {
   readonly isAdminMode = this.route.snapshot.data['mode'] === 'admin';
 
   readonly authTabs: SegmentedTabItem[] = [
-    { key: 'login',  label: 'Login'   },
-    { key: 'signup', label: 'Sign Up' },
+    { key: 'login',  label: 'Sign In' },
+    { key: 'signup', label: 'Create Account' },
   ];
 
   readonly activeSegment  = signal<'signup' | 'login'>('login');

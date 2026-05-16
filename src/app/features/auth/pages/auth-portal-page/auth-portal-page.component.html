@@ -1,71 +1,81 @@
-<div class="app-shell-bg">
-  <div class="container">
-    <div class="auth-shell">
-      <div class="row g-4 align-items-stretch auth-layout-row">
+<section class="auth-viewport container-fluid p-0">
+  <div class="row g-0 auth-shell">
+    <div class="col-lg-6 d-none d-lg-block auth-visual-column">
+      <app-auth-hero-panel />
+    </div>
 
-        <!-- Left: hero panel — same for both agent and admin -->
-        <div class="d-none d-lg-block col-lg-6 hero-column">
-          <app-auth-hero-panel />
-        </div>
+    <div class="col-12 col-lg-6 auth-form-column">
+      <section class="auth-form-shell d-flex flex-column">
+        <!-- <div class="auth-form-top d-flex justify-content-end">
+          <a routerLink="/" class="back-home-link">
+            <span aria-hidden="true">←</span>
+            <span>Back to Home</span>
+          </a>
+        </div> -->
 
-        <div class="col-12 col-lg-6">
-          <section class="right-column">
-
+        <div class="auth-form-main d-flex flex-grow-1 align-items-center justify-content-center">
+          <div class="auth-form-content w-100">
             @if (isAdminMode) {
-              <!-- ── Admin mode: heading + login card with OTP ── -->
-              <div class="admin-header">
-                <p class="admin-header__eyebrow">{{ 'public.signIn.admin.eyebrow' | translate }}</p>
-                <h1 class="admin-header__title">{{ 'public.signIn.admin.title' | translate }}</h1>
-                <p class="admin-header__sub">
-                  {{ 'public.signIn.admin.subtitle' | translate }}
+              <header class="auth-page-intro auth-page-intro--admin">
+                <p class="auth-page-kicker">LocateHome Admin</p>
+                <h2 class="auth-page-title">Secure Admin Access</h2>
+                <p class="auth-page-copy">
+                  Sign in with your existing admin credentials to manage the platform.
                 </p>
+              </header>
+
+              <div class="auth-card-host">
+                <app-login-card [isAdmin]="true" [showIntro]="false" />
               </div>
 
-              <div class="auth-form-area mt-3">
-                <div class="auth-card-anim">
-                  <app-login-card [isAdmin]="true" />
-                </div>
-              </div>
-
-              <p class="admin-portal-link mt-4 mb-0">
-                <a routerLink="/auth" class="admin-portal-link__anchor">{{ 'public.signIn.admin.notAdmin' | translate }}</a>
-              </p>
-
+              <a routerLink="/auth" class="admin-portal-link">
+                Open the standard member sign in
+              </a>
             } @else {
-              <!-- ── Agent mode: tabs + login / signup ── -->
               @if (successMessage()) {
-                <div class="alert alert-success mb-3" role="alert">
+                <div class="alert alert-success auth-alert" role="status">
                   {{ successMessage() }}
                 </div>
               }
 
-              <app-segmented-tabs
-                [active]="activeSegment()"
-                [tabs]="authTabs"
-                (changed)="onTabChanged($event)"
-              />
+              <header class="auth-page-intro">
+                <h1 class="auth-page-title">
+                  {{
+                    activeSegment() === 'signup'
+                      ? ('public.signUp.heading' | translate)
+                      : ('public.signIn.heading' | translate)
+                  }}
+                </h1>
+                <p class="auth-page-copy">
+                  {{
+                    activeSegment() === 'signup'
+                      ? ('public.signUp.description' | translate)
+                      : ('public.signIn.description' | translate)
+                  }}
+                </p>
+              </header>
 
-              <div class="auth-form-area mt-3">
+              <div class="auth-tabs-wrap">
+                <app-segmented-tabs
+                  [active]="activeSegment()"
+                  [tabs]="authTabs"
+                  density="compact"
+                  ariaLabel="Authentication mode"
+                  (changed)="onTabChanged($event)"
+                />
+              </div>
+
+              <div class="auth-card-host">
                 @if (activeSegment() === 'signup') {
-                  <div class="auth-card-anim"
-                       animate.enter="auth-card-enter"
-                       animate.leave="auth-card-leave">
-                    <app-signup-card [prefill]="prefill()" />
-                  </div>
+                  <app-signup-card [prefill]="prefill()" [showIntro]="false" />
                 } @else {
-                  <div class="auth-card-anim"
-                       animate.enter="auth-card-enter"
-                       animate.leave="auth-card-leave">
-                    <app-login-card />
-                  </div>
+                  <app-login-card [showIntro]="false" />
                 }
               </div>
             }
-
-          </section>
+          </div>
         </div>
-
-      </div>
+      </section>
     </div>
   </div>
-</div>
+</section>

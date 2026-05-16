@@ -1,51 +1,81 @@
 .locations-demand-card {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1rem;
   height: 100%;
-}
-
-.locations-demand-card__head h3 {
-  margin: 0 0 8px;
-  color: var(--font-main);
-  font-size: 1.5rem;
-  font-weight: 800;
-}
-
-.locations-demand-card__head p {
-  margin: 0;
-  color: var(--font-secondary);
 }
 
 .locations-demand-card__list {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1rem;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.locations-demand-card__item {
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--border-soft);
+
+  &:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
 }
 
 .locations-demand-card__row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 10px;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
 }
 
-.locations-demand-card__row strong {
+.locations-demand-card__label {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.55rem;
+}
+
+.locations-demand-card__rank {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  color: var(--primary);
+  font-size: var(--font-size-overline);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.locations-demand-card__label strong {
+  min-width: 0;
+  overflow: hidden;
   color: var(--font-main);
-  font-size: 0.95rem;
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-compact);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.locations-demand-card__row span {
-  color: var(--font-secondary);
-  font-size: 0.875rem;
-  font-weight: 700;
+.locations-demand-card__percent {
+  flex: 0 0 auto;
+  color: var(--font-main);
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-compact);
 }
 
 .locations-demand-card__bar {
-  height: 8px;
+  height: 0.45rem;
   border-radius: 999px;
-  background: var(--surface-muted);
+  background: var(--surface-soft);
   overflow: hidden;
 }
 
@@ -53,5 +83,12 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--primary);
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+  box-shadow: 0 0.35rem 0.85rem color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+@media (max-width: 575.98px) {
+  .locations-demand-card__row {
+    align-items: flex-start;
+  }
 }

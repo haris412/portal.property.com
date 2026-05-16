@@ -4,6 +4,7 @@ import {
   computed,
   DestroyRef,
   inject,
+  input,
   Input,
   OnInit,
   signal
@@ -104,6 +105,7 @@ interface SignupFormControls {
 export class SignupCardComponent implements OnInit {
   @Input() prefill: SignupPrefill | null = null;
 
+  readonly showIntro = input(true);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);

@@ -1,10 +1,12 @@
 <app-section-card
   [title]="'addListing.media.title' | translate"
   [description]="'addListing.media.description' | translate"
+  icon="perm_media"
+  variant="dashboard"
 >
-  <div class="row g-4">
+  <div class="property-media">
     @for (block of mediaBlocks(); track block.id) {
-      <div class="col-12 col-md-6">
+      <div class="property-media__block">
         <label class="field-label">{{ block.label }}</label>
 
         <app-upload-dropzone
@@ -34,7 +36,8 @@
           </div>
         }
         @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.VIDEO && selectedVideoName()) {
-          <p class="selection-meta">
+          <p class="selection-meta selection-meta--video">
+            <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">movie</mat-icon>
             {{ 'addListing.media.selectedVideo' | translate: { name: selectedVideoName() } }}
           </p>
         }

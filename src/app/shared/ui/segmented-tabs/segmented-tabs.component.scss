@@ -39,7 +39,7 @@
     border: 0;
     background: transparent;
     color: var(--font-secondary);
-    font-size: 0.95rem;
+    font-size: var(--font-size-body-sm);
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
@@ -47,6 +47,28 @@
 
     &--active {
       color: var(--font-main);
+    }
+  }
+
+  &--compact {
+    border-radius: var(--radius-lg);
+
+    .segmented-tabs__inner {
+      padding: 3px;
+    }
+
+    .segmented-tabs__pill {
+      top: 3px;
+      left: 3px;
+      height: calc(100% - 6px);
+      border-radius: var(--radius-md);
+    }
+
+    .segmented-tabs__button {
+      min-height: 42px;
+      padding: 0 12px;
+      font-size: var(--font-size-caption);
+      font-weight: 700;
     }
   }
 }
@@ -77,6 +99,24 @@
       &--active {
         background: var(--surface);
         box-shadow: 0 6px 16px rgba(16, 32, 28, 0.08);
+      }
+    }
+
+    &--compact {
+      .segmented-tabs__scroll {
+        overflow: hidden;
+      }
+
+      .segmented-tabs__inner {
+        display: grid;
+        width: 100%;
+        gap: 0;
+      }
+
+      .segmented-tabs__button {
+        min-width: 0;
+        min-height: 40px;
+        padding: 0 12px;
       }
     }
   }

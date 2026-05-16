@@ -11,14 +11,14 @@
 
 .feature-title {
   margin: 0 0 4px;
-  font-size: 0.95rem;
+  font-size: var(--font-size-body-sm);
   font-weight: 700;
   color: var(--font-main);
 }
 
 .feature-description {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--font-size-caption);
   line-height: 1.45;
   color: var(--font-secondary);
 }

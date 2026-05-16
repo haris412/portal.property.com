@@ -9,13 +9,13 @@
 }
 
 .stat-value {
-  font-size: 1.6rem;
+  font-size: var(--font-size-h4);
   font-weight: 700;
   line-height: 1.1;
 }
 
 .stat-label {
   margin-top: 4px;
-  font-size: 0.75rem;
+  font-size: var(--font-size-overline);
   color: rgba(255, 255, 255, 0.86);
 }

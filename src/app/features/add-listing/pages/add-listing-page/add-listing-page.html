@@ -17,31 +17,128 @@
     }
     }
 
-    <div class="row g-4">
-      <div class="col-12 col-xl-8">
-        <div class="add-listing-page__left">
+    <div class="add-listing-page__stepper">
+      <app-wizard-stepper [steps]="listingSteps()"
+                          [activeKey]="activeStepKey()"
+                          [ariaLabel]="'Add listing progress'"
+                          (stepSelected)="onWizardStepSelected($event)" />
+    </div>
+
+    <div class="add-listing-page__content">
+      <div class="add-listing-page__wizard"
+           [attr.aria-label]="activeStepLabel()">
+        @switch (activeStepKey()) {
+        @case ('basic-info') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-basic-information-section [form]="basicInfoForm" />
+        </div>
+        }
+        @case ('pricing') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-pricing-details-section [form]="pricingForm" />
+        </div>
+        }
+        @case ('location') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
+          <app-property-location-step [form]="locationForm" />
+        </div>
+        }
+        @case ('features-media') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-features-amenities-section [form]="amenitiesForm" />
           <app-property-media-section [form]="mediaForm" />
-          <div class="back-to-top">
-            <button type="button"
-                     (click)="scrollToTop()">Back to Top</button>
-          </div>
-
         </div>
-      </div>
-
-      <div class="col-12 col-xl-4">
-        <div class="add-listing-page__right">
-          <app-property-location-step [form]="locationForm" />
+        }
+        @case ('contact-description') {
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-contact-information-step [form]="contactForm" />
           <app-property-description-step [form]="descriptionForm"
                                          [aiDescriptionEnabled]="aiDescriptionContextReady()"
                                          [aiDescriptionLoading]="isGeneratingDescription()"
                                          (generateDescription)="onGenerateDescription()" />
         </div>
+        }
+        @case ('review-publish') {
+        <app-section-card title="Review & Publish"
+                          description="Confirm the listing details below, then save a draft or publish when everything is ready."
+                          variant="dashboard"
+                          headerLayout="split">
+          <div section-card-actions
+               class="add-listing-page__review-status"
+               [class.add-listing-page__review-status--ready]="canSubmitListing()">
+            <mat-icon fontSet="material-symbols-outlined"
+                      inline
+                      aria-hidden="true">{{ canSubmitListing() ? 'task_alt' : 'error_outline' }}</mat-icon>
+            <span>{{ completedRequirementCount() }} of {{ publishRequirements().length }} complete</span>
+          </div>
 
+          <div class="add-listing-page__review-grid">
+            @for (section of reviewSummarySections(); track section.title) {
+            <app-section-card [title]="section.title"
+                              [icon]="section.icon"
+                              density="compact"
+                              variant="dashboard">
+              <dl class="add-listing-page__review-list">
+                @for (item of section.items; track item.label) {
+                <div class="add-listing-page__review-row">
+                  <dt>{{ item.label }}</dt>
+                  <dd>{{ item.value }}</dd>
+                </div>
+                }
+              </dl>
+            </app-section-card>
+            }
+          </div>
+
+          <div class="add-listing-page__review-actions"
+               aria-label="Review actions">
+            @if (!editingId()) {
+            <button type="button"
+                    class="add-listing-page__nav-button add-listing-page__nav-button--secondary"
+                    [disabled]="isSubmitting()"
+                    (click)="onReviewSaveDraft()">
+              Save Draft
+            </button>
+            }
+
+            <button type="button"
+                    class="add-listing-page__nav-button add-listing-page__nav-button--primary"
+                    [disabled]="isSubmitting()"
+                    (click)="onReviewPrimaryAction()">
+              {{ reviewPrimaryActionLabel() }}
+            </button>
+          </div>
+        </app-section-card>
+        }
+        }
+
+        <div class="add-listing-page__navigation">
+          <button class="add-listing-page__nav-button add-listing-page__nav-button--secondary"
+                  type="button"
+                  [disabled]="isFirstStep()"
+                  (click)="goToPreviousStep()">
+            Previous
+          </button>
+          <button class="add-listing-page__nav-button add-listing-page__nav-button--primary"
+                  type="button"
+                  [disabled]="isLastStep()"
+                  (click)="goToNextStep()">
+            Continue
+          </button>
+        </div>
+      </div>
+
+      <div class="add-listing-page__aside-column">
+        <app-listing-progress-panel [steps]="progressPanelSteps()"
+                                    [progressPercent]="progressPercent()"
+                                    [progressDegrees]="progressDegrees()"
+                                    [activeStepCountLabel]="activeStepCountLabel()"
+                                    [completedStepCount]="completedProgressStepCount()"
+                                    [trayOpen]="progressTrayOpen()"
+                                    (toggleTray)="toggleProgressTray()"
+                                    (closeTray)="closeProgressTray()" />
+
+        <app-listing-help-card (actionClicked)="goToAiDescriptionStep()" />
       </div>
     </div>
   </div>

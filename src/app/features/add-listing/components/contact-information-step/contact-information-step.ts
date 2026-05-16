@@ -12,7 +12,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { merge } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { StepCardComponent } from '../../../../shared/ui/step-card/step-card';
+import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -23,7 +23,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    StepCardComponent,
+    SectionCardComponent,
     InfoBannerComponent,
   ],
   templateUrl: './contact-information-step.html',

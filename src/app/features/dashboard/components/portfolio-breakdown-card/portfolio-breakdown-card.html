@@ -1,9 +1,12 @@
-<app-section-card [title]="'My Proper'" density="compact">
+<app-section-card title="Property Overview" density="compact">
   <div class="portfolio-breakdown-card">
-    <div class="row g-3">
-      <div class="col-12 col-xl-4">
+    <div class="row g-3 align-items-stretch">
+      <div class="col-12 col-xl-5">
         <div class="portfolio-breakdown-card__summary-tile">
-          <div class="portfolio-breakdown-card__summary-title">Total active portfolio</div>
+          <div class="portfolio-breakdown-card__summary-title">
+            <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">monitoring</mat-icon>
+            <span>Total Listings</span>
+          </div>
           <div class="portfolio-breakdown-card__summary-value">{{ activePortfolio() }}</div>
           <p>{{ monthlyHint() }}</p>
 
@@ -11,25 +14,41 @@
             <div class="portfolio-breakdown-card__share-box">
               <span>Sale share</span>
               <strong>{{ saleShare() }}%</strong>
+              <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">trending_up</mat-icon>
             </div>
             <div class="portfolio-breakdown-card__share-box">
               <span>Rent share</span>
               <strong>{{ rentShare() }}%</strong>
+              <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">show_chart</mat-icon>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="col-12 col-xl-8">
+      <div class="col-12 col-xl-7">
         <div class="row g-3">
           @for (metric of metrics(); track metric.title) {
             <div class="col-12 col-md-6">
-              <app-metric-tile
-                [title]="metric.title"
-                [value]="metric.value"
-                [hint]="metric.hint"
-                [icon]="metric.icon"
-              />
+              <article class="portfolio-breakdown-card__metric">
+                <div class="portfolio-breakdown-card__metric-head">
+                  <span class="portfolio-breakdown-card__metric-icon">
+                    <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">
+                      {{ metric.icon }}
+                    </mat-icon>
+                  </span>
+                  <mat-icon
+                    class="portfolio-breakdown-card__metric-arrow"
+                    fontSet="material-symbols-outlined"
+                    inline
+                    aria-hidden="true"
+                  >
+                    chevron_right
+                  </mat-icon>
+                </div>
+                <div class="portfolio-breakdown-card__metric-title">{{ metric.title }}</div>
+                <div class="portfolio-breakdown-card__metric-value">{{ metric.value }}</div>
+                <p class="portfolio-breakdown-card__metric-hint">{{ metric.hint }}</p>
+              </article>
             </div>
           }
         </div>

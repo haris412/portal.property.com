@@ -1,3 +1,30 @@
 :host {
   display: block;
 }
+
+.features-amenities {
+  &__content,
+  &__state {
+    display: grid;
+    gap: 1rem;
+  }
+
+  &__hint,
+  &__loading {
+    margin: 0;
+    color: var(--font-secondary);
+    font-size: var(--font-size-body-sm);
+    line-height: 1.5;
+  }
+
+  &__loading {
+    padding: 1rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+  }
+
+  &__retry {
+    justify-self: start;
+  }
+}

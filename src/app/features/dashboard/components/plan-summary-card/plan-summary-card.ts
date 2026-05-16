@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
-import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button';
 import { PlanFeature } from '../../dashboard.mock';
 
 @Component({
   selector: 'app-plan-summary-card',
   standalone: true,
-  imports: [SectionCardComponent, ActionButtonComponent],
+  imports: [SectionCardComponent, MatIconModule],
   templateUrl: './plan-summary-card.html',
   styleUrl: './plan-summary-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -20,6 +20,18 @@ export class PlanSummaryCardComponent {
   readonly used = input.required<number>();
   readonly features = input.required<PlanFeature[]>();
 
-  readonly usagePercent = computed(() => Math.min(Math.round((this.used() / this.listingLimit()) * 100), 100));
-  readonly description = computed(() => `${this.price()} · ${this.renewalText()}`);
+  readonly usagePercent = computed(() =>
+    Math.min(Math.round((this.used() / this.listingLimit()) * 100), 100)
+  );
+
+  readonly description = computed(() => `${this.price()} - ${this.renewalText()}`);
+
+  featureIcon(label: string): string {
+    const normalized = label.toLowerCase();
+    if (normalized.includes('limit')) return 'query_stats';
+    if (normalized.includes('featured')) return 'workspace_premium';
+    if (normalized.includes('boost')) return 'rocket_launch';
+    if (normalized.includes('credit')) return 'near_me';
+    return 'check_circle';
+  }
 }

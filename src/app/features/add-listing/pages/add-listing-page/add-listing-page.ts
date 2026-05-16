@@ -20,6 +20,16 @@ import { forkJoin, merge } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { PageHeaderComponent, PageHeaderAction } from '../../../../shared/ui/page-header/page-header';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
+import {
+  WizardStepperComponent,
+  WizardStepperItem,
+} from '../../../../shared/ui/wizard-stepper/wizard-stepper';
+import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
+import {
+  ListingProgressPanelComponent,
+  ListingProgressStep,
+} from '../../components/listing-progress-panel/listing-progress-panel';
+import { ListingHelpCardComponent } from '../../components/listing-help-card/listing-help-card';
 import { BasicInformationSectionComponent } from '../../components/basic-information-section/basic-information-section';
 import { PricingDetailsSectionComponent } from '../../components/pricing-details-section/pricing-details-section';
 import { FeaturesAmenitiesSectionComponent } from '../../components/features-amenities-section/features-amenities-section';
@@ -49,6 +59,7 @@ import {
 } from '../../constants/add-listing-api-field-maps';
 import { firstValueFrom } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatIconModule } from '@angular/material/icon';
 import {
   FEATURE_SLUG_TO_AMENITY_KEY,
   normalizeFeatureSlug,
@@ -58,6 +69,36 @@ import { CdkAutofill } from "@angular/cdk/text-field";
 interface UploadedMediaPayload {
   images: ListingImagePayload[];
   videoTourUrl: string | null;
+}
+
+type AddListingStepKey =
+  | 'basic-info'
+  | 'pricing'
+  | 'location'
+  | 'features-media'
+  | 'contact-description'
+  | 'review-publish';
+
+interface AddListingWizardStep {
+  key: AddListingStepKey;
+  label: string;
+  description: string;
+}
+
+interface AddListingRequirement {
+  label: string;
+  complete: boolean;
+}
+
+interface ReviewSummaryItem {
+  label: string;
+  value: string;
+}
+
+interface ReviewSummarySection {
+  title: string;
+  icon: string;
+  items: readonly ReviewSummaryItem[];
 }
 
 /** Digits-only length 10–15 after stripping formatting (mobile / WhatsApp style). */
@@ -85,9 +126,14 @@ function locationCityFormValueToString(city: unknown): string {
   selector: 'app-add-listing-page',
   imports: [
     TranslateModule,
+    MatIconModule,
     ReactiveFormsModule,
     PageHeaderComponent,
     InfoBannerComponent,
+    WizardStepperComponent,
+    SectionCardComponent,
+    ListingProgressPanelComponent,
+    ListingHelpCardComponent,
     BasicInformationSectionComponent,
     PricingDetailsSectionComponent,
     FeaturesAmenitiesSectionComponent,
@@ -111,9 +157,271 @@ export class AddListingPageComponent {
   readonly locationForm: FormGroup;
   readonly isSubmitting = signal(false);
   readonly isGeneratingDescription = signal(false);
+  readonly activeStepKey = signal<AddListingStepKey>('basic-info');
+  private readonly stepOrder: readonly AddListingStepKey[] = [
+    'basic-info',
+    'pricing',
+    'location',
+    'features-media',
+    'contact-description',
+    'review-publish',
+  ] as const;
+  private readonly stepDefinitions: readonly AddListingWizardStep[] = [
+    {
+      key: 'basic-info',
+      label: 'Basic Info',
+      description: 'Property details',
+    },
+    {
+      key: 'pricing',
+      label: 'Pricing',
+      description: 'Price and size',
+    },
+    {
+      key: 'location',
+      label: 'Location',
+      description: "Where it's located",
+    },
+    {
+      key: 'features-media',
+      label: 'Features & Media',
+      description: 'Amenities, photos, and video',
+    },
+    {
+      key: 'contact-description',
+      label: 'Contact & Description',
+      description: 'Contact info and listing story',
+    },
+    {
+      key: 'review-publish',
+      label: 'Review & Publish',
+      description: 'Final review',
+    },
+  ] as const;
+
+  readonly listingSteps = computed<readonly WizardStepperItem[]>(() => {
+    const activeIndex = this.stepOrder.indexOf(this.activeStepKey());
+
+    return this.stepDefinitions.map((step, index): WizardStepperItem => ({
+      ...step,
+      state: index < activeIndex ? 'completed' : index === activeIndex ? 'active' : 'pending',
+    }));
+  });
+  readonly activeStepIndex = computed(() => this.stepOrder.indexOf(this.activeStepKey()));
+  readonly isFirstStep = computed(() => this.activeStepIndex() <= 0);
+  readonly isLastStep = computed(() => this.activeStepIndex() >= this.stepOrder.length - 1);
+  readonly progressPercent = computed(() =>
+    Math.round(((this.activeStepIndex() + 1) / this.stepOrder.length) * 100)
+  );
+  readonly progressDegrees = computed(() => `${Math.round((this.progressPercent() / 100) * 360)}deg`);
+  readonly activeStepLabel = computed(() => {
+    const activeKey = this.activeStepKey();
+    return this.stepDefinitions.find((step) => step.key === activeKey)?.label ?? '';
+  });
+  readonly activeStepCountLabel = computed(() => `${this.activeStepIndex() + 1} of ${this.stepOrder.length}`);
 
   /** Recomputed when basic/pricing/location/amenities forms change (OnPush + signal gate for the AI chip). */
   private readonly aiListingFormsTick = signal(0);
+  private readonly listingFormsTick = signal(0);
+  readonly publishRequirements = computed<readonly AddListingRequirement[]>(() => {
+    this.listingFormsTick();
+
+    const media = this.mediaForm.value;
+    const hasMedia = Boolean((media.images ?? []).length || (media.videoFiles ?? []).length);
+
+    return [
+      { label: 'Add basic information', complete: this.basicInfoForm.valid },
+      { label: 'Add pricing and details', complete: this.pricingForm.valid },
+      { label: 'Set property location', complete: this.locationForm.valid },
+      { label: 'Add media', complete: hasMedia },
+      { label: 'Add contact information', complete: this.contactForm.valid },
+      { label: 'Write description', complete: this.descriptionForm.valid },
+    ];
+  });
+  readonly completedRequirementCount = computed(
+    () => this.publishRequirements().filter((item) => item.complete).length
+  );
+  readonly progressPanelSteps = computed<readonly ListingProgressStep[]>(() => {
+    this.listingFormsTick();
+
+    const amenities = this.amenitiesForm.getRawValue();
+    const media = this.mediaForm.getRawValue();
+    const hasFeaturesOrMedia = Boolean(
+      (amenities.selectedFeatureIds ?? []).length ||
+      (media.images ?? []).length ||
+      (media.videoFiles ?? []).length
+    );
+
+    const readinessByStep: Record<AddListingStepKey, boolean> = {
+      'basic-info': this.basicInfoForm.valid,
+      pricing: this.pricingForm.valid,
+      location: this.locationForm.valid,
+      'features-media': hasFeaturesOrMedia,
+      'contact-description': this.contactForm.valid && this.descriptionForm.valid,
+      'review-publish': this.canSubmitListing(),
+    };
+
+    return this.listingSteps().map((step) => {
+      const ready = readinessByStep[step.key as AddListingStepKey];
+      return {
+        ...step,
+        readiness: ready ? 'complete' : 'attention',
+        readinessLabel: ready ? 'Ready' : 'Needs input',
+      };
+    });
+  });
+  readonly completedProgressStepCount = computed(
+    () => this.progressPanelSteps().filter((step) => step.readiness === 'complete').length
+  );
+  readonly progressTrayOpen = signal(false);
+  readonly canSubmitListing = computed(() =>
+    this.publishRequirements()
+      .filter((item) => item.label !== 'Add media')
+      .every((item) => item.complete)
+  );
+  readonly reviewPrimaryActionLabel = computed(() =>
+    this.editingId() ? 'Save changes' : 'Publish Listing'
+  );
+  readonly reviewSummarySections = computed<readonly ReviewSummarySection[]>(() => {
+    this.listingFormsTick();
+
+    const basic = this.basicInfoForm.getRawValue();
+    const pricing = this.pricingForm.getRawValue();
+    const location = this.locationForm.getRawValue();
+    const amenities = this.amenitiesForm.getRawValue();
+    const media = this.mediaForm.getRawValue();
+    const contact = this.contactForm.getRawValue();
+    const description = this.descriptionForm.getRawValue();
+
+    const selectedFeatureIds = (amenities.selectedFeatureIds ?? []) as string[];
+    const images = (media.images ?? []) as File[];
+    const videoFiles = (media.videoFiles ?? []) as File[];
+    const areaLabel = [this.formatReviewValue(pricing.areaSize, ''), this.formatReviewValue(pricing.areaUnit, '')]
+      .filter(Boolean)
+      .join(' ');
+    const coordinatesSelected = location.latitude != null && location.longitude != null;
+
+    return [
+      {
+        title: 'Listing basics',
+        icon: 'home_work',
+        items: [
+          {
+            label: 'Purpose',
+            value: basic.purpose === 'sale' ? 'For Sale' : 'For Rent',
+          },
+          {
+            label: 'Listing title',
+            value: this.formatReviewValue(basic.listingTitle),
+          },
+          {
+            label: 'Property type',
+            value: this.formatReviewValue(basic.propertySubtypeName || basic.propertyCategoryName),
+          },
+          {
+            label: 'Category',
+            value: this.formatReviewValue(basic.propertyCategoryName),
+          },
+        ],
+      },
+      {
+        title: 'Pricing and details',
+        icon: 'payments',
+        items: [
+          {
+            label: 'Price',
+            value: this.formatCurrencyValue(pricing.price),
+          },
+          {
+            label: 'Area size',
+            value: areaLabel || 'Not provided',
+          },
+          {
+            label: 'Bedrooms',
+            value: this.formatReviewValue(pricing.numBedrooms),
+          },
+          {
+            label: 'Bathrooms',
+            value: this.formatReviewValue(pricing.numBathrooms),
+          },
+          {
+            label: 'Parking spaces',
+            value: this.formatReviewValue(pricing.numParkingSpaces),
+          },
+          {
+            label: 'Floors',
+            value: this.formatReviewValue(pricing.numFloors),
+          },
+        ],
+      },
+      {
+        title: 'Location',
+        icon: 'location_on',
+        items: [
+          {
+            label: 'City',
+            value: this.formatReviewValue(locationCityFormValueToString(location.city)),
+          },
+          {
+            label: 'Area',
+            value: this.formatReviewValue(location.neighborhood),
+          },
+          {
+            label: 'Full address',
+            value: this.formatReviewValue(location.fullAddress),
+          },
+          {
+            label: 'Map pin',
+            value: coordinatesSelected ? 'Selected' : 'Not set',
+          },
+        ],
+      },
+      {
+        title: 'Features and media',
+        icon: 'perm_media',
+        items: [
+          {
+            label: 'Amenities',
+            value: selectedFeatureIds.length ? `${selectedFeatureIds.length} selected` : 'None selected',
+          },
+          {
+            label: 'Photos',
+            value: images.length ? `${images.length} selected` : 'None selected',
+          },
+          {
+            label: 'Video tour',
+            value: videoFiles[0]?.name ?? 'Not selected',
+          },
+        ],
+      },
+      {
+        title: 'Contact and description',
+        icon: 'contact_phone',
+        items: [
+          {
+            label: 'Contact name',
+            value: this.formatReviewValue(contact.contactName),
+          },
+          {
+            label: 'Email',
+            value: this.formatReviewValue(contact.contactEmail),
+          },
+          {
+            label: 'Phone',
+            value: this.formatReviewValue(contact.contactPhoneNumber),
+          },
+          {
+            label: 'Contact location',
+            value: this.formatReviewValue(contact.contactLocation),
+          },
+          {
+            label: 'Description',
+            value: this.formatDescriptionValue(description.propertyDescription),
+          },
+        ],
+      },
+    ];
+  });
   readonly aiDescriptionContextReady = computed(() => {
     this.aiListingFormsTick();
     return this.evalAiDescriptionContextReady();
@@ -205,6 +513,25 @@ export class AddListingPageComponent {
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.aiListingFormsTick.update((n: number) => n + 1));
+
+    merge(
+      this.basicInfoForm.valueChanges,
+      this.basicInfoForm.statusChanges,
+      this.pricingForm.valueChanges,
+      this.pricingForm.statusChanges,
+      this.locationForm.valueChanges,
+      this.locationForm.statusChanges,
+      this.amenitiesForm.valueChanges,
+      this.amenitiesForm.statusChanges,
+      this.mediaForm.valueChanges,
+      this.mediaForm.statusChanges,
+      this.contactForm.valueChanges,
+      this.contactForm.statusChanges,
+      this.descriptionForm.valueChanges,
+      this.descriptionForm.statusChanges
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.listingFormsTick.update((n: number) => n + 1));
 
     this.addListingService.getPropertyFeatures().subscribe({ error: () => void 0 });
 
@@ -347,6 +674,88 @@ export class AddListingPageComponent {
         this.isSubmitting.set(false);
       }
     }
+  }
+
+  onWizardStepSelected(stepKey: string): void {
+    if (!this.isAddListingStepKey(stepKey)) {
+      return;
+    }
+
+    this.activeStepKey.set(stepKey);
+  }
+
+  goToPreviousStep(): void {
+    const previousIndex = this.activeStepIndex() - 1;
+    if (previousIndex < 0) {
+      return;
+    }
+
+    this.activeStepKey.set(this.stepOrder[previousIndex]);
+  }
+
+  goToNextStep(): void {
+    const nextIndex = this.activeStepIndex() + 1;
+    if (nextIndex >= this.stepOrder.length) {
+      return;
+    }
+
+    this.activeStepKey.set(this.stepOrder[nextIndex]);
+  }
+
+  goToAiDescriptionStep(): void {
+    this.activeStepKey.set('contact-description');
+  }
+
+  toggleProgressTray(): void {
+    this.progressTrayOpen.update((open) => !open);
+  }
+
+  closeProgressTray(): void {
+    this.progressTrayOpen.set(false);
+  }
+
+  async onReviewPrimaryAction(): Promise<void> {
+    const actionId = this.editingId() ? 'update-property' : ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING;
+    await this.onHeaderAction(actionId);
+  }
+
+  async onReviewSaveDraft(): Promise<void> {
+    await this.onHeaderAction(ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT);
+  }
+
+  private isAddListingStepKey(stepKey: string): stepKey is AddListingStepKey {
+    return this.stepOrder.some((key) => key === stepKey);
+  }
+
+  private formatReviewValue(value: unknown, fallback = 'Not provided'): string {
+    if (value == null) {
+      return fallback;
+    }
+
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value.toLocaleString('en-US') : fallback;
+    }
+
+    const text = value.toString().trim();
+    return text || fallback;
+  }
+
+  private formatCurrencyValue(value: unknown): string {
+    if (value == null || value === '') {
+      return 'Not provided';
+    }
+
+    const numericValue = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(numericValue)) {
+      return this.formatReviewValue(value);
+    }
+
+    return `PKR ${numericValue.toLocaleString('en-US')}`;
+  }
+
+  private formatDescriptionValue(value: unknown): string {
+    const text = this.formatReviewValue(value, '');
+    return text ? `${text.length.toLocaleString('en-US')} characters` : 'Not provided';
   }
 
   private loadPropertyForEdit(id: string): void {

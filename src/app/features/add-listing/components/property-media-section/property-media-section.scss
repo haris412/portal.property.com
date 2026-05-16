@@ -1,29 +1,59 @@
 .field-label {
   display: inline-block;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
   color: var(--font-main);
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
 }
 
+.property-media {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+
+  &__block {
+    min-width: 0;
+  }
+}
+
 .selection-meta {
-  margin: 0.5rem 0 0;
+  margin: 0.625rem 0 0;
   color: var(--font-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-body-sm);
+
+  &--video {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    color: var(--font-main);
+    font-weight: 600;
+
+    mat-icon {
+      width: 1rem;
+      height: 1rem;
+      color: var(--primary);
+      font-size: var(--font-size-body);
+    }
+  }
 }
 
 .preview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 0.625rem;
-  margin-top: 0.625rem;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .preview-card {
   position: relative;
   border: 1px solid var(--border-soft);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   padding: 0.375rem;
-  background: var(--surface-white);
+  background: var(--surface);
 }
 
 .preview-card__index {
@@ -38,7 +68,7 @@
   border-radius: 999px;
   background: var(--primary);
   color: var(--surface);
-  font-size: 0.75rem;
+  font-size: var(--font-size-overline);
   font-weight: 600;
 }
 
@@ -54,13 +84,14 @@
   border: 0;
   border-radius: 999px;
   padding: 0;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--surface);
   color: var(--font-main);
   cursor: pointer;
+  border: 1px solid var(--border-soft);
 }
 
 .preview-card__remove mat-icon {
-  font-size: 0.875rem;
+  font-size: var(--font-size-body-sm);
   width: 0.875rem;
   height: 0.875rem;
   line-height: 0.875rem;
@@ -69,17 +100,24 @@
 .preview-card__image {
   display: block;
   width: 100%;
-  height: 84px;
-  border-radius: 0.375rem;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border-radius: var(--radius-sm);
   object-fit: cover;
 }
 
 .preview-card__name {
   margin: 0.375rem 0 0;
   color: var(--font-secondary);
-  font-size: 0.75rem;
+  font-size: var(--font-size-overline);
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 767.98px) {
+  .property-media {
+    grid-template-columns: 1fr;
+  }
 }
