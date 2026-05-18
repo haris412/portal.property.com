@@ -12,4 +12,7 @@ export const environment = {
   overpass: {
     interpreterUrl: 'https://overpass-api.de/api/interpreter',
   },
+  googlePlaces: {
+    apiKey: 'AIzaSyCQhyzoeFIoSD3XYRnHxxwmnaWrBqBv-Io',
+  },
 };

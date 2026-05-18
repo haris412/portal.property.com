@@ -1,3 +1,5 @@
+import type { LocationHierarchyItem } from './google-places.models';
+
 export interface BasicInformationPayload {
   purpose: string | null;
   /**
@@ -39,14 +41,11 @@ export interface PropertyMediaPayload {
 }
 
 export interface LocationPayload {
-  addressLine1?: string | null;
-  addressLine2?: string | null;
-  city?: string | null;
-  state?: string | null;
-  postalCode?: string | null;
-  country?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  location: LocationHierarchyItem[];
+  latitude: number | null;
+  longitude: number | null;
+  fullAddress: string | null;
+  mapLink: string | null;
 }
 
 export interface ContactInformationPayload {

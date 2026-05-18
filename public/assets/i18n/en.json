@@ -436,12 +436,11 @@
     },
     "location": {
       "title": "Property Location",
-      "city":         { "label": "City / Location",          "placeholder": "Search or select city",                         "loading": "Loading cities...",                    "required": "City is required" },
-      "neighborhood": { "label": "Area / Neighborhood",       "placeholder": "Search or select area",                         "loading": "Loading areas around this city...",    "required": "Neighborhood is required" },
+      "search":       { "label": "Search Location",           "placeholder": "Type a city, area or neighbourhood…",           "loading": "Searching…",    "required": "Please select a location from the suggestions" },
       "address":      { "label": "Full Property Address",     "placeholder": "Enter complete address",                        "required": "Full property address is required" },
       "mapLink":      { "label": "Pin Location / Map Link",   "placeholder": "Paste Google Maps pin or coordinates" },
       "preview": "Location Preview",
-      "banner": "Start broad with city and neighborhood, then add the full address and map reference for more accurate discovery."
+      "banner": "Search for a city, district or neighbourhood, then refine the pin on the map and enter the full street address."
     },
     "media": {
       "title": "Property Media",

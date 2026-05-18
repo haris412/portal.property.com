@@ -42,6 +42,7 @@ import {
   GenerateListingDescriptionRequest,
 } from '../../../../core/services/add-listing.service';
 import type { AddListingModel } from '../../../../core/models/add-listing.model';
+import type { LocationHierarchyItem } from '../../../../core/models/google-places.models';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 import type { PropertyCatalogData } from '../../../../core/models/property-catalog.model';
 import type { PropertyFeature } from '../../../../core/models/property-features.model';
@@ -114,12 +115,9 @@ function contactPhoneFormatValidator(control: AbstractControl): ValidationErrors
   return null;
 }
 
-/** City control is usually a string; mat-autocomplete may briefly hold a GeoNames row object. */
-function locationCityFormValueToString(city: unknown): string {
-  if (city == null) return '';
-  if (typeof city === 'string') return city.trim();
-  const o = city as { name?: string };
-  return typeof o.name === 'string' ? o.name.trim() : '';
+function nonEmptyArrayValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  return Array.isArray(value) && value.length > 0 ? null : { required: true };
 }
 
 @Component({
@@ -359,12 +357,8 @@ export class AddListingPageComponent {
         icon: 'location_on',
         items: [
           {
-            label: 'City',
-            value: this.formatReviewValue(locationCityFormValueToString(location.city)),
-          },
-          {
-            label: 'Area',
-            value: this.formatReviewValue(location.neighborhood),
+            label: 'Location',
+            value: this.formatLocationHierarchyForReview(location.locationHierarchy),
           },
           {
             label: 'Full address',
@@ -496,13 +490,12 @@ export class AddListingPageComponent {
     });
 
     this.locationForm = this.fb.group({
-      city: ['', Validators.required],
-      neighborhood: ['', Validators.required],
-      fullAddress: ['', Validators.required],
-      mapLink: [''],
-      /** Set by map pin / “Use my location” (also synced to `mapLink`). */
-      latitude: [null as number | null],
-      longitude: [null as number | null],
+      locationQuery:     [''],
+      locationHierarchy: [[] as LocationHierarchyItem[], nonEmptyArrayValidator],
+      fullAddress:       ['', Validators.required],
+      mapLink:           [''],
+      latitude:          [null as number | null],
+      longitude:         [null as number | null],
     });
 
     merge(
@@ -600,6 +593,10 @@ export class AddListingPageComponent {
       amenities.selectedFeatureIds ?? []
     );
 
+    const locationHierarchy = (location.locationHierarchy ?? []) as LocationHierarchyItem[];
+    const cityName = locationHierarchy.find(i => i.level === 2)?.name ?? '';
+    const areaName = (locationHierarchy.find(i => i.level === 4) ?? locationHierarchy.find(i => i.level === 3))?.name ?? '';
+
     return {
       title: (basic.listingTitle ?? '').trim(),
       purpose,
@@ -613,8 +610,8 @@ export class AddListingPageComponent {
       numParkingSpaces: pricing.numParkingSpaces,
       numFloors: pricing.numFloors,
       ...amenityBooleans,
-      city: locationCityFormValueToString(location.city),
-      neighborhood: location.neighborhood,
+      city: cityName,
+      neighborhood: areaName,
       fullAddress: location.fullAddress,
       mapLink: location.mapLink,
       latitude: location.latitude,
@@ -751,6 +748,15 @@ export class AddListingPageComponent {
     }
 
     return `PKR ${numericValue.toLocaleString('en-US')}`;
+  }
+
+  private formatLocationHierarchyForReview(hierarchy: unknown): string {
+    if (!Array.isArray(hierarchy) || !hierarchy.length) return 'Not provided';
+    const items = hierarchy as LocationHierarchyItem[];
+    const leaf = items[items.length - 1];
+    const city = items.find(i => i.level === 2);
+    if (city && city.name !== leaf.name) return `${leaf.name}, ${city.name}`;
+    return leaf.name;
   }
 
   private formatDescriptionValue(value: unknown): string {
@@ -898,10 +904,17 @@ export class AddListingPageComponent {
       { emitEvent: false }
     );
 
+    const locationHierarchy = Array.isArray((doc as any).location)
+      ? (doc as any).location as LocationHierarchyItem[]
+      : [];
+    const locationQueryDisplay = locationHierarchy.length
+      ? locationHierarchy[locationHierarchy.length - 1].name
+      : '';
+
     this.locationForm.patchValue(
       {
-        city: doc.city ?? '',
-        neighborhood: doc.neighborhood ?? '',
+        locationQuery: locationQueryDisplay,
+        locationHierarchy,
         fullAddress: doc.fullAddress ?? '',
         mapLink: doc.mapLink ?? '',
         latitude: doc.latitude ?? null,
@@ -1071,9 +1084,11 @@ export class AddListingPageComponent {
         ],
       },
       location: {
-        city: locationCityFormValueToString(location.city),
+        location: (location.locationHierarchy as LocationHierarchyItem[]) ?? [],
         latitude: location.latitude ?? null,
         longitude: location.longitude ?? null,
+        fullAddress: (location.fullAddress ?? null) as string | null,
+        mapLink: (location.mapLink ?? null) as string | null,
       },
       contactInformation: {
         contactName: contact.contactName,
@@ -1082,12 +1097,9 @@ export class AddListingPageComponent {
       },
       /** Preserve the boolean amenity keys the current API expects. */
       ...(amenityBooleans as unknown as Record<string, unknown>),
-      /** Preserve the flat location/contact fields the current API expects. */
+      /** Preserve flat contact fields the current API expects. */
       ...( {
         contactLocation: contact.contactLocation,
-        neighborhood: location.neighborhood,
-        fullAddress: location.fullAddress,
-        mapLink: location.mapLink,
       } as unknown as Record<string, unknown>),
       /** Preserve media arrays used elsewhere in the app/API today. */
       ...( {
