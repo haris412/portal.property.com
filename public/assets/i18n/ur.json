@@ -442,7 +442,8 @@
       "title": "پراپرٹی میڈیا",
       "description": "مرئیت اور فروخت بہتر بنانے کے لیے اعلی معیار کی تصاویر اپلوڈ کریں۔",
       "selectedImages": "{{count}} تصویر(یں) منتخب",
-      "selectedVideo": "منتخب: {{name}}"
+      "selectedVideo": "منتخب: {{name}}",
+      "minPhotos": "کم از کم 3 تصاویر درکار ہیں۔"
     }
   },
   "properties": {

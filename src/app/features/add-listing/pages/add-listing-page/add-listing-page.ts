@@ -121,6 +121,13 @@ function nonEmptyArrayValidator(control: AbstractControl): ValidationErrors | nu
   return Array.isArray(value) && value.length > 0 ? null : { required: true };
 }
 
+function minArrayLengthValidator(min: number): (control: AbstractControl) => ValidationErrors | null {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const arr = control.value as unknown[];
+    return Array.isArray(arr) && arr.length >= min ? null : { minArrayLength: { required: min, actual: arr?.length ?? 0 } };
+  };
+}
+
 @Component({
   selector: 'app-add-listing-page',
   imports: [
@@ -228,7 +235,7 @@ export class AddListingPageComponent {
     this.listingFormsTick();
 
     const media = this.mediaForm.value;
-    const hasMedia = Boolean((media.images ?? []).length || (media.videoFiles ?? []).length);
+    const hasMedia = (media.images ?? []).length >= 3 || Boolean((media.videoFiles ?? []).length);
 
     return [
       { label: 'Add basic information', complete: this.basicInfoForm.valid },
@@ -249,7 +256,7 @@ export class AddListingPageComponent {
     const media = this.mediaForm.getRawValue();
     const hasFeaturesOrMedia = Boolean(
       (amenities.selectedFeatureIds ?? []).length ||
-      (media.images ?? []).length ||
+      (media.images ?? []).length >= 3 ||
       (media.videoFiles ?? []).length
     );
 
@@ -481,7 +488,7 @@ export class AddListingPageComponent {
     });
 
     this.mediaForm = this.fb.group({
-      images: [[] as File[]],
+      images: [[] as File[], minArrayLengthValidator(3)],
       videoFiles: [[] as File[]],
     });
 
@@ -641,12 +648,14 @@ export class AddListingPageComponent {
       if (
         this.basicInfoForm.invalid ||
         this.pricingForm.invalid ||
+        this.mediaForm.invalid ||
         this.contactForm.invalid ||
         this.descriptionForm.invalid ||
         this.locationForm.invalid
       ) {
         this.basicInfoForm.markAllAsTouched();
         this.pricingForm.markAllAsTouched();
+        this.mediaForm.markAllAsTouched();
         this.contactForm.markAllAsTouched();
         this.descriptionForm.markAllAsTouched();
         this.locationForm.markAllAsTouched();
@@ -803,12 +812,14 @@ export class AddListingPageComponent {
     if (
       this.basicInfoForm.invalid ||
       this.pricingForm.invalid ||
+      this.mediaForm.invalid ||
       this.contactForm.invalid ||
       this.descriptionForm.invalid ||
       this.locationForm.invalid
     ) {
       this.basicInfoForm.markAllAsTouched();
       this.pricingForm.markAllAsTouched();
+      this.mediaForm.markAllAsTouched();
       this.contactForm.markAllAsTouched();
       this.descriptionForm.markAllAsTouched();
       this.locationForm.markAllAsTouched();

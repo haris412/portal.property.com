@@ -100,7 +100,9 @@ export class PropertyMediaSectionComponent implements OnDestroy {
 
   private syncImages(previews: SelectedImagePreview[]): void {
     this.selectedImagePreviews.set(previews);
-    this.form.get('images')?.setValue(previews.map((item) => item.file));
+    const ctrl = this.form.get('images');
+    ctrl?.setValue(previews.map((item) => item.file));
+    ctrl?.markAsTouched();
   }
 
   private fileKey(file: File): string {
