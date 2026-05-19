@@ -5,6 +5,7 @@ import {
   DestroyRef,
   inject,
   input,
+  Input,
   OnInit,
   signal
 } from '@angular/core';
@@ -47,6 +48,15 @@ import {
   rolesToUserTypeOptions,
   type UserTypeOption
 } from '../../../../core/models/auth.models';
+
+export interface SignupPrefill {
+  email?: string;
+  /** Full name or first name from URL — component splits on first space. */
+  firstName?: string;
+  /** Raw international phone e.g. "+923001234567" — component parses country + local. */
+  rawPhone?: string;
+  roleName?: string;
+}
 import { AuthService, RegisterPayload, agencyNameAvailableValidator } from '../../../../core/services/auth.service';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -101,6 +111,8 @@ interface SignupFormControls {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SignupCardComponent implements OnInit {
+  @Input() prefill: SignupPrefill | null = null;
+
   readonly showIntro = input(true);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
@@ -114,6 +126,7 @@ export class SignupCardComponent implements OnInit {
   readonly loading = signal(false);
   readonly rolesLoading = signal(true);
   readonly showAgencyName = signal(false);
+  readonly lockUserType = signal(false);
   private readonly formValid = signal(false);
 
   // —— Options & data (user types from API) ——
@@ -122,6 +135,7 @@ export class SignupCardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUserTypeOptions();
+    if (this.prefill) this.applyPrefill(this.prefill);
   }
 
   /** Fetch roles from backend and populate user type options; fallback to defaults on error. */
@@ -213,6 +227,51 @@ export class SignupCardComponent implements OnInit {
         ? (value as ICountry).name ?? ''
         : String(value);
     this.locationCountrySearchTerm.set(term);
+  }
+
+  // —— Prefill (inquiry link) ——
+
+  private applyPrefill(prefill: SignupPrefill): void {
+    if (prefill.email) {
+      this.form.controls.email.setValue(prefill.email);
+    }
+
+    if (prefill.firstName) {
+      const parts = prefill.firstName.trim().split(/\s+/);
+      this.form.controls.firstName.setValue(parts[0] ?? '');
+      if (parts.length > 1) {
+        this.form.controls.lastName.setValue(parts.slice(1).join(' '));
+      }
+    }
+
+    if (prefill.rawPhone) {
+      const { isoCode, local } = this.parsePhone(prefill.rawPhone);
+      this.form.controls.phoneCountryCode.setValue(isoCode);
+      this.form.controls.phone.setValue(local);
+    }
+
+    if (prefill.roleName) {
+      this.form.controls.userType.setValue(prefill.roleName);
+      this.lockUserType.set(true);
+    }
+  }
+
+  private parsePhone(raw: string): { isoCode: string; local: string } {
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return { isoCode: DEFAULT_PHONE_COUNTRY_CODE, local: '' };
+
+    const candidates = this.countries
+      .map(c => ({ isoCode: c.isoCode, code: c.phonecode.replace(/\D/g, '') }))
+      .filter(c => !!c.code)
+      .sort((a, b) => b.code.length - a.code.length);
+
+    for (const entry of candidates) {
+      if (digits.startsWith(entry.code)) {
+        return { isoCode: entry.isoCode, local: digits.slice(entry.code.length) };
+      }
+    }
+
+    return { isoCode: DEFAULT_PHONE_COUNTRY_CODE, local: digits };
   }
 
   // —— Build form and wire validity, search terms, and phone validation ——

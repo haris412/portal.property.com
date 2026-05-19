@@ -12,3 +12,15 @@ export const authGuard: CanActivateFn = () => {
 
   return router.createUrlTree(['/auth']);
 };
+
+/** Redirects Buyer users away from /dashboard to /appointments. */
+export const dashboardGuard: CanActivateFn = () => {
+  const auth   = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.hasRole('Buyer')) {
+    return router.createUrlTree(['/appointments']);
+  }
+
+  return true;
+};

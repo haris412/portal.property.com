@@ -14,7 +14,7 @@
   <app-sidebar
     [collapsed]="sidebarCollapsed()"
     [mobileOpen]="mobileSidebarOpen()"
-    [navItems]="navItems"
+    [navItems]="navItems()"
     (collapsedChange)="setSidebarCollapsed($event)"
     (mobileClose)="closeMobileSidebar()"
   />
