@@ -61,6 +61,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   FEATURE_SLUG_TO_AMENITY_KEY,
   normalizeFeatureSlug,
@@ -125,6 +126,7 @@ function nonEmptyArrayValidator(control: AbstractControl): ValidationErrors | nu
   imports: [
     TranslateModule,
     MatIconModule,
+    MatSlideToggleModule,
     ReactiveFormsModule,
     PageHeaderComponent,
     InfoBannerComponent,
@@ -155,6 +157,7 @@ export class AddListingPageComponent {
   readonly locationForm: FormGroup;
   readonly isSubmitting = signal(false);
   readonly isGeneratingDescription = signal(false);
+  readonly isFeatured = signal(false);
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
   private readonly stepOrder: readonly AddListingStepKey[] = [
     'basic-info',
@@ -923,6 +926,8 @@ export class AddListingPageComponent {
       { emitEvent: false }
     );
 
+    this.isFeatured.set((doc as any).isFeatured === true);
+
     const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
     // Emit so FeaturesAmenitiesSection syncs chip selection.
     this.amenitiesForm.patchValue({ selectedFeatureIds }, { emitEvent: true });
@@ -1097,6 +1102,7 @@ export class AddListingPageComponent {
       },
       /** Preserve the boolean amenity keys the current API expects. */
       ...(amenityBooleans as unknown as Record<string, unknown>),
+      isFeatured: this.isFeatured(),
       /** Preserve flat contact fields the current API expects. */
       ...( {
         contactLocation: contact.contactLocation,

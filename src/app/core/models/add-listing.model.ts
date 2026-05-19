@@ -62,6 +62,7 @@ export interface AddListingModel {
   propertyMedia: PropertyMediaPayload;
   location: LocationPayload;
   contactInformation: ContactInformationPayload;
+  isFeatured?: boolean;
   isDraft?: boolean;
 }
 
