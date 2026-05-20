@@ -1,3 +1,5 @@
+import type { LocationHierarchyItem } from './google-places.models';
+
 /** First page size for the properties grid and route resolver (API max 50). */
 export const PROPERTIES_LIST_INITIAL_PAGE_SIZE = 20;
 
@@ -35,8 +37,7 @@ export interface PropertyListDocument {
   _id?: string;
   listingTitle?: string;
   title?: string;
-  city?: string | null;
-  neighborhood?: string | null;
+  location?: LocationHierarchyItem[] | null;
   purpose?: string | null;
   price?: number | null;
   status?: string | null;
@@ -97,11 +98,14 @@ export interface PropertyListingRow {
 
 export function mapPropertyDocumentToGridRow(doc: PropertyListDocument): PropertyListingRow {
   const title = (doc.listingTitle ?? doc.title ?? '').trim() || '—';
+  const hierarchy = Array.isArray(doc.location) ? doc.location : [];
+  const city = hierarchy.find(i => i.level === 2)?.name || '—';
+  const area = (hierarchy.find(i => i.level === 4) ?? hierarchy.find(i => i.level === 3))?.name || '—';
   return {
     id: doc._id ?? '',
     title,
-    city: (doc.city ?? '').toString() || '—',
-    neighborhood: (doc.neighborhood ?? '').toString() || '—',
+    city: city || '—',
+    neighborhood: area || '—',
     purpose: (doc.purpose ?? '').toString() || '—',
     price: doc.price ?? null,
     status: (doc.status ?? '').toString() || '—',

@@ -18,6 +18,9 @@
           (filesSelected)="onFilesSelected(block.id, $event)"
         />
 
+        @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS && form.get('images')?.invalid && form.get('images')?.touched) {
+          <p class="field-error">{{ 'addListing.media.minPhotos' | translate }}</p>
+        }
         @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS && selectedImagePreviews().length) {
           <p class="selection-meta">
             {{ 'addListing.media.selectedImages' | translate: { count: selectedImagePreviews().length } }}

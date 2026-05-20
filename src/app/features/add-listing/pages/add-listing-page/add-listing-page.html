@@ -92,6 +92,12 @@
 
           <div class="add-listing-page__review-actions"
                aria-label="Review actions">
+            <mat-slide-toggle class="add-listing-page__featured-toggle"
+                              [checked]="isFeatured()"
+                              (change)="isFeatured.set($event.checked)">
+              Featured listing
+            </mat-slide-toggle>
+
             @if (!editingId()) {
             <button type="button"
                     class="add-listing-page__nav-button add-listing-page__nav-button--secondary"

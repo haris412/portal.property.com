@@ -42,6 +42,7 @@ import {
   GenerateListingDescriptionRequest,
 } from '../../../../core/services/add-listing.service';
 import type { AddListingModel } from '../../../../core/models/add-listing.model';
+import type { LocationHierarchyItem } from '../../../../core/models/google-places.models';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 import type { PropertyCatalogData } from '../../../../core/models/property-catalog.model';
 import type { PropertyFeature } from '../../../../core/models/property-features.model';
@@ -60,6 +61,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   FEATURE_SLUG_TO_AMENITY_KEY,
   normalizeFeatureSlug,
@@ -114,12 +116,16 @@ function contactPhoneFormatValidator(control: AbstractControl): ValidationErrors
   return null;
 }
 
-/** City control is usually a string; mat-autocomplete may briefly hold a GeoNames row object. */
-function locationCityFormValueToString(city: unknown): string {
-  if (city == null) return '';
-  if (typeof city === 'string') return city.trim();
-  const o = city as { name?: string };
-  return typeof o.name === 'string' ? o.name.trim() : '';
+function nonEmptyArrayValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  return Array.isArray(value) && value.length > 0 ? null : { required: true };
+}
+
+function minArrayLengthValidator(min: number): (control: AbstractControl) => ValidationErrors | null {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const arr = control.value as unknown[];
+    return Array.isArray(arr) && arr.length >= min ? null : { minArrayLength: { required: min, actual: arr?.length ?? 0 } };
+  };
 }
 
 @Component({
@@ -127,6 +133,7 @@ function locationCityFormValueToString(city: unknown): string {
   imports: [
     TranslateModule,
     MatIconModule,
+    MatSlideToggleModule,
     ReactiveFormsModule,
     PageHeaderComponent,
     InfoBannerComponent,
@@ -157,6 +164,7 @@ export class AddListingPageComponent {
   readonly locationForm: FormGroup;
   readonly isSubmitting = signal(false);
   readonly isGeneratingDescription = signal(false);
+  readonly isFeatured = signal(false);
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
   private readonly stepOrder: readonly AddListingStepKey[] = [
     'basic-info',
@@ -227,7 +235,7 @@ export class AddListingPageComponent {
     this.listingFormsTick();
 
     const media = this.mediaForm.value;
-    const hasMedia = Boolean((media.images ?? []).length || (media.videoFiles ?? []).length);
+    const hasMedia = (media.images ?? []).length >= 3 || Boolean((media.videoFiles ?? []).length);
 
     return [
       { label: 'Add basic information', complete: this.basicInfoForm.valid },
@@ -248,7 +256,7 @@ export class AddListingPageComponent {
     const media = this.mediaForm.getRawValue();
     const hasFeaturesOrMedia = Boolean(
       (amenities.selectedFeatureIds ?? []).length ||
-      (media.images ?? []).length ||
+      (media.images ?? []).length >= 3 ||
       (media.videoFiles ?? []).length
     );
 
@@ -359,12 +367,8 @@ export class AddListingPageComponent {
         icon: 'location_on',
         items: [
           {
-            label: 'City',
-            value: this.formatReviewValue(locationCityFormValueToString(location.city)),
-          },
-          {
-            label: 'Area',
-            value: this.formatReviewValue(location.neighborhood),
+            label: 'Location',
+            value: this.formatLocationHierarchyForReview(location.locationHierarchy),
           },
           {
             label: 'Full address',
@@ -484,7 +488,7 @@ export class AddListingPageComponent {
     });
 
     this.mediaForm = this.fb.group({
-      images: [[] as File[]],
+      images: [[] as File[], minArrayLengthValidator(3)],
       videoFiles: [[] as File[]],
     });
 
@@ -496,13 +500,12 @@ export class AddListingPageComponent {
     });
 
     this.locationForm = this.fb.group({
-      city: ['', Validators.required],
-      neighborhood: ['', Validators.required],
-      fullAddress: ['', Validators.required],
-      mapLink: [''],
-      /** Set by map pin / “Use my location” (also synced to `mapLink`). */
-      latitude: [null as number | null],
-      longitude: [null as number | null],
+      locationQuery:     [''],
+      locationHierarchy: [[] as LocationHierarchyItem[], nonEmptyArrayValidator],
+      fullAddress:       ['', Validators.required],
+      mapLink:           [''],
+      latitude:          [null as number | null],
+      longitude:         [null as number | null],
     });
 
     merge(
@@ -600,6 +603,10 @@ export class AddListingPageComponent {
       amenities.selectedFeatureIds ?? []
     );
 
+    const locationHierarchy = (location.locationHierarchy ?? []) as LocationHierarchyItem[];
+    const cityName = locationHierarchy.find(i => i.level === 2)?.name ?? '';
+    const areaName = (locationHierarchy.find(i => i.level === 4) ?? locationHierarchy.find(i => i.level === 3))?.name ?? '';
+
     return {
       title: (basic.listingTitle ?? '').trim(),
       purpose,
@@ -613,8 +620,8 @@ export class AddListingPageComponent {
       numParkingSpaces: pricing.numParkingSpaces,
       numFloors: pricing.numFloors,
       ...amenityBooleans,
-      city: locationCityFormValueToString(location.city),
-      neighborhood: location.neighborhood,
+      city: cityName,
+      neighborhood: areaName,
       fullAddress: location.fullAddress,
       mapLink: location.mapLink,
       latitude: location.latitude,
@@ -641,12 +648,14 @@ export class AddListingPageComponent {
       if (
         this.basicInfoForm.invalid ||
         this.pricingForm.invalid ||
+        this.mediaForm.invalid ||
         this.contactForm.invalid ||
         this.descriptionForm.invalid ||
         this.locationForm.invalid
       ) {
         this.basicInfoForm.markAllAsTouched();
         this.pricingForm.markAllAsTouched();
+        this.mediaForm.markAllAsTouched();
         this.contactForm.markAllAsTouched();
         this.descriptionForm.markAllAsTouched();
         this.locationForm.markAllAsTouched();
@@ -753,6 +762,15 @@ export class AddListingPageComponent {
     return `PKR ${numericValue.toLocaleString('en-US')}`;
   }
 
+  private formatLocationHierarchyForReview(hierarchy: unknown): string {
+    if (!Array.isArray(hierarchy) || !hierarchy.length) return 'Not provided';
+    const items = hierarchy as LocationHierarchyItem[];
+    const leaf = items[items.length - 1];
+    const city = items.find(i => i.level === 2);
+    if (city && city.name !== leaf.name) return `${leaf.name}, ${city.name}`;
+    return leaf.name;
+  }
+
   private formatDescriptionValue(value: unknown): string {
     const text = this.formatReviewValue(value, '');
     return text ? `${text.length.toLocaleString('en-US')} characters` : 'Not provided';
@@ -794,12 +812,14 @@ export class AddListingPageComponent {
     if (
       this.basicInfoForm.invalid ||
       this.pricingForm.invalid ||
+      this.mediaForm.invalid ||
       this.contactForm.invalid ||
       this.descriptionForm.invalid ||
       this.locationForm.invalid
     ) {
       this.basicInfoForm.markAllAsTouched();
       this.pricingForm.markAllAsTouched();
+      this.mediaForm.markAllAsTouched();
       this.contactForm.markAllAsTouched();
       this.descriptionForm.markAllAsTouched();
       this.locationForm.markAllAsTouched();
@@ -898,10 +918,17 @@ export class AddListingPageComponent {
       { emitEvent: false }
     );
 
+    const locationHierarchy = Array.isArray((doc as any).location)
+      ? (doc as any).location as LocationHierarchyItem[]
+      : [];
+    const locationQueryDisplay = locationHierarchy.length
+      ? locationHierarchy[locationHierarchy.length - 1].name
+      : '';
+
     this.locationForm.patchValue(
       {
-        city: doc.city ?? '',
-        neighborhood: doc.neighborhood ?? '',
+        locationQuery: locationQueryDisplay,
+        locationHierarchy,
         fullAddress: doc.fullAddress ?? '',
         mapLink: doc.mapLink ?? '',
         latitude: doc.latitude ?? null,
@@ -909,6 +936,8 @@ export class AddListingPageComponent {
       },
       { emitEvent: false }
     );
+
+    this.isFeatured.set((doc as any).isFeatured === true);
 
     const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
     // Emit so FeaturesAmenitiesSection syncs chip selection.
@@ -1071,9 +1100,11 @@ export class AddListingPageComponent {
         ],
       },
       location: {
-        city: locationCityFormValueToString(location.city),
+        location: (location.locationHierarchy as LocationHierarchyItem[]) ?? [],
         latitude: location.latitude ?? null,
         longitude: location.longitude ?? null,
+        fullAddress: (location.fullAddress ?? null) as string | null,
+        mapLink: (location.mapLink ?? null) as string | null,
       },
       contactInformation: {
         contactName: contact.contactName,
@@ -1082,12 +1113,10 @@ export class AddListingPageComponent {
       },
       /** Preserve the boolean amenity keys the current API expects. */
       ...(amenityBooleans as unknown as Record<string, unknown>),
-      /** Preserve the flat location/contact fields the current API expects. */
+      isFeatured: this.isFeatured(),
+      /** Preserve flat contact fields the current API expects. */
       ...( {
         contactLocation: contact.contactLocation,
-        neighborhood: location.neighborhood,
-        fullAddress: location.fullAddress,
-        mapLink: location.mapLink,
       } as unknown as Record<string, unknown>),
       /** Preserve media arrays used elsewhere in the app/API today. */
       ...( {

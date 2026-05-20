@@ -13,6 +13,7 @@ import type {
   PropertiesListResult,
 } from '../models/properties-list.model';
 import type { PropertyDetailApiResponse, PropertyDetailDocument } from '../models/property-detail.model';
+import type { LocationHierarchyItem } from '../models/google-places.models';
 import {
   CoarsePropertyType,
   FEATURE_SLUG_TO_AMENITY_KEY,
@@ -111,7 +112,9 @@ export class AddListingService {
       contactPhoneNumber:
         ((anyPayload as any).contactPhoneNumber ?? contact.contactPhone ?? null) as string | null,
 
-      city: ((anyPayload as any).city ?? location.city ?? null) as string | null,
+      location: (location.location ?? (anyPayload as any).location ?? []) as LocationHierarchyItem[],
+      fullAddress: ((anyPayload as any).fullAddress ?? location.fullAddress ?? null) as string | null,
+      mapLink: ((anyPayload as any).mapLink ?? location.mapLink ?? null) as string | null,
       latitude: ((anyPayload as any).latitude ?? location.latitude ?? null) as number | null,
       longitude: ((anyPayload as any).longitude ?? location.longitude ?? null) as number | null,
     };
