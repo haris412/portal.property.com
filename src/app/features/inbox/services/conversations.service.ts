@@ -1,8 +1,8 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable, inject } from "@angular/core";
 import { Observable } from "rxjs";
-import { environment } from "../../../environments/environment";
-import { CreateConversationDto } from "./models/conversation.model";
+import { environment } from "../../../../environments/environment";
+import { CreateConversationDto } from "../models/createConversation.model";
 
 @Injectable({
   providedIn: 'root',
@@ -23,5 +23,9 @@ export class ConversationService {
 
   getConversations(): Observable<any> {
     return this.http.get(`${this.baseUrl}/api/${this.controller}`);
+  }
+
+  getMessages(conversationId: string): Observable<any> {
+    return this.http.get(this.url(`${conversationId}/messages`));
   }
 }

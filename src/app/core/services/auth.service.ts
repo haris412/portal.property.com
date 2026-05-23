@@ -88,21 +88,22 @@ function extractRole(raw: Record<string, unknown>): string | undefined {
 /** Maps full API user payload to in-memory User. */
 export function fromApiUser(raw: Record<string, unknown>): User {
   const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
-  const lastName  = (raw['lastName']  as string | undefined)?.trim() || undefined;
-  const agency    = raw['agency'];
+  const lastName = (raw['lastName'] as string | undefined)?.trim() || undefined;
+  const agency = raw['agency'];
   return {
-    _id:             ((raw['_id'] ?? raw['id']) as string) || '',
-    email:           (raw['email'] as string | undefined) ?? '',
+    _id: ((raw['_id'] ?? raw['id']) as string) || '',
+    email: (raw['email'] as string | undefined) ?? '',
     firstName,
     lastName,
-    name:            [firstName, lastName].filter(Boolean).join(' ') || undefined,
-    phoneNumber:     (raw['phoneNumber']     as string | undefined)?.trim() || undefined,
-    profileImageUrl: (raw['profileImageUrl'] as string | undefined)        || undefined,
-    location:        (raw['location']        as string | undefined)?.trim() || undefined,
-    role:            extractRole(raw),
-    agencyName:      typeof agency === 'object' && agency != null && 'name' in agency
-                       ? (agency as { name: string }).name || undefined
-                       : undefined,
+    name: [firstName, lastName].filter(Boolean).join(' ') || undefined,
+    phoneNumber: (raw['phoneNumber'] as string | undefined)?.trim() || undefined,
+    profileImageUrl: (raw['profileImageUrl'] as string | undefined) || undefined,
+    location: (raw['location'] as string | undefined)?.trim() || undefined,
+    role: extractRole(raw),
+    agencyName:
+      typeof agency === 'object' && agency != null && 'name' in agency
+        ? (agency as { name: string }).name || undefined
+        : undefined,
   };
 }
 

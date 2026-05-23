@@ -36,21 +36,21 @@
             <button
               type="button"
               class="conversation-card"
-              [class.conversation-card--active]="selectedConversationId() === conversation.id"
-              (click)="selectConversation(conversation.id)"
+              [class.conversation-card--active]="selectedConversationId() === conversation._id"
+              (click)="selectConversation(conversation._id)"
             >
               <div class="conversation-card__avatar-wrap">
                 <img
                   class="conversation-card__avatar"
-                  [src]="conversation.avatar"
-                  [alt]="conversation.name"
+                  [src]="'https://i.pravatar.cc/100?img=47'"
+                  [alt]="conversation.senderName"
                 />
               </div>
 
               <div class="conversation-card__content">
                 <div class="conversation-card__top">
-                  <h4>{{ conversation.name }}</h4>
-                  <span>{{ conversation.listTime }}</span>
+                  <h4>{{ conversation.senderName }}</h4>
+                  <span>{{ conversation?.lastMessage?.at | smartTime }}</span>
                 </div>
 
                 <p class="conversation-card__meta mb-1">
@@ -82,13 +82,13 @@
             <div class="chat-panel__profile">
               <img
                 class="chat-panel__avatar"
-                [src]="activeConversation.avatar"
-                [alt]="activeConversation.name"
+                [src]="'https://i.pravatar.cc/100?img=47'"
+                [alt]="activeConversation.senderName"
               />
 
               <div class="chat-panel__info">
-                <h4>{{ activeConversation.name }}</h4>
-                <p>{{ activeConversation.propertyLine }}</p>
+                <h4>{{ activeConversation.senderName }}</h4>
+                <p>Interested in {{ activeConversation.propertyTitle }}</p>
               </div>
             </div>
 
@@ -104,14 +104,14 @@
           </header>
 
           <div #messagesContainer class="chat-panel__messages">
-            @for (message of activeConversation.messages; track trackByMessage($index, message)) {
+            @for (message of messages(); track trackByMessage($index, message)) {
               <div
                 class="chat-message"
-                [class.chat-message--mine]="message.sender === 'me'"
+                [class.chat-message--mine]="message.senderId === currentUserId"
               >
                 <div class="chat-message__bubble">
                   <p class="mb-0">{{ message.text }}</p>
-                  <span>{{ message.time }}</span>
+                  <span>{{ message.createdAt | smartTime }}</span>
                 </div>
               </div>
             }
@@ -126,7 +126,7 @@
                   [ngModel]="replyText()"
                   (ngModelChange)="replyText.set($event)"
                   (keydown)="onReplyKeydown($event)"
-                  placeholder="Type your reply to {{ activeConversation.name }}..."
+                  placeholder="Type your reply to {{ activeConversation.senderName }}..."
                 ></textarea>
               </div>
 
@@ -134,7 +134,7 @@
                 <button
                   type="button"
                   class="btn chat-panel__send-button w-100"
-                  (click)="sendMessage()"
+                  (click)="send()"
                 >
                   Send
                 </button>
