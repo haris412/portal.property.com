@@ -1,18 +1,15 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnDestroy, Output, signal } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
+import { ListingImagePayload, MediaUploadService } from '../../../../core/services/media-upload.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { ConfirmationDialogService } from '../../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { UploadDropzoneComponent } from '../../../../shared/ui/upload-dropzone/upload-dropzone';
-import { UploadDropzoneData } from '../../../../core/models/ui.models';
-import { PROPERTY_MEDIA_BLOCK_IDS } from '../../constants/add-listing.constants';
-import { TranslateModule } from '@ngx-translate/core';
 
-interface MediaBlock extends UploadDropzoneData {
-  id: string;
-  label: string;
-}
-
-interface SelectedImagePreview {
+interface NewImagePreview {
   name: string;
   url: string;
   file: File;
@@ -23,86 +20,93 @@ interface SelectedImagePreview {
   imports: [TranslateModule, SectionCardComponent, UploadDropzoneComponent, MatIconModule],
   templateUrl: './property-media-section.html',
   styleUrl: './property-media-section.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PropertyMediaSectionComponent implements OnDestroy {
+  private readonly mediaUploadService = inject(MediaUploadService);
+  private readonly notifications = inject(NotificationService);
+  private readonly confirmationDialog = inject(ConfirmationDialogService);
+
   @Input({ required: true }) form!: FormGroup;
+  @Input() existingImages: ListingImagePayload[] = [];
+  @Input() existingVideoUrl: string | null = null;
+  @Output() readonly existingImageRemoved = new EventEmitter<number>();
 
-  readonly PROPERTY_MEDIA_BLOCK_IDS = PROPERTY_MEDIA_BLOCK_IDS;
-  readonly selectedImagePreviews = signal<SelectedImagePreview[]>([]);
+  readonly newImagePreviews = signal<NewImagePreview[]>([]);
   readonly selectedVideoName = signal<string | null>(null);
-
-  readonly mediaBlocks = signal<MediaBlock[]>([
-    {
-      id: 'photos',
-      label: 'Photos',
-      title: 'Click to upload or drag & drop',
-      subtitle: 'SVG, PNG, JPG (max. 10MB)',
-      icon: 'image',
-      accept: '.svg,.png,.jpg,.jpeg'
-    },
-    {
-      id: 'video',
-      label: 'Video Tour',
-      title: 'Click to upload or drag & drop',
-      subtitle: 'MP4, WebM or MOV (max. 100MB)',
-      icon: 'videocam',
-      accept: '.mp4,.webm,.mov'
-    }
-  ]);
-
-  onFilesSelected(blockId: string, files: File[]): void {
-    const normalizedBlockId = blockId.toLowerCase();
-
-    if (normalizedBlockId === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS) {
-      const nextPreviews = [...this.selectedImagePreviews()];
-      const existingKeys = new Set(nextPreviews.map((item) => this.fileKey(item.file)));
-      for (const file of files) {
-        const key = this.fileKey(file);
-        if (existingKeys.has(key)) {
-          continue;
-        }
-        existingKeys.add(key);
-        nextPreviews.push({
-          name: file.name,
-          url: URL.createObjectURL(file),
-          file,
-        });
-      }
-      this.syncImages(nextPreviews);
-    } else if (normalizedBlockId === PROPERTY_MEDIA_BLOCK_IDS.VIDEO) {
-      this.form.get('videoFiles')?.setValue(files);
-      this.selectedVideoName.set(files[0]?.name ?? null);
-    }
-  }
+  readonly deletingImageUrls = signal(new Set<string>());
 
   ngOnDestroy(): void {
-    this.revokeImagePreviews();
-  }
-
-  removeSelectedImage(index: number): void {
-    const previews = this.selectedImagePreviews();
-    const target = previews[index];
-    if (!target) {
-      return;
-    }
-
-    URL.revokeObjectURL(target.url);
-    const nextPreviews = previews.filter((_, i) => i !== index);
-    this.syncImages(nextPreviews);
-  }
-
-  private revokeImagePreviews(): void {
-    for (const preview of this.selectedImagePreviews()) {
+    for (const preview of this.newImagePreviews()) {
       URL.revokeObjectURL(preview.url);
     }
   }
 
-  private syncImages(previews: SelectedImagePreview[]): void {
-    this.selectedImagePreviews.set(previews);
-    const ctrl = this.form.get('images');
-    ctrl?.setValue(previews.map((item) => item.file));
-    ctrl?.markAsTouched();
+  onPhotosSelected(files: File[]): void {
+    const current = this.newImagePreviews();
+    const seenKeys = new Set(current.map((p) => this.fileKey(p.file)));
+    const additions: NewImagePreview[] = [];
+
+    for (const file of files) {
+      const key = this.fileKey(file);
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
+      additions.push({ name: file.name, url: URL.createObjectURL(file), file });
+    }
+
+    if (additions.length) {
+      this.syncNewImages([...current, ...additions]);
+    }
+  }
+
+  onVideoSelected(files: File[]): void {
+    this.form.get('videoFiles')?.setValue(files);
+    this.selectedVideoName.set(files[0]?.name ?? null);
+  }
+
+  async removeExistingImage(index: number): Promise<void> {
+    const image = this.existingImages[index];
+    if (!image || this.deletingImageUrls().has(image.url)) return;
+
+    const confirmed = await firstValueFrom(
+      this.confirmationDialog.confirm({
+        title: 'Remove Image',
+        message: 'Are you sure you want to remove this image? This cannot be undone.',
+        confirmLabel: 'Remove',
+        cancelLabel: 'Cancel',
+        tone: 'warn',
+        icon: 'delete',
+      })
+    );
+    if (!confirmed) return;
+
+    this.deletingImageUrls.update((set) => new Set(set).add(image.url));
+    try {
+      await this.mediaUploadService.deleteImage(image.url);
+      this.existingImageRemoved.emit(index);
+    } catch {
+      this.notifications.error('Failed to remove image. Please try again.');
+    } finally {
+      this.deletingImageUrls.update((set) => {
+        const next = new Set(set);
+        next.delete(image.url);
+        return next;
+      });
+    }
+  }
+
+  removeNewImage(index: number): void {
+    const previews = this.newImagePreviews();
+    const target = previews[index];
+    if (!target) return;
+    URL.revokeObjectURL(target.url);
+    this.syncNewImages(previews.filter((_, i) => i !== index));
+  }
+
+  private syncNewImages(previews: NewImagePreview[]): void {
+    this.newImagePreviews.set(previews);
+    this.form.get('images')?.setValue(previews.map((p) => p.file));
+    this.form.markAsTouched();
   }
 
   private fileKey(file: File): string {

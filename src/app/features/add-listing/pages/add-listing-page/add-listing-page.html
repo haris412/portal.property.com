@@ -27,6 +27,15 @@
     <div class="add-listing-page__content">
       <div class="add-listing-page__wizard"
            [attr.aria-label]="activeStepLabel()">
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'features-media'">
+          <app-features-amenities-section [form]="amenitiesForm" />
+          <app-property-media-section [form]="mediaForm"
+                                      [existingImages]="existingPropertyImages()"
+                                      [existingVideoUrl]="loadedProperty()?.videoTourUrl ?? null"
+                                      (existingImageRemoved)="onExistingImageRemoved($event)" />
+        </div>
+
         @switch (activeStepKey()) {
         @case ('basic-info') {
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
@@ -41,12 +50,6 @@
         @case ('location') {
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-property-location-step [form]="locationForm" />
-        </div>
-        }
-        @case ('features-media') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
-          <app-features-amenities-section [form]="amenitiesForm" />
-          <app-property-media-section [form]="mediaForm" />
         </div>
         }
         @case ('contact-description') {

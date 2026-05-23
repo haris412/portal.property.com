@@ -84,6 +84,14 @@ export class MediaUploadService {
     return data.fileUrl;
   }
 
+  async deleteImage(fileUrl: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete<{ success: boolean }>(`${this.apiBase}/property-image`, {
+        body: { fileUrl },
+      })
+    );
+  }
+
   private async putToS3(uploadUrl: string, file: File): Promise<void> {
     await firstValueFrom(
       this.http.put(uploadUrl, file, {
