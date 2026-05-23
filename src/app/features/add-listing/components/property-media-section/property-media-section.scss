@@ -14,6 +14,16 @@
   &__block {
     min-width: 0;
   }
+
+  &__video-preview {
+    display: block;
+    width: 100%;
+    margin-top: 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-soft);
+    max-height: 220px;
+    background: var(--surface-muted);
+  }
 }
 
 .selection-meta {

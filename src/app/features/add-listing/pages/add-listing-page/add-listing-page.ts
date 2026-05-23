@@ -121,11 +121,10 @@ function nonEmptyArrayValidator(control: AbstractControl): ValidationErrors | nu
   return Array.isArray(value) && value.length > 0 ? null : { required: true };
 }
 
-function minArrayLengthValidator(min: number): (control: AbstractControl) => ValidationErrors | null {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const arr = control.value as unknown[];
-    return Array.isArray(arr) && arr.length >= min ? null : { minArrayLength: { required: min, actual: arr?.length ?? 0 } };
-  };
+function mediaRequirementValidator(control: AbstractControl): ValidationErrors | null {
+  const images = (control.get('images')?.value as File[] | null) ?? [];
+  const video = (control.get('videoFiles')?.value as File[] | null) ?? [];
+  return images.length >= 3 || video.length > 0 ? null : { mediaRequired: true };
 }
 
 @Component({
@@ -165,6 +164,7 @@ export class AddListingPageComponent {
   readonly isSubmitting = signal(false);
   readonly isGeneratingDescription = signal(false);
   readonly isFeatured = signal(false);
+  readonly existingPropertyImages = signal<ListingImagePayload[]>([]);
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
   private readonly stepOrder: readonly AddListingStepKey[] = [
     'basic-info',
@@ -459,7 +459,7 @@ export class AddListingPageComponent {
   readonly editingId = signal<string | null>(null);
   readonly editLoading = signal(false);
   readonly editLoadError = signal<string | null>(null);
-  private readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
+  readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
 
   constructor(private readonly fb: FormBuilder) {
     this.basicInfoForm = this.fb.group({
@@ -488,9 +488,9 @@ export class AddListingPageComponent {
     });
 
     this.mediaForm = this.fb.group({
-      images: [[] as File[], minArrayLengthValidator(3)],
+      images: [[] as File[]],
       videoFiles: [[] as File[]],
-    });
+    }, { validators: mediaRequirementValidator });
 
     this.contactForm = this.fb.group({
       contactName: ['', Validators.required],
@@ -715,6 +715,10 @@ export class AddListingPageComponent {
     this.activeStepKey.set('contact-description');
   }
 
+  onExistingImageRemoved(index: number): void {
+    this.existingPropertyImages.update((imgs) => imgs.filter((_, i) => i !== index));
+  }
+
   toggleProgressTray(): void {
     this.progressTrayOpen.update((open) => !open);
   }
@@ -812,18 +816,22 @@ export class AddListingPageComponent {
     if (
       this.basicInfoForm.invalid ||
       this.pricingForm.invalid ||
-      this.mediaForm.invalid ||
       this.contactForm.invalid ||
       this.descriptionForm.invalid ||
       this.locationForm.invalid
     ) {
       this.basicInfoForm.markAllAsTouched();
       this.pricingForm.markAllAsTouched();
-      this.mediaForm.markAllAsTouched();
       this.contactForm.markAllAsTouched();
       this.descriptionForm.markAllAsTouched();
       this.locationForm.markAllAsTouched();
       this.notifications.warning('Please fill all required fields before saving changes.');
+      return;
+    }
+
+    const totalImages = this.existingPropertyImages().length + ((this.mediaForm.value.images ?? []) as File[]).length;
+    if (totalImages < 3) {
+      this.notifications.warning('At least 3 photos are required.');
       return;
     }
 
@@ -842,21 +850,40 @@ export class AddListingPageComponent {
   }
 
   private async uploadSelectedMediaForEdit(): Promise<UploadedMediaPayload> {
-    const existing = this.loadedProperty();
-    const existingImages = (existing?.images ?? []) as ListingImagePayload[];
-    const existingVideo = ((existing?.videoTourUrl ?? null) || null) as string | null;
+    const existingVideo = ((this.loadedProperty()?.videoTourUrl ?? null) || null) as string | null;
+    const keptImages = this.existingPropertyImages();
 
     const media = this.mediaForm.value;
-    const images = (media.images ?? []) as File[];
+    const newImageFiles = (media.images ?? []) as File[];
     const videoFiles = (media.videoFiles ?? []) as File[];
 
-    // If user didn't pick new files, keep the existing URLs (avoid wiping media on update).
-    if (!images.length && !videoFiles.length) {
-      return { images: existingImages, videoTourUrl: existingVideo };
+    let uploadedNewImages: ListingImagePayload[] = [];
+    let videoTourUrl = existingVideo;
+
+    if (newImageFiles.length || videoFiles.length) {
+      this.notifications.info('Uploading media...');
+      try {
+        uploadedNewImages = newImageFiles.length
+          ? await this.mediaUploadService.uploadImages(newImageFiles)
+          : [];
+        if (videoFiles[0]) {
+          videoTourUrl = await this.mediaUploadService.uploadVideo(videoFiles[0]);
+        }
+        this.notifications.success('Media uploaded successfully');
+      } catch (error: unknown) {
+        const details = apiErrorSummary(error) || 'Media upload failed';
+        this.notifications.error(details);
+        throw new Error(details);
+      }
     }
 
-    // If they picked new media, upload and replace those fields.
-    return await this.uploadSelectedMedia();
+    const mergedImages = [...keptImages, ...uploadedNewImages].map((img, index) => ({
+      ...img,
+      orderIndex: index,
+      isThumbnail: index === 0,
+    }));
+
+    return { images: mergedImages, videoTourUrl };
   }
 
   private patchFormsFromProperty(
@@ -938,6 +965,7 @@ export class AddListingPageComponent {
     );
 
     this.isFeatured.set((doc as any).isFeatured === true);
+    this.existingPropertyImages.set((doc.images ?? []) as ListingImagePayload[]);
 
     const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
     // Emit so FeaturesAmenitiesSection syncs chip selection.
