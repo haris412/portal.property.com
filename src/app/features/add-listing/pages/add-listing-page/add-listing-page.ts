@@ -41,7 +41,12 @@ import {
   AddListingService,
   GenerateListingDescriptionRequest,
 } from '../../../../core/services/add-listing.service';
-import type { AddListingModel } from '../../../../core/models/add-listing.model';
+import type { CreateListingPayload } from '../../../../core/models/add-listing.model';
+import {
+  buildListingPayload,
+  type ListingFormSnapshot,
+  type UploadedMediaPayload,
+} from '../../mappers/listing-payload.mapper';
 import type { LocationHierarchyItem } from '../../../../core/models/google-places.models';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 import type { PropertyCatalogData } from '../../../../core/models/property-catalog.model';
@@ -67,11 +72,6 @@ import {
   normalizeFeatureSlug,
 } from '../../../../core/constants/listing-payload.constants';
 import { CdkAutofill } from "@angular/cdk/text-field";
-
-interface UploadedMediaPayload {
-  images: ListingImagePayload[];
-  videoTourUrl: string | null;
-}
 
 type AddListingStepKey =
   | 'basic-info'
@@ -1071,97 +1071,24 @@ export class AddListingPageComponent {
     );
   }
 
-  private buildPayload(uploadedMedia: UploadedMediaPayload): AddListingModel {
-    const basic = this.basicInfoForm.value;
-    const description = this.descriptionForm.value;
-    const pricing = this.pricingForm.value;
-    const amenities = this.amenitiesForm.value;
-    const contact = this.contactForm.value;
-    const location = this.locationForm.value;
-
-    const purpose =
-      basic.purpose === 'sale'
-        ? 'For Sale'
-        : 'For Rent';
+  private buildPayload(uploadedMedia: UploadedMediaPayload): CreateListingPayload {
+    const forms: ListingFormSnapshot = {
+      basic: this.basicInfoForm.value,
+      description: this.descriptionForm.value,
+      pricing: this.pricingForm.value,
+      contact: this.contactForm.value,
+      location: this.locationForm.value,
+    };
 
     const propertyType = this.addListingService.getCoarsePropertyTypeFromLabels(
-      basic.propertyCategoryName,
-      basic.propertySubtypeName
+      forms.basic.propertyCategoryName,
+      forms.basic.propertySubtypeName
     );
-    const categoryName = (basic.propertyCategoryName ?? '').trim();
-    const subtypeName = (basic.propertySubtypeName ?? '').trim();
-    /** Shown + stored as the “detail” type; falls back to category if no subtype row. */
-    const subtype = (subtypeName || categoryName).trim();
     const amenityBooleans = this.addListingService.buildAmenityBooleanPayload(
-      amenities.selectedFeatureIds ?? []
+      this.amenitiesForm.value.selectedFeatureIds ?? []
     );
 
-    return {
-      basicInformation: {
-        purpose,
-        propertyType,
-        subtype,
-        propertyCategoryName: categoryName,
-        propertySubtypeName: subtypeName,
-        title: basic.listingTitle,
-        description: description.propertyDescription,
-      },
-      pricingDetails: {
-        price: pricing.price,
-        area: pricing.areaSize,
-        areaUnit: pricing.areaUnit,
-        bedrooms: pricing.numBedrooms,
-        bathrooms: pricing.numBathrooms,
-      },
-      featuresAmenities: {
-        amenities: amenities.selectedFeatureIds ?? [],
-      },
-      propertyMedia: {
-        media: [
-          ...(uploadedMedia.images ?? []).map((img) => ({
-            type: 'photo',
-            url: img?.url,
-          })),
-          ...(uploadedMedia.videoTourUrl
-            ? [{ type: 'video', url: uploadedMedia.videoTourUrl }]
-            : []),
-        ],
-      },
-      location: {
-        location: (location.locationHierarchy as LocationHierarchyItem[]) ?? [],
-        latitude: location.latitude ?? null,
-        longitude: location.longitude ?? null,
-        fullAddress: (location.fullAddress ?? null) as string | null,
-        mapLink: (location.mapLink ?? null) as string | null,
-      },
-      contactInformation: {
-        contactName: contact.contactName,
-        contactEmail: contact.contactEmail,
-        contactPhone: contact.contactPhoneNumber,
-      },
-      /** Preserve the boolean amenity keys the current API expects. */
-      ...(amenityBooleans as unknown as Record<string, unknown>),
-      isFeatured: this.isFeatured(),
-      /** Preserve flat contact fields the current API expects. */
-      ...( {
-        contactLocation: contact.contactLocation,
-      } as unknown as Record<string, unknown>),
-      /** Preserve media arrays used elsewhere in the app/API today. */
-      ...( {
-        images: uploadedMedia.images,
-        videoTourUrl: uploadedMedia.videoTourUrl,
-      } as unknown as Record<string, unknown>),
-      /** Preserve flat pricing fields used elsewhere in the app/API today. */
-      ...( {
-        price: pricing.price,
-        areaSize: pricing.areaSize,
-        areaUnit: pricing.areaUnit,
-        numBedrooms: pricing.numBedrooms,
-        numBathrooms: pricing.numBathrooms,
-        numParkingSpaces: pricing.numParkingSpaces,
-        numFloors: pricing.numFloors,
-      } as unknown as Record<string, unknown>),
-    } as AddListingModel;
+    return buildListingPayload(forms, uploadedMedia, propertyType, amenityBooleans, this.isFeatured());
   }
   scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
