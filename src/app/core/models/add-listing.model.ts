@@ -1,68 +1,43 @@
-export interface BasicInformationPayload {
-  purpose: string | null;
-  /**
-   * Coarse type used by the listing API (e.g. House | Apartment | Plot).
-   * Derived from selected category/subtype labels.
-   */
-  propertyType: string | null;
-  /**
-   * Detail type shown in UI (e.g. "Upper Portion"); API expects it as `subtype` / `propertySubtype`.
-   */
-  subtype?: string | null;
-  /** Display labels from the catalog dropdowns. */
-  propertyCategoryName?: string | null;
-  propertySubtypeName?: string | null;
-  title: string | null;
-  description: string | null;
-}
+import type { LocationHierarchyItem } from './google-places.models';
+import type { ListingAmenityBooleans } from '../constants/listing-payload.constants';
+import type { ListingImagePayload } from '../services/media-upload.service';
 
-export interface PricingDetailsPayload {
+/** Flat payload the backend create/update endpoints accept. */
+export interface CreateListingPayload extends ListingAmenityBooleans {
+  // Basic
+  purpose: string;
+  listingTitle: string;
+  propertyDescription: string;
+  propertyType: string;
+  subtype: string;
+
+  // Pricing
   price: number | null;
-  currency?: string | null;
-  area?: number | null;
-  areaUnit?: string | null;
-  bedrooms?: number | null;
-  bathrooms?: number | null;
-}
+  areaSize: number | null;
+  areaUnit: string | null;
+  numBedrooms: number | null;
+  numBathrooms: number | null;
+  numParkingSpaces: number | null;
+  numFloors: number | null;
 
-export interface FeaturesAmenitiesPayload {
-  amenities: string[];
-}
+  // Media
+  images: ListingImagePayload[];
+  videoTourUrl: string | null;
 
-export interface MediaItemPayload {
-  type: 'photo' | 'floorplan' | 'video' | string;
-  url?: string;
-}
+  // Location
+  location: LocationHierarchyItem[];
+  latitude: number | null;
+  longitude: number | null;
+  fullAddress: string | null;
+  mapLink: string | null;
 
-export interface PropertyMediaPayload {
-  media: MediaItemPayload[];
-}
+  // Contact
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhoneNumber: string | null;
+  contactLocation: string | null;
 
-export interface LocationPayload {
-  addressLine1?: string | null;
-  addressLine2?: string | null;
-  city?: string | null;
-  state?: string | null;
-  postalCode?: string | null;
-  country?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  // Meta
+  isFeatured: boolean;
+  status?: string;
 }
-
-export interface ContactInformationPayload {
-  contactName?: string | null;
-  contactEmail?: string | null;
-  contactPhone?: string | null;
-  preferredContactMethod?: 'phone' | 'email' | 'whatsapp' | string | null;
-}
-
-export interface AddListingModel {
-  basicInformation: BasicInformationPayload;
-  pricingDetails: PricingDetailsPayload;
-  featuresAmenities: FeaturesAmenitiesPayload;
-  propertyMedia: PropertyMediaPayload;
-  location: LocationPayload;
-  contactInformation: ContactInformationPayload;
-  isDraft?: boolean;
-}
-

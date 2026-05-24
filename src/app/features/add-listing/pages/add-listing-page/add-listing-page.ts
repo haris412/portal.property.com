@@ -41,7 +41,13 @@ import {
   AddListingService,
   GenerateListingDescriptionRequest,
 } from '../../../../core/services/add-listing.service';
-import type { AddListingModel } from '../../../../core/models/add-listing.model';
+import type { CreateListingPayload } from '../../../../core/models/add-listing.model';
+import {
+  buildListingPayload,
+  type ListingFormSnapshot,
+  type UploadedMediaPayload,
+} from '../../mappers/listing-payload.mapper';
+import type { LocationHierarchyItem } from '../../../../core/models/google-places.models';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 import type { PropertyCatalogData } from '../../../../core/models/property-catalog.model';
 import type { PropertyFeature } from '../../../../core/models/property-features.model';
@@ -60,16 +66,12 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   FEATURE_SLUG_TO_AMENITY_KEY,
   normalizeFeatureSlug,
 } from '../../../../core/constants/listing-payload.constants';
 import { CdkAutofill } from "@angular/cdk/text-field";
-
-interface UploadedMediaPayload {
-  images: ListingImagePayload[];
-  videoTourUrl: string | null;
-}
 
 type AddListingStepKey =
   | 'basic-info'
@@ -114,12 +116,15 @@ function contactPhoneFormatValidator(control: AbstractControl): ValidationErrors
   return null;
 }
 
-/** City control is usually a string; mat-autocomplete may briefly hold a GeoNames row object. */
-function locationCityFormValueToString(city: unknown): string {
-  if (city == null) return '';
-  if (typeof city === 'string') return city.trim();
-  const o = city as { name?: string };
-  return typeof o.name === 'string' ? o.name.trim() : '';
+function nonEmptyArrayValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  return Array.isArray(value) && value.length > 0 ? null : { required: true };
+}
+
+function mediaRequirementValidator(control: AbstractControl): ValidationErrors | null {
+  const images = (control.get('images')?.value as File[] | null) ?? [];
+  const video = (control.get('videoFiles')?.value as File[] | null) ?? [];
+  return images.length >= 3 || video.length > 0 ? null : { mediaRequired: true };
 }
 
 @Component({
@@ -127,6 +132,7 @@ function locationCityFormValueToString(city: unknown): string {
   imports: [
     TranslateModule,
     MatIconModule,
+    MatSlideToggleModule,
     ReactiveFormsModule,
     PageHeaderComponent,
     InfoBannerComponent,
@@ -157,6 +163,8 @@ export class AddListingPageComponent {
   readonly locationForm: FormGroup;
   readonly isSubmitting = signal(false);
   readonly isGeneratingDescription = signal(false);
+  readonly isFeatured = signal(false);
+  readonly existingPropertyImages = signal<ListingImagePayload[]>([]);
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
   private readonly stepOrder: readonly AddListingStepKey[] = [
     'basic-info',
@@ -227,7 +235,7 @@ export class AddListingPageComponent {
     this.listingFormsTick();
 
     const media = this.mediaForm.value;
-    const hasMedia = Boolean((media.images ?? []).length || (media.videoFiles ?? []).length);
+    const hasMedia = (media.images ?? []).length >= 3 || Boolean((media.videoFiles ?? []).length);
 
     return [
       { label: 'Add basic information', complete: this.basicInfoForm.valid },
@@ -248,7 +256,7 @@ export class AddListingPageComponent {
     const media = this.mediaForm.getRawValue();
     const hasFeaturesOrMedia = Boolean(
       (amenities.selectedFeatureIds ?? []).length ||
-      (media.images ?? []).length ||
+      (media.images ?? []).length >= 3 ||
       (media.videoFiles ?? []).length
     );
 
@@ -359,12 +367,8 @@ export class AddListingPageComponent {
         icon: 'location_on',
         items: [
           {
-            label: 'City',
-            value: this.formatReviewValue(locationCityFormValueToString(location.city)),
-          },
-          {
-            label: 'Area',
-            value: this.formatReviewValue(location.neighborhood),
+            label: 'Location',
+            value: this.formatLocationHierarchyForReview(location.locationHierarchy),
           },
           {
             label: 'Full address',
@@ -455,7 +459,7 @@ export class AddListingPageComponent {
   readonly editingId = signal<string | null>(null);
   readonly editLoading = signal(false);
   readonly editLoadError = signal<string | null>(null);
-  private readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
+  readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
 
   constructor(private readonly fb: FormBuilder) {
     this.basicInfoForm = this.fb.group({
@@ -486,7 +490,7 @@ export class AddListingPageComponent {
     this.mediaForm = this.fb.group({
       images: [[] as File[]],
       videoFiles: [[] as File[]],
-    });
+    }, { validators: mediaRequirementValidator });
 
     this.contactForm = this.fb.group({
       contactName: ['', Validators.required],
@@ -496,13 +500,12 @@ export class AddListingPageComponent {
     });
 
     this.locationForm = this.fb.group({
-      city: ['', Validators.required],
-      neighborhood: ['', Validators.required],
-      fullAddress: ['', Validators.required],
-      mapLink: [''],
-      /** Set by map pin / “Use my location” (also synced to `mapLink`). */
-      latitude: [null as number | null],
-      longitude: [null as number | null],
+      locationQuery:     [''],
+      locationHierarchy: [[] as LocationHierarchyItem[], nonEmptyArrayValidator],
+      fullAddress:       ['', Validators.required],
+      mapLink:           [''],
+      latitude:          [null as number | null],
+      longitude:         [null as number | null],
     });
 
     merge(
@@ -600,6 +603,10 @@ export class AddListingPageComponent {
       amenities.selectedFeatureIds ?? []
     );
 
+    const locationHierarchy = (location.locationHierarchy ?? []) as LocationHierarchyItem[];
+    const cityName = locationHierarchy.find(i => i.level === 2)?.name ?? '';
+    const areaName = (locationHierarchy.find(i => i.level === 4) ?? locationHierarchy.find(i => i.level === 3))?.name ?? '';
+
     return {
       title: (basic.listingTitle ?? '').trim(),
       purpose,
@@ -613,8 +620,8 @@ export class AddListingPageComponent {
       numParkingSpaces: pricing.numParkingSpaces,
       numFloors: pricing.numFloors,
       ...amenityBooleans,
-      city: locationCityFormValueToString(location.city),
-      neighborhood: location.neighborhood,
+      city: cityName,
+      neighborhood: areaName,
       fullAddress: location.fullAddress,
       mapLink: location.mapLink,
       latitude: location.latitude,
@@ -641,12 +648,14 @@ export class AddListingPageComponent {
       if (
         this.basicInfoForm.invalid ||
         this.pricingForm.invalid ||
+        this.mediaForm.invalid ||
         this.contactForm.invalid ||
         this.descriptionForm.invalid ||
         this.locationForm.invalid
       ) {
         this.basicInfoForm.markAllAsTouched();
         this.pricingForm.markAllAsTouched();
+        this.mediaForm.markAllAsTouched();
         this.contactForm.markAllAsTouched();
         this.descriptionForm.markAllAsTouched();
         this.locationForm.markAllAsTouched();
@@ -706,6 +715,10 @@ export class AddListingPageComponent {
     this.activeStepKey.set('contact-description');
   }
 
+  onExistingImageRemoved(index: number): void {
+    this.existingPropertyImages.update((imgs) => imgs.filter((_, i) => i !== index));
+  }
+
   toggleProgressTray(): void {
     this.progressTrayOpen.update((open) => !open);
   }
@@ -751,6 +764,15 @@ export class AddListingPageComponent {
     }
 
     return `PKR ${numericValue.toLocaleString('en-US')}`;
+  }
+
+  private formatLocationHierarchyForReview(hierarchy: unknown): string {
+    if (!Array.isArray(hierarchy) || !hierarchy.length) return 'Not provided';
+    const items = hierarchy as LocationHierarchyItem[];
+    const leaf = items[items.length - 1];
+    const city = items.find(i => i.level === 2);
+    if (city && city.name !== leaf.name) return `${leaf.name}, ${city.name}`;
+    return leaf.name;
   }
 
   private formatDescriptionValue(value: unknown): string {
@@ -807,6 +829,12 @@ export class AddListingPageComponent {
       return;
     }
 
+    const totalImages = this.existingPropertyImages().length + ((this.mediaForm.value.images ?? []) as File[]).length;
+    if (totalImages < 3) {
+      this.notifications.warning('At least 3 photos are required.');
+      return;
+    }
+
     this.isSubmitting.set(true);
     try {
       const uploadedMedia = await this.uploadSelectedMediaForEdit();
@@ -822,21 +850,40 @@ export class AddListingPageComponent {
   }
 
   private async uploadSelectedMediaForEdit(): Promise<UploadedMediaPayload> {
-    const existing = this.loadedProperty();
-    const existingImages = (existing?.images ?? []) as ListingImagePayload[];
-    const existingVideo = ((existing?.videoTourUrl ?? null) || null) as string | null;
+    const existingVideo = ((this.loadedProperty()?.videoTourUrl ?? null) || null) as string | null;
+    const keptImages = this.existingPropertyImages();
 
     const media = this.mediaForm.value;
-    const images = (media.images ?? []) as File[];
+    const newImageFiles = (media.images ?? []) as File[];
     const videoFiles = (media.videoFiles ?? []) as File[];
 
-    // If user didn't pick new files, keep the existing URLs (avoid wiping media on update).
-    if (!images.length && !videoFiles.length) {
-      return { images: existingImages, videoTourUrl: existingVideo };
+    let uploadedNewImages: ListingImagePayload[] = [];
+    let videoTourUrl = existingVideo;
+
+    if (newImageFiles.length || videoFiles.length) {
+      this.notifications.info('Uploading media...');
+      try {
+        uploadedNewImages = newImageFiles.length
+          ? await this.mediaUploadService.uploadImages(newImageFiles)
+          : [];
+        if (videoFiles[0]) {
+          videoTourUrl = await this.mediaUploadService.uploadVideo(videoFiles[0]);
+        }
+        this.notifications.success('Media uploaded successfully');
+      } catch (error: unknown) {
+        const details = apiErrorSummary(error) || 'Media upload failed';
+        this.notifications.error(details);
+        throw new Error(details);
+      }
     }
 
-    // If they picked new media, upload and replace those fields.
-    return await this.uploadSelectedMedia();
+    const mergedImages = [...keptImages, ...uploadedNewImages].map((img, index) => ({
+      ...img,
+      orderIndex: index,
+      isThumbnail: index === 0,
+    }));
+
+    return { images: mergedImages, videoTourUrl };
   }
 
   private patchFormsFromProperty(
@@ -898,10 +945,17 @@ export class AddListingPageComponent {
       { emitEvent: false }
     );
 
+    const locationHierarchy = Array.isArray((doc as any).location)
+      ? (doc as any).location as LocationHierarchyItem[]
+      : [];
+    const locationQueryDisplay = locationHierarchy.length
+      ? locationHierarchy[locationHierarchy.length - 1].name
+      : '';
+
     this.locationForm.patchValue(
       {
-        city: doc.city ?? '',
-        neighborhood: doc.neighborhood ?? '',
+        locationQuery: locationQueryDisplay,
+        locationHierarchy,
         fullAddress: doc.fullAddress ?? '',
         mapLink: doc.mapLink ?? '',
         latitude: doc.latitude ?? null,
@@ -909,6 +963,9 @@ export class AddListingPageComponent {
       },
       { emitEvent: false }
     );
+
+    this.isFeatured.set((doc as any).isFeatured === true);
+    this.existingPropertyImages.set((doc.images ?? []) as ListingImagePayload[]);
 
     const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
     // Emit so FeaturesAmenitiesSection syncs chip selection.
@@ -1014,97 +1071,24 @@ export class AddListingPageComponent {
     );
   }
 
-  private buildPayload(uploadedMedia: UploadedMediaPayload): AddListingModel {
-    const basic = this.basicInfoForm.value;
-    const description = this.descriptionForm.value;
-    const pricing = this.pricingForm.value;
-    const amenities = this.amenitiesForm.value;
-    const contact = this.contactForm.value;
-    const location = this.locationForm.value;
-
-    const purpose =
-      basic.purpose === 'sale'
-        ? 'For Sale'
-        : 'For Rent';
+  private buildPayload(uploadedMedia: UploadedMediaPayload): CreateListingPayload {
+    const forms: ListingFormSnapshot = {
+      basic: this.basicInfoForm.value,
+      description: this.descriptionForm.value,
+      pricing: this.pricingForm.value,
+      contact: this.contactForm.value,
+      location: this.locationForm.value,
+    };
 
     const propertyType = this.addListingService.getCoarsePropertyTypeFromLabels(
-      basic.propertyCategoryName,
-      basic.propertySubtypeName
+      forms.basic.propertyCategoryName,
+      forms.basic.propertySubtypeName
     );
-    const categoryName = (basic.propertyCategoryName ?? '').trim();
-    const subtypeName = (basic.propertySubtypeName ?? '').trim();
-    /** Shown + stored as the “detail” type; falls back to category if no subtype row. */
-    const subtype = (subtypeName || categoryName).trim();
     const amenityBooleans = this.addListingService.buildAmenityBooleanPayload(
-      amenities.selectedFeatureIds ?? []
+      this.amenitiesForm.value.selectedFeatureIds ?? []
     );
 
-    return {
-      basicInformation: {
-        purpose,
-        propertyType,
-        subtype,
-        propertyCategoryName: categoryName,
-        propertySubtypeName: subtypeName,
-        title: basic.listingTitle,
-        description: description.propertyDescription,
-      },
-      pricingDetails: {
-        price: pricing.price,
-        area: pricing.areaSize,
-        areaUnit: pricing.areaUnit,
-        bedrooms: pricing.numBedrooms,
-        bathrooms: pricing.numBathrooms,
-      },
-      featuresAmenities: {
-        amenities: amenities.selectedFeatureIds ?? [],
-      },
-      propertyMedia: {
-        media: [
-          ...(uploadedMedia.images ?? []).map((img) => ({
-            type: 'photo',
-            url: img?.url,
-          })),
-          ...(uploadedMedia.videoTourUrl
-            ? [{ type: 'video', url: uploadedMedia.videoTourUrl }]
-            : []),
-        ],
-      },
-      location: {
-        city: locationCityFormValueToString(location.city),
-        latitude: location.latitude ?? null,
-        longitude: location.longitude ?? null,
-      },
-      contactInformation: {
-        contactName: contact.contactName,
-        contactEmail: contact.contactEmail,
-        contactPhone: contact.contactPhoneNumber,
-      },
-      /** Preserve the boolean amenity keys the current API expects. */
-      ...(amenityBooleans as unknown as Record<string, unknown>),
-      /** Preserve the flat location/contact fields the current API expects. */
-      ...( {
-        contactLocation: contact.contactLocation,
-        neighborhood: location.neighborhood,
-        fullAddress: location.fullAddress,
-        mapLink: location.mapLink,
-      } as unknown as Record<string, unknown>),
-      /** Preserve media arrays used elsewhere in the app/API today. */
-      ...( {
-        images: uploadedMedia.images,
-        videoTourUrl: uploadedMedia.videoTourUrl,
-      } as unknown as Record<string, unknown>),
-      /** Preserve flat pricing fields used elsewhere in the app/API today. */
-      ...( {
-        price: pricing.price,
-        areaSize: pricing.areaSize,
-        areaUnit: pricing.areaUnit,
-        numBedrooms: pricing.numBedrooms,
-        numBathrooms: pricing.numBathrooms,
-        numParkingSpaces: pricing.numParkingSpaces,
-        numFloors: pricing.numFloors,
-      } as unknown as Record<string, unknown>),
-    } as AddListingModel;
+    return buildListingPayload(forms, uploadedMedia, propertyType, amenityBooleans, this.isFeatured());
   }
   scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });

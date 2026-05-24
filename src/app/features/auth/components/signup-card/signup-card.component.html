@@ -145,9 +145,10 @@
           />
         </div>
 
-        <div class="col-12">
-          <fieldset class="border-0 p-0 m-0">
-            <legend class="form-label-auth mb-2">{{ 'public.signUp.userType' | translate }}</legend>
+        @if (!lockUserType()) {
+          <div class="col-12">
+            <fieldset class="border-0 p-0 m-0">
+              <legend class="form-label-auth mb-2">{{ 'public.signUp.userType' | translate }}</legend>
 
             @if (rolesLoading()) {
               <p class="text-muted-auth mb-0">{{ 'public.signUp.loadingOptions' | translate }}</p>
@@ -168,7 +169,7 @@
             }
           </fieldset>
         </div>
-
+      }
         @if (showAgencyName()) {
           <div class="col-12">
             <label class="form-label-auth" for="signup-agency-name">{{ 'public.signUp.agencyName' | translate }}</label>
@@ -182,7 +183,7 @@
               />
               @if (form.controls.agencyName.pending) {
                 <mat-spinner matSuffix [diameter]="18" />
-              } @else if (form.controls.agencyName.valid && form.controls.agencyName.value?.trim()) {
+              } @else if (form.controls.agencyName.valid && form.controls.agencyName.value.trim()) {
                 <mat-icon matSuffix class="agency-available-icon">check_circle</mat-icon>
               }
             </mat-form-field>
@@ -191,7 +192,7 @@
               <p class="field-hint">{{ 'public.signUp.agencyNameChecking' | translate }}</p>
             } @else if (form.controls.agencyName.errors?.['agencyNameTaken']) {
               <p class="field-hint field-hint--error">{{ 'public.signUp.agencyNameTaken' | translate }}</p>
-            } @else if (form.controls.agencyName.valid && form.controls.agencyName.value?.trim()) {
+            } @else if (form.controls.agencyName.valid && form.controls.agencyName.value.trim()) {
               <p class="field-hint field-hint--success">{{ 'public.signUp.agencyNameAvailable' | translate }}</p>
             } @else {
               <app-form-field-error

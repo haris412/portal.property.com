@@ -67,7 +67,7 @@
 
               <div class="auth-card-host">
                 @if (activeSegment() === 'signup') {
-                  <app-signup-card [showIntro]="false" />
+                  <app-signup-card [prefill]="prefill()" [showIntro]="false" />
                 } @else {
                   <app-login-card [showIntro]="false" />
                 }

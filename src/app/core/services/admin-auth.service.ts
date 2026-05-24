@@ -93,8 +93,7 @@ export class AdminAuthService {
   /** Session is valid in memory (after login or refresh). */
   isAdminSession(): boolean {
     const u = this.getCurrentAdminUser();
-    const role = u?.role?.trim().toLowerCase();
-    return this.isLoggedIn() && role === 'admin';
+    return this.isLoggedIn() && (u?.roles?.some(r => r.toLowerCase() === 'admin') ?? false);
   }
 
   private loadStoredAdminUser(): void {
