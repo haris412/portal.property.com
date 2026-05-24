@@ -50,7 +50,7 @@ export class InboxConversations implements AfterViewChecked, OnInit {
   readonly currentUserId = this.auth.getUserId();
   readonly replyText = signal('');
   readonly activeTab = signal<InboxTab>('all');
-  readonly selectedConversationId = signal<string>('6a0636060f202b0cc50bef03');
+  readonly selectedConversationId = signal<string>('');
 
   readonly conversations = signal<ConversationItem[]>([]);
   readonly messages = signal<any[]>([]);
@@ -70,7 +70,6 @@ export class InboxConversations implements AfterViewChecked, OnInit {
   readonly filteredConversations = computed(() => {
     const active = this.activeTab();
     const items = this.conversations();
-    console.log('Filtering conversations for tab:', active, 'Total items:', items);
     // if (active === 'read') {
     //   return items.filter(item => !item.unread);
     // }
@@ -96,27 +95,27 @@ export class InboxConversations implements AfterViewChecked, OnInit {
     const token = this.auth.getAccessToken();
     this.messageService.connect(token ?? '');
 
-    // this.messageService.onError()
-    //   .pipe(takeUntilDestroyed(this.destroyRef))
-    //   .subscribe(err => console.error('[Socket]', err));
+    this.messageService.onError()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(err => console.error('[Socket]', err));
 
-    // this.messageService.onNewMessage()
-    //   .pipe(takeUntilDestroyed(this.destroyRef))
-    //   .subscribe(msg => {
-    //     if (msg.conversationId !== this.selectedConversationId()) return;
-    //     this.messages.update(msgs => {
-    //       // replace optimistic temp bubble if text matches, otherwise append
-    //       const tempIdx = msgs.findIndex(m => m._id?.startsWith('temp_') && m.text === msg.text);
-    //       if (tempIdx !== -1) {
-    //         const updated = [...msgs];
-    //         updated[tempIdx] = msg;
-    //         return updated;
-    //       }
-    //       return [...msgs, msg];
-    //     });
-    //     this.shouldScrollToBottom = true;
-    //     this.cdr.markForCheck();
-    //   });
+    this.messageService.onNewMessage()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(msg => {
+        if (msg.conversationId !== this.selectedConversationId()) return;
+        this.messages.update(msgs => {
+          // replace optimistic temp bubble if text matches, otherwise append
+          const tempIdx = msgs.findIndex(m => m._id?.startsWith('temp_') && m.text === msg.text);
+          if (tempIdx !== -1) {
+            const updated = [...msgs];
+            updated[tempIdx] = msg;
+            return updated;
+          }
+          return [...msgs, msg];
+        });
+        this.shouldScrollToBottom = true;
+        this.cdr.markForCheck();
+      });
   }
 
   loadMessages(id: string): void {
@@ -157,11 +156,12 @@ export class InboxConversations implements AfterViewChecked, OnInit {
       }
     });
 
-    // effect(() => {
-    //   const id = this.selectedConversationId();
-    //   if (!id) return;
-    //   this.loadMessages(id);
-    // });
+    effect(() => {
+      const id = this.selectedConversationId();
+      if (!id) return;
+      this.messageService.joinConversation(id);
+      this.loadMessages(id);
+    });
   }
 
   ngAfterViewChecked(): void {
@@ -179,7 +179,6 @@ export class InboxConversations implements AfterViewChecked, OnInit {
   selectConversation(id: string): void {
     this.selectedConversationId.set(id);
     this.markConversationAsRead(id);
-    this.messageService.joinConversation(id);
     this.shouldScrollToBottom = true;
     //   this.auth.currentUser$.subscribe(user => {
     //   if (user) {
