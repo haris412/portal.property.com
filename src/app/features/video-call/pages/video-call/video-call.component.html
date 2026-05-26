@@ -1,47 +1,72 @@
-<section class="video-call">
-  <header class="video-call__toolbar">
-    <div class="video-call__room">
-      <span class="video-call__room-label">Room</span>
-      <strong class="video-call__room-name">{{ callRoomLabel }}</strong>
-    </div>
-  </header>
+<section class="video-call" [class.video-call--chat-open]="chatOpen">
+  <div class="video-call__shell">
+    <main class="video-call__meeting" aria-label="Video call room">
+      <app-video-call-topbar
+        [callRoomLabel]="callRoomLabel"
+        [remoteDisconnected]="remoteDisconnected"
+        [remoteHasVideo]="remoteHasVideo"
+        [isMuted]="isMuted"
+        [isVideoOff]="isVideoOff"
+        [chatOpen]="chatOpen"
+        (muteToggle)="toggleMute()"
+        (videoToggle)="toggleVideo()"
+        (endCall)="endCall()"
+        (appointmentsBack)="goToAppointments()"
+        (chatToggle)="toggleChat()"
+      />
 
-  @if (transientBanner) {
-    <div class="video-call__banner video-call__banner--info" role="status">{{ transientBanner }}</div>
-  }
-  @if (statusText) {
-    <div class="video-call__banner video-call__banner--alert" role="alert">{{ statusText }}</div>
-  }
-
-  <!-- Teams / Skype style: large main (other), small PiP (you), controls on the video -->
-  <div class="video-call__stage">
-    <div class="video-call__stage-main">
-      <span class="video-call__stage-label">Other participant</span>
-      @if (!remoteHasVideo && !remoteDisconnected) {
-        <div class="video-call__placeholder">Waiting for their camera…</div>
+      @if (transientBanner) {
+        <div class="video-call__banner video-call__banner--info" role="status">
+          {{ transientBanner }}
+        </div>
       }
-      <video
-        #remoteVideo
-        class="video-call__video video-call__video--main"
-        [class.video-call__video--hidden]="!remoteHasVideo && !remoteDisconnected"
-        autoplay
-        playsinline
-      ></video>
-    </div>
-
-    <div class="video-call__pip" aria-label="Your camera preview">
-      <span class="video-call__pip-label">You</span>
-      <video #localVideo class="video-call__video video-call__video--pip" autoplay playsinline muted></video>
-    </div>
-
-    <div class="video-call__stage-actions">
-      @if (!remoteDisconnected) {
-        <button type="button" class="btn btn-danger video-call__btn-end" (click)="endCall()">End call</button>
-      } @else {
-        <button type="button" class="btn btn-primary video-call__btn-end" (click)="goToAppointments()">
-          Back to appointments
-        </button>
+      @if (statusText) {
+        <div class="video-call__banner video-call__banner--alert" role="alert">
+          {{ statusText }}
+        </div>
       }
-    </div>
+
+      <div class="video-call__stage">
+        <div class="video-call__stage-main">
+          @if (!remoteHasVideo && !remoteDisconnected) {
+            <div class="video-call__placeholder">
+              <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">person</mat-icon>
+              <span>Waiting for their camera</span>
+            </div>
+          }
+          @if (remoteDisconnected) {
+            <div class="video-call__placeholder">
+              <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">call_end</mat-icon>
+              <span>The other participant left the call</span>
+            </div>
+          }
+          <video
+            #remoteVideo
+            class="video-call__video video-call__video--main"
+            [class.video-call__video--hidden]="!remoteHasVideo"
+            autoplay
+            playsinline
+          ></video>
+        </div>
+
+        <div class="video-call__pip" [class.video-call__pip--off]="isVideoOff" aria-label="Your camera preview">
+          <video #localVideo class="video-call__video video-call__video--pip" autoplay playsinline muted></video>
+          @if (isVideoOff) {
+            <div class="video-call__pip-off">
+              <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">videocam_off</mat-icon>
+            </div>
+          }
+          <span class="video-call__pip-label">You</span>
+        </div>
+      </div>
+    </main>
+
+    <app-video-call-chat-panel
+      [open]="chatOpen"
+      [connected]="chatConnected"
+      [messages]="chatMessages"
+      (close)="closeChat()"
+      (messageSend)="sendChatMessage($event)"
+    />
   </div>
 </section>

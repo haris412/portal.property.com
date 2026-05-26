@@ -1,0 +1,61 @@
+<header class="video-call-topbar">
+  <div class="video-call-topbar__participant">
+    <span class="video-call-topbar__participant-avatar" aria-hidden="true">
+      <mat-icon fontSet="material-symbols-outlined" inline>groups</mat-icon>
+    </span>
+
+    <span class="video-call-topbar__participant-copy">
+      <strong class="video-call-topbar__participant-name">{{ callRoomLabel || 'Video call' }}</strong>
+      <span class="video-call-topbar__participant-status">
+        <span class="video-call-topbar__status-dot" aria-hidden="true"></span>
+        {{ participantStatus }}
+      </span>
+    </span>
+  </div>
+
+  <div class="video-call-topbar__actions">
+    <nav class="video-call-topbar__controls" aria-label="Call controls">
+      <app-video-call-control-button
+        [icon]="isMuted ? 'mic_off' : 'mic'"
+        [label]="isMuted ? 'Unmute' : 'Mute'"
+        [active]="isMuted"
+        [pressed]="isMuted"
+        (controlClick)="muteToggle.emit()"
+      />
+
+      <app-video-call-control-button
+        [icon]="isVideoOff ? 'videocam_off' : 'videocam'"
+        [label]="isVideoOff ? 'Start video' : 'Stop video'"
+        [active]="isVideoOff"
+        [pressed]="isVideoOff"
+        (controlClick)="videoToggle.emit()"
+      />
+
+      @if (!remoteDisconnected) {
+        <app-video-call-control-button
+          icon="call_end"
+          label="End call"
+          variant="danger"
+          (controlClick)="endCall.emit()"
+        />
+      } @else {
+        <app-video-call-control-button
+          icon="event"
+          label="Appointments"
+          variant="primary"
+          (controlClick)="appointmentsBack.emit()"
+        />
+      }
+    </nav>
+
+    <app-video-call-control-button
+      icon="chat_bubble"
+      label="Chat"
+      ariaLabel="Toggle chat"
+      ariaControls="video-call-chat"
+      [active]="chatOpen"
+      [expanded]="chatOpen"
+      (controlClick)="chatToggle.emit()"
+    />
+  </div>
+</header>
