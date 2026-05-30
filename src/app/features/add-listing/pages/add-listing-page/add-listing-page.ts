@@ -1080,15 +1080,11 @@ export class AddListingPageComponent {
       location: this.locationForm.value,
     };
 
-    const propertyType = this.addListingService.getCoarsePropertyTypeFromLabels(
-      forms.basic.propertyCategoryName,
-      forms.basic.propertySubtypeName
-    );
     const amenityBooleans = this.addListingService.buildAmenityBooleanPayload(
       this.amenitiesForm.value.selectedFeatureIds ?? []
     );
 
-    return buildListingPayload(forms, uploadedMedia, propertyType, amenityBooleans, this.isFeatured());
+    return buildListingPayload(forms, uploadedMedia, amenityBooleans, this.isFeatured());
   }
   scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
