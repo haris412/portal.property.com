@@ -1,0 +1,136 @@
+<section class="subscription-plan-page">
+  <app-section-card
+    title="Subscription plan configuration"
+    description="Choose a role, edit pricing per feature, add rows, then save. This page is not linked from the main navigation."
+    density="comfortable"
+  >
+
+    <form [formGroup]="planForm" (ngSubmit)="save()">
+      <div class="subscription-plan-page__toolbar">
+        <label class="subscription-plan-page__field">
+          <span class="subscription-plan-page__label">Role</span>
+          <select
+            class="form-select subscription-plan-page__select"
+            formControlName="roleName"
+            (change)="onRoleSelected()"
+            [disabled]="loadingRoles()"
+          >
+            <option value="">— Select role —</option>
+            @for (r of roles(); track r.name) {
+              <option [value]="r.name">{{ r.name }}</option>
+            }
+          </select>
+        </label>
+
+        <button
+          type="button"
+          class="btn btn-outline-primary subscription-plan-page__add"
+          (click)="addRow()"
+          [disabled]="!planForm.controls.roleName.value || loadingConfigs()"
+          title="Add row"
+        >
+          <mat-icon fontSet="material-symbols-outlined" inline>add</mat-icon>
+          Add row
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-primary subscription-plan-page__save"
+          [disabled]="saving() || loadingConfigs() || !planForm.controls.roleName.value"
+        >
+          @if (saving()) {
+            Saving…
+          } @else {
+            Save all
+          }
+        </button>
+      </div>
+
+      @if (loadingRoles() || loadingFeatures()) {
+        <p class="subscription-plan-page__hint">Loading…</p>
+      }
+
+      @if (loadingConfigs()) {
+        <p class="subscription-plan-page__hint">Loading configuration…</p>
+      } @else if (planForm.controls.roleName.value && !loadingRoles()) {
+        <div class="subscription-plan-page__table-wrap">
+          <table class="table table-bordered subscription-plan-page__table">
+            <thead>
+              <tr>
+                <th scope="col">Feature</th>
+                <th scope="col">Monthly price</th>
+                <th scope="col">Annual price</th>
+                <th scope="col">Feature value</th>
+                <th scope="col" class="subscription-plan-page__col-actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rowGroup of configRows.controls; track trackRowGroup($index, rowGroup); let i = $index) {
+                <tr [formGroup]="$any(rowGroup)">
+                  <td>
+                    <select class="form-select form-select-sm" formControlName="featureId">
+                      <option value="">— Feature —</option>
+                      @for (f of features(); track f._id) {
+                        <option [value]="f._id">{{ f.description }}{{ f.isPaid ? ' (paid)' : '' }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      class="form-control form-control-sm"
+                      formControlName="monthlyPrice"
+                      min="0"
+                      step="0.01"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      class="form-control form-control-sm"
+                      formControlName="annualPrice"
+                      min="0"
+                      step="0.01"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      class="form-control form-control-sm"
+                      formControlName="featureValue"
+                      min="0"
+                      step="1"
+                    />
+                  </td>
+                  <td class="subscription-plan-page__col-actions">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger subscription-plan-page__icon-btn"
+                      (click)="removeRow(i)"
+                      title="Remove row"
+                      aria-label="Remove row"
+                    >
+                      <mat-icon fontSet="material-symbols-outlined" inline>delete</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="subscription-plan-page__empty">
+                    No rows yet. Use “Add row” or pick another role.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (features().length === 0 && !loadingFeatures()) {
+          <p class="subscription-plan-page__hint subscription-plan-page__hint--warn">
+            No subscription features loaded — add features via API before assigning here.
+          </p>
+        }
+      }
+    </form>
+  </app-section-card>
+</section>

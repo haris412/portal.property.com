@@ -106,6 +106,14 @@ export const routes: Routes = [
           ),
         title: 'Video call',
       },
+      {
+        path: 'subscription-plan',
+        loadChildren: () =>
+          import('./features/subscription-plan/subscription-plan.routes').then(
+            (m) => m.SUBSCRIPTION_PLAN_ROUTES
+          ),
+        title: 'Subscription plan',
+      },
     ],
   },
   {

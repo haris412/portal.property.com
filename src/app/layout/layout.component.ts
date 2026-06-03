@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent, SidebarNavItem } from './sidebar/sidebar.component';
 import { HeaderComponent } from './header/header.component';
 import { NotificationContainerComponent } from '../shared/ui/notification-container/notification-container.component';
+import { AuthService } from '../core/services/auth.service';
+import { SubscriptionPlansGateService } from '../core/services/subscription-plans-gate.service';
 
 @Component({
   selector: 'app-layout',
@@ -12,7 +15,11 @@ import { NotificationContainerComponent } from '../shared/ui/notification-contai
   styleUrl: './layout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LayoutComponent {
+export class LayoutComponent implements OnInit {
+  private readonly auth = inject(AuthService);
+  private readonly subscriptionPlansGate = inject(SubscriptionPlansGateService);
+  private readonly platformId = inject(PLATFORM_ID);
+
   readonly sidebarCollapsed  = signal(false);
   readonly mobileSidebarOpen = signal(false);
 
@@ -25,6 +32,19 @@ export class LayoutComponent {
     { label: 'sidebar.nav.settings',     route: '/settings',     icon: 'settings'                   },
     { label: 'sidebar.nav.profile',      route: '/profile',      icon: 'person'                     },
   ];
+
+  ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    const user = this.auth.getCurrentUser();
+    if (!user?._id) {
+      return;
+    }
+    this.auth.fetchUserProfile(user._id).subscribe(() => {
+      this.subscriptionPlansGate.tryOpenSubscriptionPlansIfNeeded();
+    });
+  }
 
   toggleSidebar(): void {
     if (window.innerWidth <= 991.98) {

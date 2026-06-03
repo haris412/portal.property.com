@@ -14,6 +14,7 @@ import {
   throwError,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SubscriptionSessionStorageService } from './subscription-session-storage.service';
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -33,14 +34,14 @@ export interface User {
   location?: string;
   role?: string;
   agencyName?: string;
+  agencyId?: string;
 }
-
-/** Stored in localStorage — no PII (no email, no phone). */
 interface StoredSession {
   _id: string;
   role?: string;
   firstName?: string;
   lastName?: string;
+  agencyId?: string;
 }
 
 export interface LoginPayload {
@@ -83,11 +84,14 @@ function extractRole(raw: Record<string, unknown>): string | undefined {
     : (r as string | undefined);
 }
 
-/** Maps full API user payload to in-memory User. */
 export function fromApiUser(raw: Record<string, unknown>): User {
   const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
   const lastName  = (raw['lastName']  as string | undefined)?.trim() || undefined;
   const agency    = raw['agency'];
+  const agencyId =
+    typeof agency === 'object' && agency != null && '_id' in agency
+      ? String((agency as { _id?: unknown })._id ?? '').trim() || undefined
+      : undefined;
   return {
     _id:             ((raw['_id'] ?? raw['id']) as string) || '',
     email:           (raw['email'] as string | undefined) ?? '',
@@ -101,15 +105,22 @@ export function fromApiUser(raw: Record<string, unknown>): User {
     agencyName:      typeof agency === 'object' && agency != null && 'name' in agency
                        ? (agency as { name: string }).name || undefined
                        : undefined,
+    agencyId,
   };
 }
 
 function toStoredSession(raw: Record<string, unknown>): StoredSession {
+  const agency = raw['agency'];
+  const agencyId =
+    typeof agency === 'object' && agency != null && '_id' in agency
+      ? String((agency as { _id?: unknown })._id ?? '').trim() || undefined
+      : undefined;
   return {
     _id:       ((raw['_id'] ?? raw['id']) as string) || '',
     role:      extractRole(raw),
     firstName: (raw['firstName'] as string | undefined)?.trim() || undefined,
     lastName:  (raw['lastName']  as string | undefined)?.trim() || undefined,
+    agencyId,
   };
 }
 
@@ -120,6 +131,7 @@ export class AuthService {
   private readonly http       = inject(HttpClient);
   private readonly router     = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly subscriptionSession = inject(SubscriptionSessionStorageService);
 
   private accessToken:     string | null = null;
   private redirectMessage: string | null = null;
@@ -342,6 +354,7 @@ export class AuthService {
         firstName: s.firstName,
         lastName:  s.lastName,
         name:      [s.firstName, s.lastName].filter(Boolean).join(' ') || undefined,
+        agencyId:  s.agencyId,
       });
     } catch { /* ignore corrupt data */ }
   }
@@ -359,6 +372,7 @@ export class AuthService {
     this.userSubject.next(null);
     this.storage?.removeItem(REFRESH_KEY);
     this.storage?.removeItem(USER_KEY);
+    this.subscriptionSession.clear();
   }
 
   private clearAndRedirect(): void {
