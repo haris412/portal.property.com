@@ -1,0 +1,65 @@
+<div class="subscription-plans-dialog">
+  <h2 class="subscription-plans-dialog__title" mat-dialog-title>Choose your plan</h2>
+
+  <mat-dialog-content class="subscription-plans-dialog__body">
+    @if (loading) {
+      <p class="subscription-plans-dialog__hint">Loading plans…</p>
+    } @else if (loadError) {
+      <p class="subscription-plans-dialog__error" role="alert">{{ loadError }}</p>
+      <button mat-stroked-button type="button" class="subscription-plans-dialog__retry" (click)="retryLoad()">
+        Retry
+      </button>
+    } @else {
+      <div class="subscription-plans-dialog__grid">
+        @for (card of cards; track card.id) {
+          <article
+            class="subscription-plans-dialog__card"
+            [class.subscription-plans-dialog__card--emphasis]="card.emphasis"
+            [class.subscription-plans-dialog__card--current]="card.isCurrentPlan"
+          >
+            <header class="subscription-plans-dialog__card-head">
+              <h3 class="subscription-plans-dialog__card-title">{{ card.title }}</h3>
+              <p class="subscription-plans-dialog__card-sub">{{ card.subtitle }}</p>
+              <p class="subscription-plans-dialog__price">{{ card.priceDisplay }}</p>
+              @if (card.isCurrentPlan) {
+                <p class="subscription-plans-dialog__current-badge">Your current plan</p>
+                <p class="subscription-plans-dialog__quota-hint">
+                  Active quotas: {{ card.numberOfFeatureListing }} featured listings ·
+                  {{ card.numberOfAgentVisibility }} agent visibility
+                </p>
+              }
+            </header>
+            <ul class="subscription-plans-dialog__features">
+              @for (line of card.lines; track $index) {
+                <li class="subscription-plans-dialog__feature">
+                  <span class="subscription-plans-dialog__check" aria-hidden="true">
+                    <mat-icon fontSet="material-symbols-outlined" inline>check</mat-icon>
+                  </span>
+                  <span>{{ line }}</span>
+                </li>
+              }
+            </ul>
+            <footer class="subscription-plans-dialog__footer">
+              <button
+                mat-flat-button
+                type="button"
+                class="subscription-plans-dialog__cta"
+                [class.subscription-plans-dialog__cta--inverse]="card.emphasis"
+                [disabled]="submittingCardId !== null || card.isCurrentPlan"
+                (click)="subscribePlan(card)"
+              >
+                @if (card.isCurrentPlan) {
+                  Current plan
+                } @else if (submittingCardId === card.id) {
+                  Saving…
+                } @else {
+                  Subscribe now
+                }
+              </button>
+            </footer>
+          </article>
+        }
+      </div>
+    }
+  </mat-dialog-content>
+</div>
