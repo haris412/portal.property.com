@@ -1,5 +1,5 @@
 import type { CreateListingPayload } from '../../../core/models/add-listing.model';
-import type { CoarsePropertyType, ListingAmenityBooleans } from '../../../core/constants/listing-payload.constants';
+import type { ListingAmenityBooleans } from '../../../core/constants/listing-payload.constants';
 import type { ListingImagePayload } from '../../../core/services/media-upload.service';
 import type { LocationHierarchyItem } from '../../../core/models/google-places.models';
 
@@ -45,7 +45,6 @@ export interface ListingFormSnapshot {
 export function buildListingPayload(
   forms: ListingFormSnapshot,
   uploadedMedia: UploadedMediaPayload,
-  propertyType: CoarsePropertyType,
   amenityBooleans: ListingAmenityBooleans,
   isFeatured: boolean
 ): CreateListingPayload {
@@ -58,7 +57,7 @@ export function buildListingPayload(
     purpose: basic.purpose === 'sale' ? 'For Sale' : 'For Rent',
     listingTitle: (basic.listingTitle ?? '').trim(),
     propertyDescription: (description.propertyDescription ?? '').trim(),
-    propertyType,
+    propertyType: categoryName,           // "Homes" | "Plots" | "Commercial"
     subtype: (subtypeName || categoryName).trim(),
     // Pricing
     price: pricing.price ?? null,

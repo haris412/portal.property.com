@@ -749,3 +749,9 @@ div.mat-mdc-autocomplete-panel {
     border-radius: var(--radius-sm);
   }
 }
+
+/** Subscription plan picker dialog (see `panelClass` on open). */
+.subscription-plans-dialog-shell .mat-mdc-dialog-container {
+  border-radius: 16px;
+  padding: 0;
+}

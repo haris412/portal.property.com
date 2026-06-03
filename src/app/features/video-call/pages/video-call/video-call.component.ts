@@ -8,18 +8,24 @@ import {
   ViewChild,
   inject,
 } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, firstValueFrom, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, take } from 'rxjs/operators';
 import { WebRtcSignalingService } from '../../../../core/services/webrtc-signaling.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AppointmentsService } from '../../../../core/services/appointments.service';
+import { VideoChatSocketService } from '../../../../core/services/video-chat-socket.service';
+import { VideoCallChatPanelComponent } from '../../components/video-call-chat-panel/video-call-chat-panel.component';
+import { VideoCallTopbarComponent } from '../../components/video-call-topbar/video-call-topbar.component';
+import { VideoCallChatMessage } from '../../models/video-call-chat-message';
 
 const REMOTE_LEFT_STATUS = 'The other participant left the call';
 
 @Component({
   selector: 'app-video-call',
   standalone: true,
+  imports: [MatIconModule, VideoCallChatPanelComponent, VideoCallTopbarComponent],
   templateUrl: './video-call.component.html',
   styleUrl: './video-call.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +37,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   private readonly signaling = inject(WebRtcSignalingService);
   private readonly auth = inject(AuthService);
   private readonly appointmentsService = inject(AppointmentsService);
+  private readonly chatSocket = inject(VideoChatSocketService);
 
   @ViewChild('localVideo', { static: true })
   private localVideoRef!: ElementRef<HTMLVideoElement>;
@@ -66,6 +73,13 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   remoteDisconnected = false;
   /** Room id from route (for header). */
   callRoomLabel = '';
+  /** Local call controls. */
+  isMuted = false;
+  isVideoOff = false;
+  /** Right-side chat panel UI. */
+  chatOpen = false;
+  chatConnected = false;
+  chatMessages: VideoCallChatMessage[] = [];
 
   /** Short-lived join / connection hints (both sides). Clears after a few seconds. */
   transientBanner: string | null = null;
@@ -98,6 +112,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     const accessToken = sessionToken || queryToken || undefined;
 
     this.signaling.connect(accessToken);
+    this.connectChat(accessToken);
 
     this.subs.add(
       this.signaling.error$.subscribe((err) => {
@@ -202,6 +217,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
 
     // Join room via signaling server.
     this.signaling.joinRoom(this.roomName);
+    this.chatSocket.joinRoom(this.roomName);
 
     this.attachRemote(this.remoteStream);
   }
@@ -229,6 +245,140 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     this.userEndedCall = true;
     this.teardownMediaAndConnections();
     void this.router.navigate(['/appointments']);
+  }
+
+  toggleMute(): void {
+    if (!this.localStream) return;
+    this.isMuted = !this.isMuted;
+    for (const track of this.localStream.getAudioTracks()) {
+      track.enabled = !this.isMuted;
+    }
+    this.cdr.markForCheck();
+  }
+
+  toggleVideo(): void {
+    if (!this.localStream) return;
+    this.isVideoOff = !this.isVideoOff;
+    for (const track of this.localStream.getVideoTracks()) {
+      track.enabled = !this.isVideoOff;
+    }
+    this.cdr.markForCheck();
+  }
+
+  toggleChat(): void {
+    this.chatOpen = !this.chatOpen;
+    this.cdr.markForCheck();
+  }
+
+  closeChat(): void {
+    this.chatOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  sendChatMessage(rawMessage: string): void {
+    const message = rawMessage.trim();
+    if (!message) return;
+
+    this.chatMessages = [
+      ...this.chatMessages,
+      {
+        id: `local-${Date.now()}`,
+        author: 'You',
+        text: message,
+        timeLabel: this.formatMessageTime(new Date()),
+        own: true,
+      },
+    ];
+
+    try {
+      this.chatSocket.sendMessage(this.roomName, message);
+    } catch {
+      this.showTransient('Chat is not connected yet.');
+    }
+    this.cdr.markForCheck();
+  }
+
+  private connectChat(accessToken: string | undefined): void {
+    this.chatSocket.connect(accessToken);
+    this.subs.add(
+      this.chatSocket.isConnected$.subscribe((connected) => {
+        this.chatConnected = connected;
+        this.cdr.markForCheck();
+      })
+    );
+    this.subs.add(
+      this.chatSocket.history$.subscribe((payload) => {
+        const messages = this.parseChatHistory(payload);
+        if (messages.length > 0) {
+          this.chatMessages = messages;
+          this.cdr.markForCheck();
+        }
+      })
+    );
+    this.subs.add(
+      this.chatSocket.message$.subscribe((payload) => {
+        const message = this.parseChatMessage(payload);
+        if (!message) return;
+        this.chatMessages = [...this.chatMessages, message];
+        this.cdr.markForCheck();
+      })
+    );
+    this.subs.add(
+      this.chatSocket.error$.subscribe(() => {
+        this.showTransient('Chat is temporarily unavailable.');
+      })
+    );
+  }
+
+  private parseChatHistory(payload: unknown): VideoCallChatMessage[] {
+    const rawMessages = Array.isArray(payload)
+      ? payload
+      : isRecord(payload) && Array.isArray(payload['messages'])
+        ? payload['messages']
+        : [];
+
+    return rawMessages
+      .map((item, index) => this.parseChatMessage(item, `history-${index}`))
+      .filter((message): message is VideoCallChatMessage => message !== null);
+  }
+
+  private parseChatMessage(payload: unknown, fallbackId = `remote-${Date.now()}`): VideoCallChatMessage | null {
+    if (!isRecord(payload)) return null;
+
+    const textValue = payload['message'] ?? payload['text'] ?? payload['content'];
+    if (typeof textValue !== 'string' || !textValue.trim()) return null;
+
+    const authorValue = payload['senderName'] ?? payload['sender'] ?? payload['author'];
+    const author = typeof authorValue === 'string' && authorValue.trim() ? authorValue.trim() : 'Participant';
+    const idValue = payload['id'] ?? payload['_id'] ?? payload['messageId'];
+    const timestampValue = payload['createdAt'] ?? payload['timestamp'] ?? payload['sentAt'];
+    const isOwnValue = payload['own'] ?? payload['isOwn'] ?? payload['fromSelf'];
+
+    return {
+      id: typeof idValue === 'string' && idValue.trim() ? idValue : fallbackId,
+      author,
+      text: textValue.trim(),
+      timeLabel: this.formatMessageTime(timestampValue),
+      own: typeof isOwnValue === 'boolean' ? isOwnValue : author.toLowerCase() === 'you',
+    };
+  }
+
+  private formatMessageTime(value: unknown): string {
+    const date =
+      value instanceof Date
+        ? value
+        : typeof value === 'string' || typeof value === 'number'
+          ? new Date(value)
+          : new Date();
+
+    if (Number.isNaN(date.getTime())) {
+      return this.formatMessageTime(new Date());
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
   }
 
   private showTransient(message: string, durationMs = 5000): void {
@@ -308,6 +458,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
       }
     }
     this.signaling.disconnect();
+    this.chatSocket.disconnect();
     this.maybePatchAppointmentCompleted();
     this.cdr.markForCheck();
   }
@@ -550,5 +701,9 @@ function decodeQueryTokenParam(raw: string): string {
   } catch {
     return t;
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 

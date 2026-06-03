@@ -1,0 +1,47 @@
+<aside
+  id="video-call-chat"
+  class="video-call-chat"
+  [class.video-call-chat--open]="open"
+  [attr.aria-hidden]="!open"
+>
+  <header class="video-call-chat__header">
+    <div>
+      <strong>Chat</strong>
+      <span>{{ connected ? 'Connected' : 'Connecting' }}</span>
+    </div>
+    <button type="button" class="video-call-chat__icon-button" (click)="close.emit()" aria-label="Close chat">
+      <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <div class="video-call-chat__messages" aria-live="polite">
+    @if (messages.length === 0) {
+      <div class="video-call-chat__empty">
+        <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">forum</mat-icon>
+        <span>No messages yet</span>
+      </div>
+    }
+    @for (message of messages; track message.id) {
+      <article class="video-call-chat__message" [class.video-call-chat__message--own]="message.own">
+        <span class="video-call-chat__message-author">{{ message.author }}</span>
+        <p>{{ message.text }}</p>
+        <time>{{ message.timeLabel }}</time>
+      </article>
+    }
+  </div>
+
+  <form class="video-call-chat__form" (ngSubmit)="send()">
+    <input
+      id="video-call-chat-message"
+      type="text"
+      name="chatDraft"
+      [(ngModel)]="draft"
+      autocomplete="off"
+      aria-label="Message"
+      placeholder="Type a message"
+    />
+    <button type="submit" class="video-call-chat__send-button" [disabled]="!draft.trim()" aria-label="Send message">
+      <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">send</mat-icon>
+    </button>
+  </form>
+</aside>
