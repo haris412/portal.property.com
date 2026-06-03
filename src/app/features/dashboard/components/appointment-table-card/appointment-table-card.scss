@@ -1,122 +1,80 @@
-.appointments-table-card {
+.appointments-table-card__action {
+  min-height: 2.25rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--font-main);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: var(--border-soft-strong);
+    background: var(--primary-soft);
+    color: var(--primary);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+.appointments-table-card__empty {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  align-items: center;
+  gap: 0.875rem;
+  min-height: 8rem;
+  padding: 1rem;
+  border: 1px dashed var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
 
-  &__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-
-    h3 {
-      margin: 0 0 8px;
-      color: var(--font-main);
-      font-size: 1.5rem;
-      font-weight: 800;
-    }
-
-    p {
-      margin: 0;
-      color: var(--font-secondary);
-      line-height: 1.6;
-    }
-  }
-
-  &__table-header,
-  &__row {
-    display: grid;
-    grid-template-columns: 2.3fr 1.4fr 1.6fr 0.9fr 1fr 32px;
-    gap: 16px;
-    align-items: center;
-  }
-
-  &__table-header {
-    padding: 0 16px 12px;
-    color: var(--font-secondary);
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-
-  &__row {
-    width: 100%;
-    border: 1px solid var(--border-soft);
-    background: linear-gradient(
-      180deg,
-      var(--tertiary) 0%,
-      var(--surface) 100%
-    );
-    border-radius: var(--radius-lg);
-    padding: 18px 16px;
-    text-align: left;
-    margin-bottom: 12px;
-
-    strong {
-      display: block;
-      color: var(--font-main);
-      font-size: 0.95rem;
-      font-weight: 700;
-    }
-
-    span {
-      display: block;
-      margin-top: 4px;
-      color: var(--font-secondary);
-      font-size: 0.875rem;
-    }
-  }
-
-  &__mobile-meta {
+  strong {
     display: block;
-    margin-top: 4px;
+    margin-bottom: 0.25rem;
+    color: var(--font-main);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-bold);
+  }
+
+  p {
+    margin: 0;
     color: var(--font-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-body-sm);
+    line-height: var(--line-height-body);
+  }
+}
+
+.appointments-table-card__empty-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  mat-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: var(--font-size-h4);
+  }
+}
+
+@media (max-width: 575.98px) {
+  .appointments-table-card__action {
+    width: 100%;
   }
 
-  &__arrow {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    color: var(--font-secondary);
-  }
-
-  &__mobile {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  &__mobile-item {
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(
-      180deg,
-      var(--tertiary) 0%,
-      var(--surface) 100%
-    );
-    padding: 16px;
-    text-align: left;
-
-    strong {
-      display: block;
-      color: var(--font-main);
-      font-size: 0.95rem;
-      font-weight: 700;
-    }
-  }
-
-  &__mobile-top {
-    display: flex;
+  .appointments-table-card__empty {
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 8px;
-  }
-
-  @media (max-width: 767.98px) {
-    &__head {
-      flex-direction: column;
-      align-items: stretch;
-    }
   }
 }

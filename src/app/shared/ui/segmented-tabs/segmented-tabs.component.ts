@@ -25,6 +25,7 @@ export class SegmentedTabsComponent {
   readonly active = input.required<string>();
   readonly ariaLabel = input<string>('Segmented tabs');
   readonly switchDelayMs = input<number>(120);
+  readonly density = input<'default' | 'compact'>('default');
 
   readonly changed = output<string>();
 
@@ -91,7 +92,7 @@ export class SegmentedTabsComponent {
 
   getPillWidth(): string {
     const length = this.tabs().length || 1;
-    return `calc((100% / ${length}) - 2px)`;
+    return `calc((100% / ${length}) - 3px)`;
   }
 
   trackByKey(_: number, item: SegmentedTabItem): string {

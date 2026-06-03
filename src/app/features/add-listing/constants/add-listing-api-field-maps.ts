@@ -27,8 +27,7 @@ export const ADD_LISTING_PRICING_API_MAP: ApiPathToControlMap = {
 };
 
 export const ADD_LISTING_LOCATION_API_MAP: ApiPathToControlMap = {
-  city: 'city',
-  neighborhood: 'neighborhood',
+  location: 'locationHierarchy',
   fullAddress: 'fullAddress',
   mapLink: 'mapLink',
   latitude: 'latitude',

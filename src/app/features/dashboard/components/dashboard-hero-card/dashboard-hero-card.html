@@ -1,3 +1,25 @@
-<app-section-card [title]="title()" [description]="description()" density="compact">
-  <app-action-button [label]="ctaLabel()" icon="home_work" (clicked)="onCta()" />
-</app-section-card>
+<section class="dashboard-hero-card">
+  <div class="dashboard-hero-card__content">
+    <p class="dashboard-hero-card__eyebrow">Admin dashboard</p>
+    <h2 class="dashboard-hero-card__title">{{ title() }}</h2>
+    <p class="dashboard-hero-card__description">{{ description() }}</p>
+
+    <button type="button" class="dashboard-hero-card__cta" (click)="onCta()">
+      <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">add</mat-icon>
+      <span>{{ ctaLabel() }}</span>
+    </button>
+  </div>
+
+  <div class="dashboard-hero-card__visual" aria-hidden="true">
+    <div class="dashboard-hero-card__building dashboard-hero-card__building--rear">
+      <span></span>
+      <span></span>
+    </div>
+    <div class="dashboard-hero-card__building dashboard-hero-card__building--front">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="dashboard-hero-card__ground"></div>
+  </div>
+</section>

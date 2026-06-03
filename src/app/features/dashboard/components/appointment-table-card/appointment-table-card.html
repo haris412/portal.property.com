@@ -1,8 +1,32 @@
-<app-section-card title="All Appointments"
-                  description="Track upcoming site visits, buyer meetings, and tenant viewing requests in one place." density="compact">
-  <app-appointments-list [appointments]="appointments()"
-                         viewerRole="agent"
-                         [showArrow]="true"
-                         [clickableRows]="true"
-                         (rowClicked)="goToAppointments()" />
+<app-section-card
+  title="All Appointments"
+  description="Track upcoming site visits, buyer meetings, and tenant viewing requests in one place."
+  density="compact"
+  variant="dashboard"
+  headerLayout="split"
+  icon="calendar_month"
+>
+  <button section-card-actions type="button" class="appointments-table-card__action" (click)="goToAppointments()">
+    View all appointments
+  </button>
+
+  @if (appointments().length) {
+    <app-appointments-list
+      [appointments]="appointments()"
+      viewerRole="agent"
+      [showArrow]="true"
+      [clickableRows]="true"
+      (rowClicked)="goToAppointments()"
+    />
+  } @else {
+    <div class="appointments-table-card__empty">
+      <span class="appointments-table-card__empty-icon">
+        <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">event_available</mat-icon>
+      </span>
+      <div>
+        <strong>No upcoming appointments</strong>
+        <p>New viewing requests and buyer meetings will appear here.</p>
+      </div>
+    </div>
+  }
 </app-section-card>

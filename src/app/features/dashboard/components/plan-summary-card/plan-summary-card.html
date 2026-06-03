@@ -1,9 +1,22 @@
 <app-section-card [title]="name()" [description]="description()" density="compact">
   <div class="plan-summary-card">
+    <div class="plan-summary-card__status-row">
+      <span class="plan-summary-card__status">
+        <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">verified</mat-icon>
+        {{ status() }}
+      </span>
+      <span class="plan-summary-card__renewal">{{ used() }} of {{ listingLimit() }} listings used</span>
+    </div>
+
     <div class="plan-summary-card__list">
       @for (feature of features(); track feature.label) {
         <div class="plan-summary-card__item">
-          <span>{{ feature.label }}</span>
+          <span class="plan-summary-card__item-label">
+            <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">
+              {{ featureIcon(feature.label) }}
+            </mat-icon>
+            {{ feature.label }}
+          </span>
           <strong>{{ feature.value }}</strong>
         </div>
       }
@@ -12,13 +25,16 @@
     <div class="plan-summary-card__usage">
       <div class="plan-summary-card__usage-row">
         <span>Plan usage</span>
-        <span>{{ used() }} of {{ listingLimit() }} listings used</span>
+        <strong>{{ usagePercent() }}%</strong>
       </div>
       <div class="plan-summary-card__progress">
         <span [style.width.%]="usagePercent()"></span>
       </div>
     </div>
 
-    <app-action-button label="Upgrade Plan" icon="trending_up" size="compact" />
+    <button type="button" class="plan-summary-card__cta">
+      <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">trending_up</mat-icon>
+      <span>Upgrade Plan</span>
+    </button>
   </div>
 </app-section-card>

@@ -1,24 +1,106 @@
-.chart-panel {
+:host {
+  display: block;
+  min-width: 0;
   height: 100%;
 }
 
-.chart-panel__head {
-  margin-bottom: 16px;
+.chart-panel__range {
+  position: relative;
+  flex: 0 0 auto;
+
+  summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.625rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+    color: var(--font-main);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    mat-icon {
+      width: 0.9rem;
+      height: 0.9rem;
+      font-size: var(--font-size-caption);
+      transition: transform 160ms ease;
+    }
+  }
+
+  summary:hover {
+    border-color: var(--border-soft-strong);
+    background: var(--surface);
+  }
+
+  summary:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  &[open] summary mat-icon {
+    transform: rotate(180deg);
+  }
 }
 
-.chart-panel__head h3 {
-  margin: 0 0 8px;
-  color: var(--font-main);
-  font-size: 1.5rem;
-  font-weight: 800;
+.chart-panel__range-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 2;
+  display: grid;
+  min-width: 9rem;
+  padding: 0.35rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+
+  button {
+    width: 100%;
+    padding: 0.45rem 0.55rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--font-main);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--primary-soft);
+      color: var(--primary);
+      outline: none;
+    }
+  }
 }
 
-.chart-panel__head p {
-  margin: 0;
-  color: var(--font-secondary);
+.chart-panel__body {
+  border-radius: var(--radius-md);
+  background: var(--surface);
 }
 
 .chart-panel__chart {
+  display: block;
   width: 100%;
-  border-radius: var(--radius-lg);
+  min-height: 18rem;
+}
+
+@media (max-width: 575.98px) {
+  .chart-panel__range {
+    width: 100%;
+
+    summary {
+      justify-content: space-between;
+      width: 100%;
+    }
+  }
 }

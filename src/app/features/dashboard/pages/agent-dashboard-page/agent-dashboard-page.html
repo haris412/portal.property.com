@@ -1,52 +1,62 @@
 <app-page-shell>
-  <app-page-header
-    [title]="'Welcome back, ' + displayName() + '!'"
-    [subtitle]="'Here is what’s happening with your properties today.'">
-  </app-page-header>
+  <div class="agent-dashboard-page">
+    <header class="agent-dashboard-page__header">
+      <div>
+        <h1 class="agent-dashboard-page__title">Dashboard</h1>
+        <p class="agent-dashboard-page__subtitle">
+          Monitor listings, appointments, and property activity across LocateHome.
+        </p>
+      </div>
+    </header>
 
-  <div class="agent-dashboard-page__stack">
-    <app-dashboard-hero-card
-      [title]="hero.title"
-      [description]="hero.description"
-      [ctaLabel]="hero.ctaLabel" />
+    <div class="agent-dashboard-page__stack">
+      <app-dashboard-hero-card
+        [title]="hero.title"
+        [description]="hero.description"
+        [ctaLabel]="hero.ctaLabel"
+      />
 
-    <div class="row g-3 align-items-stretch">
-      <div class="col-12 col-xl-8">
-        <app-portfolio-breakdown-card
-          [activePortfolio]="portfolioSummary.activePortfolio"
-          [monthlyHint]="portfolioSummary.monthlyHint"
-          [saleShare]="portfolioSummary.saleShare"
-          [rentShare]="portfolioSummary.rentShare"
-          [footerText]="portfolioSummary.footerText"
-          [metrics]="portfolioMetrics" />
+      <div class="row g-3 align-items-stretch">
+        <div class="col-12 col-xl-8">
+          <app-portfolio-breakdown-card
+            [activePortfolio]="portfolioSummary.activePortfolio"
+            [monthlyHint]="portfolioSummary.monthlyHint"
+            [saleShare]="portfolioSummary.saleShare"
+            [rentShare]="portfolioSummary.rentShare"
+            [footerText]="portfolioSummary.footerText"
+            [metrics]="portfolioMetrics"
+          />
+        </div>
+
+        <div class="col-12 col-xl-4">
+          <app-plan-summary-card
+            [name]="planSummary.name"
+            [price]="planSummary.price"
+            [renewalText]="planSummary.renewalText"
+            [status]="planSummary.status"
+            [listingLimit]="planSummary.listingLimit"
+            [used]="planSummary.used"
+            [features]="planFeatures"
+          />
+        </div>
       </div>
 
-      <div class="col-12 col-xl-4">
-        <app-plan-summary-card
-          [name]="planSummary.name"
-          [price]="planSummary.price"
-          [renewalText]="planSummary.renewalText"
-          [status]="planSummary.status"
-          [listingLimit]="planSummary.listingLimit"
-          [used]="planSummary.used"
-          [features]="planFeatures" />
+      <div class="row g-3 align-items-stretch">
+        <div class="col-12 col-xl-8">
+          <app-chart-panel
+            title="Trending Property Views"
+            subtitle="Daily profile visits for your top listings over the last 7 days."
+            [options]="viewsChartOptions()"
+            height="320px"
+          />
+        </div>
+
+        <div class="col-12 col-xl-4">
+          <app-locations-demand-card [locations]="locationDemand" />
+        </div>
       </div>
+
+      <app-appointments-table-card [appointments]="appointments()" />
     </div>
-
-    <div class="row g-3 align-items-stretch">
-      <div class="col-12 col-xl-8">
-        <app-chart-panel
-          title="Trending Properties Views"
-          subtitle="Daily profile visits for your top listings over the last 7 days."
-          [options]="viewsChartOptions()"
-          height="320px" />
-      </div>
-
-      <div class="col-12 col-xl-4">
-        <app-locations-demand-card [locations]="locationDemand" />
-      </div>
-    </div>
-
-    <app-appointments-table-card [appointments]="appointments()" />
   </div>
 </app-page-shell>

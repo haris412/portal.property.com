@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { ApiResponse } from '../models/api-response.model';
-import { AddListingModel } from '../models/add-listing.model';
+import { CreateListingPayload } from '../models/add-listing.model';
 import { PropertyCatalogData } from '../models/property-catalog.model';
 import { PropertyFeature, PropertyFeaturesApiResponse } from '../models/property-features.model';
 import { environment } from '../../../environments/environment';
@@ -62,62 +62,6 @@ export class AddListingService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * The UI builds a nested `AddListingModel`. The backend create/draft endpoints
-   * still expect the legacy flat payload, so we normalize here.
-   */
-  private toCreateListingApiPayload(payload: AddListingModel): Record<string, unknown> {
-    const anyPayload = payload as unknown as Record<string, unknown>;
-    const basic = (payload as any)?.basicInformation ?? {};
-    const pricing = (payload as any)?.pricingDetails ?? {};
-    const contact = (payload as any)?.contactInformation ?? {};
-    const location = (payload as any)?.location ?? {};
-
-    const subtype =
-      (basic.subtype ??
-        (anyPayload as any).subtype ??
-        (anyPayload as any).propertySubtype ??
-        null) as string | null;
-
-    return {
-      // Preserve any existing flat keys already present on payload.
-      ...anyPayload,
-
-      // Canonical flat keys the API validates.
-      purpose: (basic.purpose ?? (anyPayload as any).purpose ?? null) as string | null,
-      propertyType: (basic.propertyType ?? (anyPayload as any).propertyType ?? null) as string | null,
-      subtype,
-      propertySubtype: subtype,
-      propertyCategoryName:
-        (basic.propertyCategoryName ?? (anyPayload as any).propertyCategoryName ?? null) as
-          | string
-          | null,
-      propertySubtypeName:
-        (basic.propertySubtypeName ?? (anyPayload as any).propertySubtypeName ?? null) as
-          | string
-          | null,
-      listingTitle: (basic.title ?? (anyPayload as any).listingTitle ?? null) as string | null,
-      propertyDescription:
-        (basic.description ?? (anyPayload as any).propertyDescription ?? null) as string | null,
-
-      price: (pricing.price ?? (anyPayload as any).price ?? null) as number | null,
-      areaSize: ((anyPayload as any).areaSize ?? pricing.area ?? null) as number | null,
-      areaUnit: ((anyPayload as any).areaUnit ?? pricing.areaUnit ?? null) as string | null,
-      numBedrooms: ((anyPayload as any).numBedrooms ?? pricing.bedrooms ?? null) as number | null,
-      numBathrooms: ((anyPayload as any).numBathrooms ?? pricing.bathrooms ?? null) as number | null,
-
-      contactName: ((anyPayload as any).contactName ?? contact.contactName ?? null) as string | null,
-      contactEmail: ((anyPayload as any).contactEmail ?? contact.contactEmail ?? null) as string | null,
-      contactPhoneNumber:
-        ((anyPayload as any).contactPhoneNumber ?? contact.contactPhone ?? null) as string | null,
-
-      city: ((anyPayload as any).city ?? location.city ?? null) as string | null,
-      latitude: ((anyPayload as any).latitude ?? location.latitude ?? null) as number | null,
-      longitude: ((anyPayload as any).longitude ?? location.longitude ?? null) as number | null,
-    };
-  }
-
-  
   getPropertyCatalog(): Observable<PropertyCatalogData> {
     if (this.catalogCache) {
       return of(this.catalogCache);
@@ -222,16 +166,16 @@ export class AddListingService {
     return out;
   }
 
-  createListing(payload: AddListingModel): Observable<ApiResponse<AddListingResponse>> {
-    return this.http.post<ApiResponse<AddListingResponse>>(`${this.baseUrl}`, {
-      ...this.toCreateListingApiPayload(payload),
+  createListing(payload: CreateListingPayload): Observable<ApiResponse<AddListingResponse>> {
+    return this.http.post<ApiResponse<AddListingResponse>>(this.baseUrl, {
+      ...payload,
       status: 'Published',
     });
   }
 
-  saveDraft(payload: AddListingModel): Observable<ApiResponse<AddListingResponse>> {
-    return this.http.post<ApiResponse<AddListingResponse>>(`${this.baseUrl}`, {
-      ...this.toCreateListingApiPayload(payload),
+  saveDraft(payload: CreateListingPayload): Observable<ApiResponse<AddListingResponse>> {
+    return this.http.post<ApiResponse<AddListingResponse>>(this.baseUrl, {
+      ...payload,
       status: 'Draft',
     });
   }
@@ -246,14 +190,14 @@ export class AddListingService {
   }
 
   /** PUT /api/properties/:id */
-  updateProperty(id: string, payload: AddListingModel): Observable<ApiResponse<AddListingResponse>> {
+  updateProperty(id: string, payload: CreateListingPayload): Observable<ApiResponse<AddListingResponse>> {
     const safeId = (id ?? '').trim();
     if (!safeId) {
       return throwError(() => new Error('Missing property id'));
     }
     return this.http.put<ApiResponse<AddListingResponse>>(
       `${this.baseUrl}/${encodeURIComponent(safeId)}`,
-      this.toCreateListingApiPayload(payload)
+      payload
     );
   }
 

@@ -20,6 +20,16 @@ import { forkJoin, merge } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { PageHeaderComponent, PageHeaderAction } from '../../../../shared/ui/page-header/page-header';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
+import {
+  WizardStepperComponent,
+  WizardStepperItem,
+} from '../../../../shared/ui/wizard-stepper/wizard-stepper';
+import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
+import {
+  ListingProgressPanelComponent,
+  ListingProgressStep,
+} from '../../components/listing-progress-panel/listing-progress-panel';
+import { ListingHelpCardComponent } from '../../components/listing-help-card/listing-help-card';
 import { BasicInformationSectionComponent } from '../../components/basic-information-section/basic-information-section';
 import { PricingDetailsSectionComponent } from '../../components/pricing-details-section/pricing-details-section';
 import { FeaturesAmenitiesSectionComponent } from '../../components/features-amenities-section/features-amenities-section';
@@ -31,7 +41,13 @@ import {
   AddListingService,
   GenerateListingDescriptionRequest,
 } from '../../../../core/services/add-listing.service';
-import type { AddListingModel } from '../../../../core/models/add-listing.model';
+import type { CreateListingPayload } from '../../../../core/models/add-listing.model';
+import {
+  buildListingPayload,
+  type ListingFormSnapshot,
+  type UploadedMediaPayload,
+} from '../../mappers/listing-payload.mapper';
+import type { LocationHierarchyItem } from '../../../../core/models/google-places.models';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 import type { PropertyCatalogData } from '../../../../core/models/property-catalog.model';
 import type { PropertyFeature } from '../../../../core/models/property-features.model';
@@ -49,15 +65,42 @@ import {
 } from '../../constants/add-listing-api-field-maps';
 import { firstValueFrom } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {
   FEATURE_SLUG_TO_AMENITY_KEY,
   normalizeFeatureSlug,
 } from '../../../../core/constants/listing-payload.constants';
 import { CdkAutofill } from "@angular/cdk/text-field";
 
-interface UploadedMediaPayload {
-  images: ListingImagePayload[];
-  videoTourUrl: string | null;
+type AddListingStepKey =
+  | 'basic-info'
+  | 'pricing'
+  | 'location'
+  | 'features-media'
+  | 'contact-description'
+  | 'review-publish';
+
+interface AddListingWizardStep {
+  key: AddListingStepKey;
+  label: string;
+  description: string;
+}
+
+interface AddListingRequirement {
+  label: string;
+  complete: boolean;
+}
+
+interface ReviewSummaryItem {
+  label: string;
+  value: string;
+}
+
+interface ReviewSummarySection {
+  title: string;
+  icon: string;
+  items: readonly ReviewSummaryItem[];
 }
 
 /** Digits-only length 10–15 after stripping formatting (mobile / WhatsApp style). */
@@ -73,21 +116,30 @@ function contactPhoneFormatValidator(control: AbstractControl): ValidationErrors
   return null;
 }
 
-/** City control is usually a string; mat-autocomplete may briefly hold a GeoNames row object. */
-function locationCityFormValueToString(city: unknown): string {
-  if (city == null) return '';
-  if (typeof city === 'string') return city.trim();
-  const o = city as { name?: string };
-  return typeof o.name === 'string' ? o.name.trim() : '';
+function nonEmptyArrayValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  return Array.isArray(value) && value.length > 0 ? null : { required: true };
+}
+
+function mediaRequirementValidator(control: AbstractControl): ValidationErrors | null {
+  const images = (control.get('images')?.value as File[] | null) ?? [];
+  const video = (control.get('videoFiles')?.value as File[] | null) ?? [];
+  return images.length >= 3 || video.length > 0 ? null : { mediaRequired: true };
 }
 
 @Component({
   selector: 'app-add-listing-page',
   imports: [
     TranslateModule,
+    MatIconModule,
+    MatSlideToggleModule,
     ReactiveFormsModule,
     PageHeaderComponent,
     InfoBannerComponent,
+    WizardStepperComponent,
+    SectionCardComponent,
+    ListingProgressPanelComponent,
+    ListingHelpCardComponent,
     BasicInformationSectionComponent,
     PricingDetailsSectionComponent,
     FeaturesAmenitiesSectionComponent,
@@ -111,9 +163,269 @@ export class AddListingPageComponent {
   readonly locationForm: FormGroup;
   readonly isSubmitting = signal(false);
   readonly isGeneratingDescription = signal(false);
+  readonly isFeatured = signal(false);
+  readonly existingPropertyImages = signal<ListingImagePayload[]>([]);
+  readonly activeStepKey = signal<AddListingStepKey>('basic-info');
+  private readonly stepOrder: readonly AddListingStepKey[] = [
+    'basic-info',
+    'pricing',
+    'location',
+    'features-media',
+    'contact-description',
+    'review-publish',
+  ] as const;
+  private readonly stepDefinitions: readonly AddListingWizardStep[] = [
+    {
+      key: 'basic-info',
+      label: 'Basic Info',
+      description: 'Property details',
+    },
+    {
+      key: 'pricing',
+      label: 'Pricing',
+      description: 'Price and size',
+    },
+    {
+      key: 'location',
+      label: 'Location',
+      description: "Where it's located",
+    },
+    {
+      key: 'features-media',
+      label: 'Features & Media',
+      description: 'Amenities, photos, and video',
+    },
+    {
+      key: 'contact-description',
+      label: 'Contact & Description',
+      description: 'Contact info and listing story',
+    },
+    {
+      key: 'review-publish',
+      label: 'Review & Publish',
+      description: 'Final review',
+    },
+  ] as const;
+
+  readonly listingSteps = computed<readonly WizardStepperItem[]>(() => {
+    const activeIndex = this.stepOrder.indexOf(this.activeStepKey());
+
+    return this.stepDefinitions.map((step, index): WizardStepperItem => ({
+      ...step,
+      state: index < activeIndex ? 'completed' : index === activeIndex ? 'active' : 'pending',
+    }));
+  });
+  readonly activeStepIndex = computed(() => this.stepOrder.indexOf(this.activeStepKey()));
+  readonly isFirstStep = computed(() => this.activeStepIndex() <= 0);
+  readonly isLastStep = computed(() => this.activeStepIndex() >= this.stepOrder.length - 1);
+  readonly progressPercent = computed(() =>
+    Math.round(((this.activeStepIndex() + 1) / this.stepOrder.length) * 100)
+  );
+  readonly progressDegrees = computed(() => `${Math.round((this.progressPercent() / 100) * 360)}deg`);
+  readonly activeStepLabel = computed(() => {
+    const activeKey = this.activeStepKey();
+    return this.stepDefinitions.find((step) => step.key === activeKey)?.label ?? '';
+  });
+  readonly activeStepCountLabel = computed(() => `${this.activeStepIndex() + 1} of ${this.stepOrder.length}`);
 
   /** Recomputed when basic/pricing/location/amenities forms change (OnPush + signal gate for the AI chip). */
   private readonly aiListingFormsTick = signal(0);
+  private readonly listingFormsTick = signal(0);
+  readonly publishRequirements = computed<readonly AddListingRequirement[]>(() => {
+    this.listingFormsTick();
+
+    const media = this.mediaForm.value;
+    const hasMedia = (media.images ?? []).length >= 3 || Boolean((media.videoFiles ?? []).length);
+
+    return [
+      { label: 'Add basic information', complete: this.basicInfoForm.valid },
+      { label: 'Add pricing and details', complete: this.pricingForm.valid },
+      { label: 'Set property location', complete: this.locationForm.valid },
+      { label: 'Add media', complete: hasMedia },
+      { label: 'Add contact information', complete: this.contactForm.valid },
+      { label: 'Write description', complete: this.descriptionForm.valid },
+    ];
+  });
+  readonly completedRequirementCount = computed(
+    () => this.publishRequirements().filter((item) => item.complete).length
+  );
+  readonly progressPanelSteps = computed<readonly ListingProgressStep[]>(() => {
+    this.listingFormsTick();
+
+    const amenities = this.amenitiesForm.getRawValue();
+    const media = this.mediaForm.getRawValue();
+    const hasFeaturesOrMedia = Boolean(
+      (amenities.selectedFeatureIds ?? []).length ||
+      (media.images ?? []).length >= 3 ||
+      (media.videoFiles ?? []).length
+    );
+
+    const readinessByStep: Record<AddListingStepKey, boolean> = {
+      'basic-info': this.basicInfoForm.valid,
+      pricing: this.pricingForm.valid,
+      location: this.locationForm.valid,
+      'features-media': hasFeaturesOrMedia,
+      'contact-description': this.contactForm.valid && this.descriptionForm.valid,
+      'review-publish': this.canSubmitListing(),
+    };
+
+    return this.listingSteps().map((step) => {
+      const ready = readinessByStep[step.key as AddListingStepKey];
+      return {
+        ...step,
+        readiness: ready ? 'complete' : 'attention',
+        readinessLabel: ready ? 'Ready' : 'Needs input',
+      };
+    });
+  });
+  readonly completedProgressStepCount = computed(
+    () => this.progressPanelSteps().filter((step) => step.readiness === 'complete').length
+  );
+  readonly progressTrayOpen = signal(false);
+  readonly canSubmitListing = computed(() =>
+    this.publishRequirements()
+      .filter((item) => item.label !== 'Add media')
+      .every((item) => item.complete)
+  );
+  readonly reviewPrimaryActionLabel = computed(() =>
+    this.editingId() ? 'Save changes' : 'Publish Listing'
+  );
+  readonly reviewSummarySections = computed<readonly ReviewSummarySection[]>(() => {
+    this.listingFormsTick();
+
+    const basic = this.basicInfoForm.getRawValue();
+    const pricing = this.pricingForm.getRawValue();
+    const location = this.locationForm.getRawValue();
+    const amenities = this.amenitiesForm.getRawValue();
+    const media = this.mediaForm.getRawValue();
+    const contact = this.contactForm.getRawValue();
+    const description = this.descriptionForm.getRawValue();
+
+    const selectedFeatureIds = (amenities.selectedFeatureIds ?? []) as string[];
+    const images = (media.images ?? []) as File[];
+    const videoFiles = (media.videoFiles ?? []) as File[];
+    const areaLabel = [this.formatReviewValue(pricing.areaSize, ''), this.formatReviewValue(pricing.areaUnit, '')]
+      .filter(Boolean)
+      .join(' ');
+    const coordinatesSelected = location.latitude != null && location.longitude != null;
+
+    return [
+      {
+        title: 'Listing basics',
+        icon: 'home_work',
+        items: [
+          {
+            label: 'Purpose',
+            value: basic.purpose === 'sale' ? 'For Sale' : 'For Rent',
+          },
+          {
+            label: 'Listing title',
+            value: this.formatReviewValue(basic.listingTitle),
+          },
+          {
+            label: 'Property type',
+            value: this.formatReviewValue(basic.propertySubtypeName || basic.propertyCategoryName),
+          },
+          {
+            label: 'Category',
+            value: this.formatReviewValue(basic.propertyCategoryName),
+          },
+        ],
+      },
+      {
+        title: 'Pricing and details',
+        icon: 'payments',
+        items: [
+          {
+            label: 'Price',
+            value: this.formatCurrencyValue(pricing.price),
+          },
+          {
+            label: 'Area size',
+            value: areaLabel || 'Not provided',
+          },
+          {
+            label: 'Bedrooms',
+            value: this.formatReviewValue(pricing.numBedrooms),
+          },
+          {
+            label: 'Bathrooms',
+            value: this.formatReviewValue(pricing.numBathrooms),
+          },
+          {
+            label: 'Parking spaces',
+            value: this.formatReviewValue(pricing.numParkingSpaces),
+          },
+          {
+            label: 'Floors',
+            value: this.formatReviewValue(pricing.numFloors),
+          },
+        ],
+      },
+      {
+        title: 'Location',
+        icon: 'location_on',
+        items: [
+          {
+            label: 'Location',
+            value: this.formatLocationHierarchyForReview(location.locationHierarchy),
+          },
+          {
+            label: 'Full address',
+            value: this.formatReviewValue(location.fullAddress),
+          },
+          {
+            label: 'Map pin',
+            value: coordinatesSelected ? 'Selected' : 'Not set',
+          },
+        ],
+      },
+      {
+        title: 'Features and media',
+        icon: 'perm_media',
+        items: [
+          {
+            label: 'Amenities',
+            value: selectedFeatureIds.length ? `${selectedFeatureIds.length} selected` : 'None selected',
+          },
+          {
+            label: 'Photos',
+            value: images.length ? `${images.length} selected` : 'None selected',
+          },
+          {
+            label: 'Video tour',
+            value: videoFiles[0]?.name ?? 'Not selected',
+          },
+        ],
+      },
+      {
+        title: 'Contact and description',
+        icon: 'contact_phone',
+        items: [
+          {
+            label: 'Contact name',
+            value: this.formatReviewValue(contact.contactName),
+          },
+          {
+            label: 'Email',
+            value: this.formatReviewValue(contact.contactEmail),
+          },
+          {
+            label: 'Phone',
+            value: this.formatReviewValue(contact.contactPhoneNumber),
+          },
+          {
+            label: 'Contact location',
+            value: this.formatReviewValue(contact.contactLocation),
+          },
+          {
+            label: 'Description',
+            value: this.formatDescriptionValue(description.propertyDescription),
+          },
+        ],
+      },
+    ];
+  });
   readonly aiDescriptionContextReady = computed(() => {
     this.aiListingFormsTick();
     return this.evalAiDescriptionContextReady();
@@ -147,7 +459,7 @@ export class AddListingPageComponent {
   readonly editingId = signal<string | null>(null);
   readonly editLoading = signal(false);
   readonly editLoadError = signal<string | null>(null);
-  private readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
+  readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
 
   constructor(private readonly fb: FormBuilder) {
     this.basicInfoForm = this.fb.group({
@@ -178,7 +490,7 @@ export class AddListingPageComponent {
     this.mediaForm = this.fb.group({
       images: [[] as File[]],
       videoFiles: [[] as File[]],
-    });
+    }, { validators: mediaRequirementValidator });
 
     this.contactForm = this.fb.group({
       contactName: ['', Validators.required],
@@ -188,13 +500,12 @@ export class AddListingPageComponent {
     });
 
     this.locationForm = this.fb.group({
-      city: ['', Validators.required],
-      neighborhood: ['', Validators.required],
-      fullAddress: ['', Validators.required],
-      mapLink: [''],
-      /** Set by map pin / “Use my location” (also synced to `mapLink`). */
-      latitude: [null as number | null],
-      longitude: [null as number | null],
+      locationQuery:     [''],
+      locationHierarchy: [[] as LocationHierarchyItem[], nonEmptyArrayValidator],
+      fullAddress:       ['', Validators.required],
+      mapLink:           [''],
+      latitude:          [null as number | null],
+      longitude:         [null as number | null],
     });
 
     merge(
@@ -205,6 +516,25 @@ export class AddListingPageComponent {
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.aiListingFormsTick.update((n: number) => n + 1));
+
+    merge(
+      this.basicInfoForm.valueChanges,
+      this.basicInfoForm.statusChanges,
+      this.pricingForm.valueChanges,
+      this.pricingForm.statusChanges,
+      this.locationForm.valueChanges,
+      this.locationForm.statusChanges,
+      this.amenitiesForm.valueChanges,
+      this.amenitiesForm.statusChanges,
+      this.mediaForm.valueChanges,
+      this.mediaForm.statusChanges,
+      this.contactForm.valueChanges,
+      this.contactForm.statusChanges,
+      this.descriptionForm.valueChanges,
+      this.descriptionForm.statusChanges
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.listingFormsTick.update((n: number) => n + 1));
 
     this.addListingService.getPropertyFeatures().subscribe({ error: () => void 0 });
 
@@ -273,6 +603,10 @@ export class AddListingPageComponent {
       amenities.selectedFeatureIds ?? []
     );
 
+    const locationHierarchy = (location.locationHierarchy ?? []) as LocationHierarchyItem[];
+    const cityName = locationHierarchy.find(i => i.level === 2)?.name ?? '';
+    const areaName = (locationHierarchy.find(i => i.level === 4) ?? locationHierarchy.find(i => i.level === 3))?.name ?? '';
+
     return {
       title: (basic.listingTitle ?? '').trim(),
       purpose,
@@ -286,8 +620,8 @@ export class AddListingPageComponent {
       numParkingSpaces: pricing.numParkingSpaces,
       numFloors: pricing.numFloors,
       ...amenityBooleans,
-      city: locationCityFormValueToString(location.city),
-      neighborhood: location.neighborhood,
+      city: cityName,
+      neighborhood: areaName,
       fullAddress: location.fullAddress,
       mapLink: location.mapLink,
       latitude: location.latitude,
@@ -314,12 +648,14 @@ export class AddListingPageComponent {
       if (
         this.basicInfoForm.invalid ||
         this.pricingForm.invalid ||
+        this.mediaForm.invalid ||
         this.contactForm.invalid ||
         this.descriptionForm.invalid ||
         this.locationForm.invalid
       ) {
         this.basicInfoForm.markAllAsTouched();
         this.pricingForm.markAllAsTouched();
+        this.mediaForm.markAllAsTouched();
         this.contactForm.markAllAsTouched();
         this.descriptionForm.markAllAsTouched();
         this.locationForm.markAllAsTouched();
@@ -347,6 +683,101 @@ export class AddListingPageComponent {
         this.isSubmitting.set(false);
       }
     }
+  }
+
+  onWizardStepSelected(stepKey: string): void {
+    if (!this.isAddListingStepKey(stepKey)) {
+      return;
+    }
+
+    this.activeStepKey.set(stepKey);
+  }
+
+  goToPreviousStep(): void {
+    const previousIndex = this.activeStepIndex() - 1;
+    if (previousIndex < 0) {
+      return;
+    }
+
+    this.activeStepKey.set(this.stepOrder[previousIndex]);
+  }
+
+  goToNextStep(): void {
+    const nextIndex = this.activeStepIndex() + 1;
+    if (nextIndex >= this.stepOrder.length) {
+      return;
+    }
+
+    this.activeStepKey.set(this.stepOrder[nextIndex]);
+  }
+
+  goToAiDescriptionStep(): void {
+    this.activeStepKey.set('contact-description');
+  }
+
+  onExistingImageRemoved(index: number): void {
+    this.existingPropertyImages.update((imgs) => imgs.filter((_, i) => i !== index));
+  }
+
+  toggleProgressTray(): void {
+    this.progressTrayOpen.update((open) => !open);
+  }
+
+  closeProgressTray(): void {
+    this.progressTrayOpen.set(false);
+  }
+
+  async onReviewPrimaryAction(): Promise<void> {
+    const actionId = this.editingId() ? 'update-property' : ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING;
+    await this.onHeaderAction(actionId);
+  }
+
+  async onReviewSaveDraft(): Promise<void> {
+    await this.onHeaderAction(ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT);
+  }
+
+  private isAddListingStepKey(stepKey: string): stepKey is AddListingStepKey {
+    return this.stepOrder.some((key) => key === stepKey);
+  }
+
+  private formatReviewValue(value: unknown, fallback = 'Not provided'): string {
+    if (value == null) {
+      return fallback;
+    }
+
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value.toLocaleString('en-US') : fallback;
+    }
+
+    const text = value.toString().trim();
+    return text || fallback;
+  }
+
+  private formatCurrencyValue(value: unknown): string {
+    if (value == null || value === '') {
+      return 'Not provided';
+    }
+
+    const numericValue = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(numericValue)) {
+      return this.formatReviewValue(value);
+    }
+
+    return `PKR ${numericValue.toLocaleString('en-US')}`;
+  }
+
+  private formatLocationHierarchyForReview(hierarchy: unknown): string {
+    if (!Array.isArray(hierarchy) || !hierarchy.length) return 'Not provided';
+    const items = hierarchy as LocationHierarchyItem[];
+    const leaf = items[items.length - 1];
+    const city = items.find(i => i.level === 2);
+    if (city && city.name !== leaf.name) return `${leaf.name}, ${city.name}`;
+    return leaf.name;
+  }
+
+  private formatDescriptionValue(value: unknown): string {
+    const text = this.formatReviewValue(value, '');
+    return text ? `${text.length.toLocaleString('en-US')} characters` : 'Not provided';
   }
 
   private loadPropertyForEdit(id: string): void {
@@ -398,6 +829,12 @@ export class AddListingPageComponent {
       return;
     }
 
+    const totalImages = this.existingPropertyImages().length + ((this.mediaForm.value.images ?? []) as File[]).length;
+    if (totalImages < 3) {
+      this.notifications.warning('At least 3 photos are required.');
+      return;
+    }
+
     this.isSubmitting.set(true);
     try {
       const uploadedMedia = await this.uploadSelectedMediaForEdit();
@@ -413,21 +850,40 @@ export class AddListingPageComponent {
   }
 
   private async uploadSelectedMediaForEdit(): Promise<UploadedMediaPayload> {
-    const existing = this.loadedProperty();
-    const existingImages = (existing?.images ?? []) as ListingImagePayload[];
-    const existingVideo = ((existing?.videoTourUrl ?? null) || null) as string | null;
+    const existingVideo = ((this.loadedProperty()?.videoTourUrl ?? null) || null) as string | null;
+    const keptImages = this.existingPropertyImages();
 
     const media = this.mediaForm.value;
-    const images = (media.images ?? []) as File[];
+    const newImageFiles = (media.images ?? []) as File[];
     const videoFiles = (media.videoFiles ?? []) as File[];
 
-    // If user didn't pick new files, keep the existing URLs (avoid wiping media on update).
-    if (!images.length && !videoFiles.length) {
-      return { images: existingImages, videoTourUrl: existingVideo };
+    let uploadedNewImages: ListingImagePayload[] = [];
+    let videoTourUrl = existingVideo;
+
+    if (newImageFiles.length || videoFiles.length) {
+      this.notifications.info('Uploading media...');
+      try {
+        uploadedNewImages = newImageFiles.length
+          ? await this.mediaUploadService.uploadImages(newImageFiles)
+          : [];
+        if (videoFiles[0]) {
+          videoTourUrl = await this.mediaUploadService.uploadVideo(videoFiles[0]);
+        }
+        this.notifications.success('Media uploaded successfully');
+      } catch (error: unknown) {
+        const details = apiErrorSummary(error) || 'Media upload failed';
+        this.notifications.error(details);
+        throw new Error(details);
+      }
     }
 
-    // If they picked new media, upload and replace those fields.
-    return await this.uploadSelectedMedia();
+    const mergedImages = [...keptImages, ...uploadedNewImages].map((img, index) => ({
+      ...img,
+      orderIndex: index,
+      isThumbnail: index === 0,
+    }));
+
+    return { images: mergedImages, videoTourUrl };
   }
 
   private patchFormsFromProperty(
@@ -489,10 +945,17 @@ export class AddListingPageComponent {
       { emitEvent: false }
     );
 
+    const locationHierarchy = Array.isArray((doc as any).location)
+      ? (doc as any).location as LocationHierarchyItem[]
+      : [];
+    const locationQueryDisplay = locationHierarchy.length
+      ? locationHierarchy[locationHierarchy.length - 1].name
+      : '';
+
     this.locationForm.patchValue(
       {
-        city: doc.city ?? '',
-        neighborhood: doc.neighborhood ?? '',
+        locationQuery: locationQueryDisplay,
+        locationHierarchy,
         fullAddress: doc.fullAddress ?? '',
         mapLink: doc.mapLink ?? '',
         latitude: doc.latitude ?? null,
@@ -500,6 +963,9 @@ export class AddListingPageComponent {
       },
       { emitEvent: false }
     );
+
+    this.isFeatured.set((doc as any).isFeatured === true);
+    this.existingPropertyImages.set((doc.images ?? []) as ListingImagePayload[]);
 
     const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
     // Emit so FeaturesAmenitiesSection syncs chip selection.
@@ -605,97 +1071,20 @@ export class AddListingPageComponent {
     );
   }
 
-  private buildPayload(uploadedMedia: UploadedMediaPayload): AddListingModel {
-    const basic = this.basicInfoForm.value;
-    const description = this.descriptionForm.value;
-    const pricing = this.pricingForm.value;
-    const amenities = this.amenitiesForm.value;
-    const contact = this.contactForm.value;
-    const location = this.locationForm.value;
+  private buildPayload(uploadedMedia: UploadedMediaPayload): CreateListingPayload {
+    const forms: ListingFormSnapshot = {
+      basic: this.basicInfoForm.value,
+      description: this.descriptionForm.value,
+      pricing: this.pricingForm.value,
+      contact: this.contactForm.value,
+      location: this.locationForm.value,
+    };
 
-    const purpose =
-      basic.purpose === 'sale'
-        ? 'For Sale'
-        : 'For Rent';
-
-    const propertyType = this.addListingService.getCoarsePropertyTypeFromLabels(
-      basic.propertyCategoryName,
-      basic.propertySubtypeName
-    );
-    const categoryName = (basic.propertyCategoryName ?? '').trim();
-    const subtypeName = (basic.propertySubtypeName ?? '').trim();
-    /** Shown + stored as the “detail” type; falls back to category if no subtype row. */
-    const subtype = (subtypeName || categoryName).trim();
     const amenityBooleans = this.addListingService.buildAmenityBooleanPayload(
-      amenities.selectedFeatureIds ?? []
+      this.amenitiesForm.value.selectedFeatureIds ?? []
     );
 
-    return {
-      basicInformation: {
-        purpose,
-        propertyType,
-        subtype,
-        propertyCategoryName: categoryName,
-        propertySubtypeName: subtypeName,
-        title: basic.listingTitle,
-        description: description.propertyDescription,
-      },
-      pricingDetails: {
-        price: pricing.price,
-        area: pricing.areaSize,
-        areaUnit: pricing.areaUnit,
-        bedrooms: pricing.numBedrooms,
-        bathrooms: pricing.numBathrooms,
-      },
-      featuresAmenities: {
-        amenities: amenities.selectedFeatureIds ?? [],
-      },
-      propertyMedia: {
-        media: [
-          ...(uploadedMedia.images ?? []).map((img) => ({
-            type: 'photo',
-            url: img?.url,
-          })),
-          ...(uploadedMedia.videoTourUrl
-            ? [{ type: 'video', url: uploadedMedia.videoTourUrl }]
-            : []),
-        ],
-      },
-      location: {
-        city: locationCityFormValueToString(location.city),
-        latitude: location.latitude ?? null,
-        longitude: location.longitude ?? null,
-      },
-      contactInformation: {
-        contactName: contact.contactName,
-        contactEmail: contact.contactEmail,
-        contactPhone: contact.contactPhoneNumber,
-      },
-      /** Preserve the boolean amenity keys the current API expects. */
-      ...(amenityBooleans as unknown as Record<string, unknown>),
-      /** Preserve the flat location/contact fields the current API expects. */
-      ...( {
-        contactLocation: contact.contactLocation,
-        neighborhood: location.neighborhood,
-        fullAddress: location.fullAddress,
-        mapLink: location.mapLink,
-      } as unknown as Record<string, unknown>),
-      /** Preserve media arrays used elsewhere in the app/API today. */
-      ...( {
-        images: uploadedMedia.images,
-        videoTourUrl: uploadedMedia.videoTourUrl,
-      } as unknown as Record<string, unknown>),
-      /** Preserve flat pricing fields used elsewhere in the app/API today. */
-      ...( {
-        price: pricing.price,
-        areaSize: pricing.areaSize,
-        areaUnit: pricing.areaUnit,
-        numBedrooms: pricing.numBedrooms,
-        numBathrooms: pricing.numBathrooms,
-        numParkingSpaces: pricing.numParkingSpaces,
-        numFloors: pricing.numFloors,
-      } as unknown as Record<string, unknown>),
-    } as AddListingModel;
+    return buildListingPayload(forms, uploadedMedia, amenityBooleans, this.isFeatured());
   }
   scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });

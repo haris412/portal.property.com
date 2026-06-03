@@ -13,7 +13,7 @@
   width: 100%;
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: var(--secondary);
+  background: var(--surface-muted);
 }
 
 .map-toolbar {
@@ -27,11 +27,14 @@
 .map-toolbar__btn {
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(4px);
+  border-color: var(--border-soft);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .map-toolbar__icon {
   margin-right: 4px;
-  font-size: 18px;
+  font-size: var(--font-size-h5);
   width: 18px;
   height: 18px;
   vertical-align: middle;
@@ -39,7 +42,7 @@
 
 .map-error {
   margin: 8px 0 0;
-  font-size: 0.875rem;
+  font-size: var(--font-size-body-sm);
   color: var(--mat-sys-error, var(--error-strong));
 }
 

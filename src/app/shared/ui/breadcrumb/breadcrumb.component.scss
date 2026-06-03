@@ -16,7 +16,7 @@
     align-items: center;
     gap: 0.25rem;
     min-width: 0;
-    font-size: 0.875rem;
+    font-size: var(--font-size-body-sm);
 
     &--active {
       font-weight: 600;
@@ -51,7 +51,7 @@
     }
 
     &__item {
-      font-size: 0.8125rem;
+      font-size: var(--font-size-caption);
     }
   }
 }

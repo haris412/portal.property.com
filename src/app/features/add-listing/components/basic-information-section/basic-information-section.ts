@@ -63,7 +63,7 @@ export class BasicInformationSectionComponent implements OnInit {
   readonly catalogError = signal(false);
 
   readonly titleActions = signal<readonly ActionChipData[]>([
-    { id: 'generate-title', label: 'Ask AI to generate title' },
+    { id: 'generate-title', label: 'AI can help generate title' },
     { id: 'title-loading', label: 'Generating and populating field', muted: true, disabled: true },
   ]);
 

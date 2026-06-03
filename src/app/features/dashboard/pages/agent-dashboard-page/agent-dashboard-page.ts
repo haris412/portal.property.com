@@ -14,7 +14,6 @@ import { catchError, finalize, switchMap, take } from 'rxjs/operators';
 
 import { PageShellComponent } from '../../../../shared/ui/page-shell/page-shell';
 
-import { DashboardTopbarComponent } from '../../components/dashboard-topbar/dashboard-topbar';
 import { DashboardHeroCardComponent } from '../../components/dashboard-hero-card/dashboard-hero-card';
 import { PortfolioBreakdownCardComponent } from '../../components/portfolio-breakdown-card/portfolio-breakdown-card';
 import { PlanSummaryCardComponent } from '../../components/plan-summary-card/plan-summary-card';
@@ -34,21 +33,18 @@ import {
   PORTFOLIO_METRICS,
   PORTFOLIO_SUMMARY
 } from '../../dashboard.mock';
-import { PageHeaderComponent } from "../../../../shared/ui/page-header/page-header";
 
 @Component({
   selector: 'app-agent-dashboard-page',
   standalone: true,
   imports: [
     PageShellComponent,
-    DashboardTopbarComponent,
     DashboardHeroCardComponent,
     PortfolioBreakdownCardComponent,
     PlanSummaryCardComponent,
     ChartPanelComponent,
     LocationsDemandCardComponent,
-    AppointmentsTableCardComponent,
-    PageHeaderComponent
+    AppointmentsTableCardComponent
   ],
   templateUrl: './agent-dashboard-page.html',
   styleUrl: './agent-dashboard-page.scss',
@@ -107,11 +103,10 @@ export class AgentDashboardPageComponent {
   private readonly css = getComputedStyle(document.documentElement);
 
   private readonly primary = this.css.getPropertyValue('--primary').trim();
-  private readonly secondary = this.css.getPropertyValue('--secondary').trim();
   private readonly surface = this.css.getPropertyValue('--surface').trim();
   private readonly fontMain = this.css.getPropertyValue('--font-main').trim();
+  private readonly fontSecondary = this.css.getPropertyValue('--font-secondary').trim();
   private readonly borderSoft = this.css.getPropertyValue('--border-soft').trim();
-  private readonly tertiary = this.css.getPropertyValue('--tertiary').trim();
 
   readonly viewsChartOptions = computed<EChartsOption>(() => ({
     tooltip: {
@@ -119,9 +114,10 @@ export class AgentDashboardPageComponent {
       axisPointer: { type: 'shadow' },
       backgroundColor: this.primary,
       borderWidth: 0,
+      padding: [8, 10],
       textStyle: { color: this.surface }
     },
-    grid: { left: 0, right: 0, top: 12, bottom: 0, containLabel: true },
+    grid: { left: 4, right: 8, top: 12, bottom: 0, containLabel: true },
     xAxis: {
       type: 'category',
       data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -134,24 +130,24 @@ export class AgentDashboardPageComponent {
       show: true,
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: this.fontMain },
+      axisLabel: { color: this.fontSecondary, fontSize: 11 },
       splitLine: {
         show: true,
-        lineStyle: { color: this.borderSoft }
+        lineStyle: { color: this.borderSoft, type: 'dashed' }
       }
     },
     series: [
       {
         type: 'bar',
-        barWidth: '56%',
+        barWidth: '42%',
         data: [120, 198, 154, 245, 212, 176, 165],
         itemStyle: {
-          color: this.secondary,
-          borderRadius: [10, 10, 0, 0]
+          color: this.primary,
+          borderRadius: [6, 6, 0, 0]
         },
         emphasis: {
           itemStyle: {
-            color: this.secondary
+            color: this.primary
           }
         }
       }

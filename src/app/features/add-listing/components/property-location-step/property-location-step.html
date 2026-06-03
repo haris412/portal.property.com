@@ -1,103 +1,109 @@
-<app-step-card [step]="1" [title]="'addListing.location.title' | translate">
-  <div class="d-grid gap-1" [formGroup]="form">
+<app-section-card [title]="'addListing.location.title' | translate"
+                  description="Set the location, full address, and exact map pin for the listing."
+                  icon="location_on"
+                  variant="dashboard">
+  <div class="location-step" [formGroup]="form">
     <app-info-banner icon="info" [text]="locationBanner()" />
 
-    <div>
-      <label class="field-label">{{ 'addListing.location.city.label' | translate }}</label>
-      <mat-form-field appearance="outline" class="w-100">
-        <input matInput formControlName="city"
-          [placeholder]="'addListing.location.city.placeholder' | translate"
-          [matAutocomplete]="cityAuto" (blur)="markLocationControlTouched('city')" />
-        @if (citiesLoading()) {
-          <mat-hint>{{ 'addListing.location.city.loading' | translate }}</mat-hint>
-        } @else if (citiesError(); as err) {
-          <mat-hint>{{ err }}</mat-hint>
-        }
-        <mat-autocomplete #cityAuto="matAutocomplete" autoActiveFirstOption
-          [displayWith]="displayCityPlace" (optionSelected)="onCitySelected($event)">
-          @for (place of filteredPlaces(); track place.geonameId) {
-            <mat-option [value]="place">
-              {{ place.name }}
-              @if (place.adminName1) {
-                <span class="city-option__region"> — {{ place.adminName1 }}</span>
+    <div class="location-step__grid">
+      <div class="location-step__fields">
+
+        <!-- Location search -->
+        <div>
+          <label class="field-label">{{ 'addListing.location.search.label' | translate }}</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput
+                   formControlName="locationQuery"
+                   [placeholder]="'addListing.location.search.placeholder' | translate"
+                   [matAutocomplete]="locationAuto"
+                   (blur)="markLocationControlTouched('locationQuery')" />
+            @if (searchLoading()) {
+              <mat-hint>{{ 'addListing.location.search.loading' | translate }}</mat-hint>
+            } @else if (searchError(); as err) {
+              <mat-hint>{{ err }}</mat-hint>
+            }
+            <mat-autocomplete #locationAuto="matAutocomplete"
+                              autoActiveFirstOption
+                              [displayWith]="displaySuggestion"
+                              (optionSelected)="onPlaceSelected($event)">
+              @for (suggestion of suggestions(); track suggestion.placeId) {
+                <mat-option [value]="suggestion">
+                  <span class="location-option__main">{{ suggestion.mainText }}</span>
+                  @if (suggestion.secondaryText) {
+                    <span class="location-option__secondary"> — {{ suggestion.secondaryText }}</span>
+                  }
+                </mat-option>
               }
-            </mat-option>
-          }
-        </mat-autocomplete>
-        <mat-error>
-          @if (form.get('city')?.hasError('server')) {
-            {{ form.get('city')?.getError('server') }}
-          } @else {
-            {{ 'addListing.location.city.required' | translate }}
-          }
-        </mat-error>
-      </mat-form-field>
-    </div>
+            </mat-autocomplete>
+          </mat-form-field>
 
-    <div>
-      <label class="field-label">{{ 'addListing.location.neighborhood.label' | translate }}</label>
-      <mat-form-field appearance="outline" class="w-100">
-        <input matInput formControlName="neighborhood"
-          [placeholder]="'addListing.location.neighborhood.placeholder' | translate"
-          [matAutocomplete]="neighborhoodAuto" (blur)="markLocationControlTouched('neighborhood')" />
-        @if (neighborhoodsLoading()) {
-          <mat-hint>{{ 'addListing.location.neighborhood.loading' | translate }}</mat-hint>
-        } @else if (neighborhoodsError(); as nErr) {
-          <mat-hint>{{ nErr }}</mat-hint>
-        }
-        <mat-autocomplete #neighborhoodAuto="matAutocomplete" autoActiveFirstOption
-          [displayWith]="displayNeighborhood" (optionSelected)="onNeighborhoodSelected($event)">
-          @for (item of filteredNeighborhoods(); track pickTrackKey(item)) {
-            <mat-option [value]="item">
-              {{ item.name }}
-              <span class="location-pick__kind"> — {{ pickKindLabel(item.kind) }}</span>
-            </mat-option>
+          <!-- Hierarchy breadcrumb shown after a place is selected -->
+          @if (selectedHierarchy().length) {
+            <div class="location-step__breadcrumb">
+              @for (item of selectedHierarchy(); track item.level; let last = $last) {
+                <span class="location-step__breadcrumb-item"
+                      [class.location-step__breadcrumb-item--leaf]="last">
+                  {{ item.name }}
+                </span>
+                @if (!last) {
+                  <span class="location-step__breadcrumb-sep">›</span>
+                }
+              }
+            </div>
           }
-        </mat-autocomplete>
-        <mat-error>
-          @if (form.get('neighborhood')?.hasError('server')) {
-            {{ form.get('neighborhood')?.getError('server') }}
-          } @else {
-            {{ 'addListing.location.neighborhood.required' | translate }}
-          }
-        </mat-error>
-      </mat-form-field>
-    </div>
 
-    <div>
-      <label class="field-label">{{ 'addListing.location.address.label' | translate }}</label>
-      <mat-form-field appearance="outline" class="w-100">
-        <input matInput formControlName="fullAddress"
-          [placeholder]="'addListing.location.address.placeholder' | translate"
-          (blur)="markLocationControlTouched('fullAddress')" />
-        <mat-error>
-          @if (form.get('fullAddress')?.hasError('server')) {
-            {{ form.get('fullAddress')?.getError('server') }}
-          } @else {
-            {{ 'addListing.location.address.required' | translate }}
+          <!-- Hierarchy validation error shown outside mat-form-field -->
+          @if (form.get('locationHierarchy')?.invalid && form.get('locationHierarchy')?.touched) {
+            <p class="location-step__field-error">
+              {{ 'addListing.location.search.required' | translate }}
+            </p>
           }
-        </mat-error>
-      </mat-form-field>
-    </div>
+        </div>
 
-    <div>
-      <label class="field-label">{{ 'addListing.location.mapLink.label' | translate }}</label>
-      <mat-form-field appearance="outline" class="w-100">
-        <input matInput formControlName="mapLink"
-          [placeholder]="'addListing.location.mapLink.placeholder' | translate" />
-        <mat-error>
-          @if (form.get('mapLink')?.hasError('server')) {
-            {{ form.get('mapLink')?.getError('server') }}
-          }
-        </mat-error>
-      </mat-form-field>
-    </div>
+        <!-- Full address -->
+        <div class="location-step__wide-field">
+          <label class="field-label">{{ 'addListing.location.address.label' | translate }}</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput
+                   formControlName="fullAddress"
+                   [placeholder]="'addListing.location.address.placeholder' | translate"
+                   (blur)="markLocationControlTouched('fullAddress')" />
+            <mat-error>
+              @if (form.get('fullAddress')?.hasError('server')) {
+                {{ form.get('fullAddress')?.getError('server') }}
+              } @else {
+                {{ 'addListing.location.address.required' | translate }}
+              }
+            </mat-error>
+          </mat-form-field>
+        </div>
 
-    <div class="location-preview">
-      <h3 class="location-preview__title">{{ 'addListing.location.preview' | translate }}</h3>
-      <div class="location-preview__map">
-        <app-location-map-picker [form]="form" />
+        <!-- Map link -->
+        <div class="location-step__wide-field">
+          <label class="field-label">{{ 'addListing.location.mapLink.label' | translate }}</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput
+                   formControlName="mapLink"
+                   [placeholder]="'addListing.location.mapLink.placeholder' | translate" />
+            <mat-error>
+              @if (form.get('mapLink')?.hasError('server')) {
+                {{ form.get('mapLink')?.getError('server') }}
+              }
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+      </div>
+
+      <div class="location-preview">
+        <div class="location-preview__header">
+          <h4 class="location-preview__title">{{ 'addListing.location.preview' | translate }}</h4>
+          <p>Click the map or use your current location to refine the property pin.</p>
+        </div>
+        <div class="location-preview__map">
+          <app-location-map-picker [form]="form" />
+        </div>
       </div>
     </div>
   </div>
-</app-step-card>
+</app-section-card>

@@ -1,10 +1,9 @@
-
-<div
+<button
   type="button"
   class="social-btn w-100"
   (click)="onClick()"
   [attr.aria-label]="label()"
 >
-  <img [src]="'icons/' + icon() + '.svg'" alt="{{ icon() }}" class="social-icon" />
+  <img [src]="'icons/' + icon() + '.svg'" alt="" class="social-icon" />
   <span>{{ label() }}</span>
-</div>
+</button>

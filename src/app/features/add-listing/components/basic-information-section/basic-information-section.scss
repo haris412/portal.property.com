@@ -1,13 +1,14 @@
 .field-label {
   display: inline-block;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
   color: var(--font-main);
+  font-size: var(--font-size-body-sm);
   font-weight: 600;
 }
 
 .field-validation-msg {
   margin-top: 0.35rem;
-  font-size: 0.75rem;
+  font-size: var(--font-size-overline);
   color: var(--mat-form-field-error-text-color, var(--error-strong));
 }
 
@@ -16,6 +17,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
   flex-wrap: wrap;
+}
+
+.basic-information-form {
+  align-items: start;
 }

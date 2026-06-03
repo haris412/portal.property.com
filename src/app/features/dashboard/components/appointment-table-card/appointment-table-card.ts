@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import {
   AppointmentsListComponent
@@ -9,7 +10,7 @@ import { AppointmentListItem } from '../../../../core/models/appointment.models'
 @Component({
   selector: 'app-appointments-table-card',
   standalone: true,
-  imports: [SectionCardComponent, AppointmentsListComponent],
+  imports: [SectionCardComponent, AppointmentsListComponent, MatIconModule],
   templateUrl: './appointment-table-card.html',
   styleUrl: './appointment-table-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

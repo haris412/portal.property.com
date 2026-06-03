@@ -4,6 +4,8 @@ import {
   computed,
   DestroyRef,
   inject,
+  input,
+  Input,
   OnInit,
   signal
 } from '@angular/core';
@@ -23,6 +25,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import countryList from 'country-state-city/lib/assets/country.json';
 import type { ICountry } from 'country-state-city';
 
@@ -45,7 +48,16 @@ import {
   rolesToUserTypeOptions,
   type UserTypeOption
 } from '../../../../core/models/auth.models';
-import { AuthService, RegisterPayload } from '../../../../core/services/auth.service';
+
+export interface SignupPrefill {
+  email?: string;
+  /** Full name or first name from URL — component splits on first space. */
+  firstName?: string;
+  /** Raw international phone e.g. "+923001234567" — component parses country + local. */
+  rawPhone?: string;
+  roleName?: string;
+}
+import { AuthService, RegisterPayload, agencyNameAvailableValidator } from '../../../../core/services/auth.service';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -60,6 +72,7 @@ interface SignupFormValue {
   phone: string;
   locationCountryCode: string | ICountry | null;
   userType: string;
+  agencyName: string;
   password: string;
   agree: boolean;
 }
@@ -72,6 +85,7 @@ interface SignupFormControls {
   phone: FormControl<string>;
   locationCountryCode: FormControl<string | ICountry | null>;
   userType: FormControl<string>;
+  agencyName: FormControl<string>;
   password: FormControl<string>;
   agree: FormControl<boolean>;
 }
@@ -88,6 +102,7 @@ interface SignupFormControls {
     MatButtonModule,
     MatIconModule,
     MatCheckboxModule,
+    MatProgressSpinnerModule,
     SocialButtonComponent,
     FormFieldErrorComponent
   ],
@@ -96,6 +111,9 @@ interface SignupFormControls {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SignupCardComponent implements OnInit {
+  @Input() prefill: SignupPrefill | null = null;
+
+  readonly showIntro = input(true);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -107,6 +125,8 @@ export class SignupCardComponent implements OnInit {
   readonly successMessage = signal<string | null>(null);
   readonly loading = signal(false);
   readonly rolesLoading = signal(true);
+  readonly showAgencyName = signal(false);
+  readonly lockUserType = signal(false);
   private readonly formValid = signal(false);
 
   // —— Options & data (user types from API) ——
@@ -115,6 +135,7 @@ export class SignupCardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUserTypeOptions();
+    if (this.prefill) this.applyPrefill(this.prefill);
   }
 
   /** Fetch roles from backend and populate user type options; fallback to defaults on error. */
@@ -208,6 +229,51 @@ export class SignupCardComponent implements OnInit {
     this.locationCountrySearchTerm.set(term);
   }
 
+  // —— Prefill (inquiry link) ——
+
+  private applyPrefill(prefill: SignupPrefill): void {
+    if (prefill.email) {
+      this.form.controls.email.setValue(prefill.email);
+    }
+
+    if (prefill.firstName) {
+      const parts = prefill.firstName.trim().split(/\s+/);
+      this.form.controls.firstName.setValue(parts[0] ?? '');
+      if (parts.length > 1) {
+        this.form.controls.lastName.setValue(parts.slice(1).join(' '));
+      }
+    }
+
+    if (prefill.rawPhone) {
+      const { isoCode, local } = this.parsePhone(prefill.rawPhone);
+      this.form.controls.phoneCountryCode.setValue(isoCode);
+      this.form.controls.phone.setValue(local);
+    }
+
+    if (prefill.roleName) {
+      this.form.controls.userType.setValue(prefill.roleName);
+      this.lockUserType.set(true);
+    }
+  }
+
+  private parsePhone(raw: string): { isoCode: string; local: string } {
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return { isoCode: DEFAULT_PHONE_COUNTRY_CODE, local: '' };
+
+    const candidates = this.countries
+      .map(c => ({ isoCode: c.isoCode, code: c.phonecode.replace(/\D/g, '') }))
+      .filter(c => !!c.code)
+      .sort((a, b) => b.code.length - a.code.length);
+
+    for (const entry of candidates) {
+      if (digits.startsWith(entry.code)) {
+        return { isoCode: entry.isoCode, local: digits.slice(entry.code.length) };
+      }
+    }
+
+    return { isoCode: DEFAULT_PHONE_COUNTRY_CODE, local: digits };
+  }
+
   // —— Build form and wire validity, search terms, and phone validation ——
   private buildForm(): FormGroup<SignupFormControls> {
     const form = this.createFormGroup();
@@ -244,9 +310,10 @@ export class SignupCardComponent implements OnInit {
         Validators.required,
         validLocationCountryValidator(this.countries)
       ]),
-      userType: this.fb.nonNullable.control('Buyer', [
+      userType: this.fb.nonNullable.control('Seller', [
         Validators.required
       ]),
+      agencyName: this.fb.nonNullable.control('', { updateOn: 'blur' }),
       password: this.fb.nonNullable.control('', [Validators.required]),
       agree: this.fb.nonNullable.control(false, [Validators.requiredTrue])
     });
@@ -276,6 +343,23 @@ export class SignupCardComponent implements OnInit {
     form.controls.phoneCountryCode.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => form.controls.phone.updateValueAndValidity());
+
+    form.controls.userType.valueChanges
+      .pipe(startWith(form.controls.userType.value), takeUntilDestroyed(this.destroyRef))
+      .subscribe((type) => {
+        const isAgent = type === 'Agent';
+        this.showAgencyName.set(isAgent);
+        const ctrl = form.controls.agencyName;
+        if (isAgent) {
+          ctrl.setValidators([Validators.required, Validators.minLength(2)]);
+          ctrl.setAsyncValidators([agencyNameAvailableValidator(this.auth)]);
+        } else {
+          ctrl.clearValidators();
+          ctrl.clearAsyncValidators();
+          ctrl.reset('');
+        }
+        ctrl.updateValueAndValidity({ emitEvent: false });
+      });
   }
 
   // —— Map form value to API payload (role sent as-is to backend) ——
@@ -292,6 +376,9 @@ export class SignupCardComponent implements OnInit {
       phoneNumber
     };
     if (location) payload.location = location;
+    if (value.userType === 'Agent' && value.agencyName?.trim()) {
+      payload.agencyName = value.agencyName.trim();
+    }
     return payload;
   }
 

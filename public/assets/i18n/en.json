@@ -88,6 +88,10 @@
       "phoneCode":    "Code",
       "location":     "Location",
       "userType":     "User type",
+      "agencyName":          "Agency name",
+      "agencyNameChecking":  "Checking availability…",
+      "agencyNameAvailable": "Available",
+      "agencyNameTaken":     "This agency name is already taken.",
       "loadingOptions": "Loading options…",
       "password":     "Password",
       "agreePrefix":  "I agree to the",
@@ -207,8 +211,8 @@
       "location": "Location",
       "contact": "Contact",
       "contacts": "Contacts",
-      "status": "{{base.status}}",
-      "createdAt": "{{base.createdAt}}"
+      "status": "Status",
+      "createdAt": "Created"
     },
     "form": {
       "name": "Agency name",
@@ -301,11 +305,11 @@
     "tc": {
       "user": "User",
       "phone": "Phone",
-      "agency": "{{base.agency}}",
-      "role": "{{base.role}}",
-      "status": "{{base.status}}",
+      "agency": "Agency",
+      "role": "Role",
+      "status": "Status",
       "email": "Email",
-      "createdAt": "{{base.createdAt}}"
+      "createdAt": "Created"
     },
     "statuses": {
       "0": "Inactive",
@@ -432,18 +436,18 @@
     },
     "location": {
       "title": "Property Location",
-      "city":         { "label": "City / Location",          "placeholder": "Search or select city",                         "loading": "Loading cities...",                    "required": "City is required" },
-      "neighborhood": { "label": "Area / Neighborhood",       "placeholder": "Search or select area",                         "loading": "Loading areas around this city...",    "required": "Neighborhood is required" },
+      "search":       { "label": "Search Location",           "placeholder": "Type a city, area or neighbourhood…",           "loading": "Searching…",    "required": "Please select a location from the suggestions" },
       "address":      { "label": "Full Property Address",     "placeholder": "Enter complete address",                        "required": "Full property address is required" },
       "mapLink":      { "label": "Pin Location / Map Link",   "placeholder": "Paste Google Maps pin or coordinates" },
       "preview": "Location Preview",
-      "banner": "Start broad with city and neighborhood, then add the full address and map reference for more accurate discovery."
+      "banner": "Search for a city, district or neighbourhood, then refine the pin on the map and enter the full street address."
     },
     "media": {
       "title": "Property Media",
       "description": "Upload high-quality visuals to improve visibility and conversions.",
       "selectedImages": "Selected {{count}} image(s)",
-      "selectedVideo": "Selected: {{name}}"
+      "selectedVideo": "Selected: {{name}}",
+      "minPhotos": "At least 3 photos are required."
     }
   },
   "properties": {
@@ -462,12 +466,12 @@
       "area": "Area",
       "purpose": "Purpose",
       "price": "Price",
-      "status": "{{base.status}}",
+      "status": "Status",
       "listedBy": "Listed by"
     },
     "actions": {
       "addListing": "Add Listing",
-      "edit": "{{base.edit}}"
+      "edit": "Edit"
     },
     "messages": {
       "loadError": "Could not load properties."
@@ -490,8 +494,8 @@
   "pagination": {
     "page": "Page {{current}} of {{total}}",
     "total": "{{count}} total",
-    "previous": "{{base.previous}}",
-    "next": "{{base.next}}"
+    "previous": "Previous",
+    "next": "Next"
   },
   "profile": {
     "defaultTitle": "Profile Settings",

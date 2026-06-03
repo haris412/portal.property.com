@@ -1,45 +1,48 @@
 .auth-card {
   min-height: 100%;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .card-inner {
-  padding: 20px;
+  padding: 0;
   height: 100%;
-  overflow-y: auto;
 }
 
 .auth-card-title {
-  margin: 0 0 8px;
-  font-size: 2rem;
-  line-height: 1.1;
-  font-weight: 800;
+  margin: 0 0 0.625rem;
   color: var(--font-main);
+  font-size: var(--font-size-h2);
+  font-weight: 800;
+  line-height: 1.08;
 }
 
 .auth-card-copy {
-  margin: 0 0 18px;
-  font-size: 0.95rem;
-  line-height: 1.55;
+  margin: 0 0 1.25rem;
+  font-size: var(--font-size-body-sm);
+  line-height: 1.6;
 }
 
 .form-label-auth {
   display: inline-block;
-  margin-bottom: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
+  margin-bottom: 0.5rem;
   color: var(--font-main);
+  font-size: var(--font-size-body-sm);
+  font-weight: 700;
 }
 
-@media (max-width: 575.98px) {
-  .card-inner {
-    padding: 18px;
-  }
-
-  .auth-card-title {
-    font-size: 1.65rem;
-  }
+.auth-link {
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
 }
 
 .mat-icon {
   color: var(--font-secondary);
+}
+
+@media (max-width: 575.98px) {
+  .auth-card-title {
+    font-size: var(--font-size-h3);
+  }
 }

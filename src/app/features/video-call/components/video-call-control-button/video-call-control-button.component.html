@@ -1,0 +1,17 @@
+<button
+  type="button"
+  class="video-call-control"
+  [class.video-call-control--active]="active"
+  [class.video-call-control--danger]="variant === 'danger'"
+  [class.video-call-control--primary]="variant === 'primary'"
+  (click)="controlClick.emit()"
+  [attr.aria-pressed]="pressed"
+  [attr.aria-expanded]="expanded"
+  [attr.aria-controls]="ariaControls"
+  [attr.aria-label]="ariaLabel || label"
+>
+  <span class="video-call-control__icon">
+    <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">{{ icon }}</mat-icon>
+  </span>
+  <span class="video-call-control__label">{{ label }}</span>
+</button>

@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { AuthPortalPageComponent } from './features/auth/pages/auth-portal-page/auth-portal-page.component';
 import { VerifyEmailComponent } from './features/auth/components/verify-email/verify-email.component';
-import { authGuard } from './core/guards/auth.guard';
+import { dashboardGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -46,6 +46,7 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
+        canActivate: [dashboardGuard],
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
         title: 'Dashboard',

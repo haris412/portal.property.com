@@ -1,44 +1,92 @@
 <app-section-card
   [title]="'addListing.media.title' | translate"
   [description]="'addListing.media.description' | translate"
+  icon="perm_media"
+  variant="dashboard"
 >
-  <div class="row g-4">
-    @for (block of mediaBlocks(); track block.id) {
-      <div class="col-12 col-md-6">
-        <label class="field-label">{{ block.label }}</label>
+  <div class="property-media">
 
-        <app-upload-dropzone
-          [icon]="block.icon"
-          [title]="block.title"
-          [subtitle]="block.subtitle"
-          [accept]="block.accept ?? ''"
-          [multiple]="block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS"
-          (filesSelected)="onFilesSelected(block.id, $event)"
-        />
+    <!-- Photos -->
+    <div class="property-media__block">
+      <label class="field-label">Photos</label>
 
-        @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.PHOTOS && selectedImagePreviews().length) {
-          <p class="selection-meta">
-            {{ 'addListing.media.selectedImages' | translate: { count: selectedImagePreviews().length } }}
-          </p>
-          <div class="preview-grid">
-            @for (image of selectedImagePreviews(); track image.url; let i = $index) {
-              <div class="preview-card">
-                <span class="preview-card__index">{{ i + 1 }}</span>
-                <button type="button" class="preview-card__remove" (click)="removeSelectedImage(i)" aria-label="Remove selected image">
-                  <mat-icon fontIcon="close" aria-hidden="true"></mat-icon>
-                </button>
-                <img [src]="image.url" [alt]="image.name" class="preview-card__image" />
-                <p class="preview-card__name">{{ image.name }}</p>
-              </div>
-            }
-          </div>
-        }
-        @if (block.id.toLowerCase() === PROPERTY_MEDIA_BLOCK_IDS.VIDEO && selectedVideoName()) {
-          <p class="selection-meta">
-            {{ 'addListing.media.selectedVideo' | translate: { name: selectedVideoName() } }}
-          </p>
-        }
-      </div>
-    }
+      <app-upload-dropzone
+        icon="image"
+        title="Click to upload or drag & drop"
+        subtitle="SVG, PNG, JPG (max. 10MB)"
+        accept=".svg,.png,.jpg,.jpeg"
+        [multiple]="true"
+        (filesSelected)="onPhotosSelected($event)"
+      />
+
+      @if (form.hasError('mediaRequired') && form.touched) {
+        <p class="field-error">{{ 'addListing.media.minPhotos' | translate }}</p>
+      }
+
+      @if (existingImages.length || newImagePreviews().length) {
+        <p class="selection-meta">
+          {{ 'addListing.media.selectedImages' | translate: { count: existingImages.length + newImagePreviews().length } }}
+        </p>
+
+        <div class="preview-grid">
+          @for (image of existingImages; track image.url; let i = $index) {
+            <div class="preview-card">
+              <span class="preview-card__index">{{ i + 1 }}</span>
+              <button type="button"
+                      class="preview-card__remove"
+                      [disabled]="deletingImageUrls().has(image.url)"
+                      (click)="removeExistingImage(i)"
+                      aria-label="Remove image">
+                <mat-icon fontIcon="close" aria-hidden="true" />
+              </button>
+              <img [src]="image.url" alt="Property image {{ i + 1 }}" class="preview-card__image" />
+              <p class="preview-card__name">Image {{ i + 1 }}</p>
+            </div>
+          }
+
+          @for (preview of newImagePreviews(); track preview.url; let i = $index) {
+            <div class="preview-card">
+              <span class="preview-card__index">{{ existingImages.length + i + 1 }}</span>
+              <button type="button"
+                      class="preview-card__remove"
+                      (click)="removeNewImage(i)"
+                      aria-label="Remove selected image">
+                <mat-icon fontIcon="close" aria-hidden="true" />
+              </button>
+              <img [src]="preview.url" [alt]="preview.name" class="preview-card__image" />
+              <p class="preview-card__name">{{ preview.name }}</p>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Video Tour -->
+    <div class="property-media__block">
+      <label class="field-label">Video Tour</label>
+
+      <app-upload-dropzone
+        icon="videocam"
+        title="Click to upload or drag & drop"
+        subtitle="MP4, WebM or MOV (max. 100MB)"
+        accept=".mp4,.webm,.mov"
+        [multiple]="false"
+        (filesSelected)="onVideoSelected($event)"
+      />
+
+      @if (selectedVideoName()) {
+        <p class="selection-meta selection-meta--video">
+          <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">movie</mat-icon>
+          {{ 'addListing.media.selectedVideo' | translate: { name: selectedVideoName() } }}
+        </p>
+      } @else if (existingVideoUrl) {
+        <video class="property-media__video-preview"
+               [src]="existingVideoUrl"
+               controls
+               preload="metadata">
+        </video>
+      }
+    </div>
+
   </div>
 </app-section-card>

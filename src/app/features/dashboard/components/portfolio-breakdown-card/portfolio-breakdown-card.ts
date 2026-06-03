@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
-import { MetricTileComponent } from '../../../../shared/ui/metric-tile/metric-tile';
 import { PortfolioMetric } from '../../dashboard.mock';
 
 @Component({
   selector: 'app-portfolio-breakdown-card',
   standalone: true,
-  imports: [SectionCardComponent, MetricTileComponent],
+  imports: [SectionCardComponent, MatIconModule],
   templateUrl: './portfolio-breakdown-card.html',
   styleUrl: './portfolio-breakdown-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

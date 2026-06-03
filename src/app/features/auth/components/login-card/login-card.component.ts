@@ -1,9 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Input,
   computed,
   inject,
-  Input,
+  input,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,7 +16,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { FeatureCardComponent } from '../../../../shared/ui/feature-card/feature-card.component';
 import { SocialButtonComponent } from '../../../../shared/ui/social-button/social-button.component';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -36,7 +36,6 @@ interface LoginFeatureItem { icon: string; titleKey: string; descriptionKey: str
     MatCheckboxModule,
     MatIconModule,
     MatButtonModule,
-    FeatureCardComponent,
     SocialButtonComponent,
     FormFieldErrorComponent,
   ],
@@ -46,7 +45,8 @@ interface LoginFeatureItem { icon: string; titleKey: string; descriptionKey: str
 })
 export class LoginCardComponent {
   /** Pass true from admin portal — enables OTP flow via AdminAuthService */
-  @Input() isAdmin = false;
+  @Input() isAdmin    = false;
+  readonly showIntro = input(true);
 
   private readonly fb        = inject(FormBuilder);
   private readonly auth      = inject(AuthService);
@@ -117,6 +117,10 @@ export class LoginCardComponent {
     this.error.set(null);
   }
 
+  private postLoginRoute(roles: string[]): string {
+    return roles.includes('Buyer') ? '/appointments' : '/dashboard';
+  }
+
   // ── Agent login ────────────────────────────────────────────────────────────
 
   private agentLogin(): void {
@@ -127,7 +131,7 @@ export class LoginCardComponent {
     this.auth.login({ email: identifier.trim(), password })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next:  () => void this.router.navigate(['/dashboard']),
+        next:  ({ user }) => void this.router.navigate([this.postLoginRoute(user.roles)]),
         error: (err: unknown) => this.error.set((err as { message?: string } | null)?.message ?? 'Login failed. Please try again.'),
       });
   }

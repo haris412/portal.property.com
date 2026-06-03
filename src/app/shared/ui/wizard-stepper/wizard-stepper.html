@@ -1,0 +1,37 @@
+<nav class="wizard-stepper" [class]="classes()" [attr.aria-label]="ariaLabel()">
+  <ol class="wizard-stepper__list">
+    @for (step of steps(); track step.key; let index = $index) {
+      <li class="wizard-stepper__item">
+        <button
+          type="button"
+          class="wizard-stepper__button"
+          [class.wizard-stepper__button--active]="isActive(step)"
+          [class.wizard-stepper__button--completed]="isCompleted(step)"
+          [disabled]="isDisabled(step)"
+          [attr.aria-current]="isActive(step) ? 'step' : null"
+          [attr.aria-describedby]="step.description ? descriptionId(index) : null"
+          [attr.aria-label]="step.label + ', step ' + (index + 1) + ' of ' + totalSteps()"
+          (click)="selectStep(step)"
+        >
+          <span class="wizard-stepper__marker" aria-hidden="true">
+            @if (isCompleted(step)) {
+              <mat-icon fontSet="material-symbols-outlined" inline>check</mat-icon>
+            } @else {
+              {{ index + 1 }}
+            }
+          </span>
+
+          <span class="wizard-stepper__copy">
+            <span class="wizard-stepper__label">{{ step.label }}</span>
+
+            @if (step.description) {
+              <span class="wizard-stepper__description" [id]="descriptionId(index)">
+                {{ step.description }}
+              </span>
+            }
+          </span>
+        </button>
+      </li>
+    }
+  </ol>
+</nav>

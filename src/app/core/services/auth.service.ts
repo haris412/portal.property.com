@@ -13,6 +13,7 @@ import {
   tap,
   throwError,
 } from 'rxjs';
+import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 import { SubscriptionSessionStorageService } from './subscription-session-storage.service';
 
@@ -32,13 +33,13 @@ export interface User {
   phoneNumber?: string;
   profileImageUrl?: string;
   location?: string;
-  role?: string;
+  roles: string[];
   agencyName?: string;
   agencyId?: string;
 }
 interface StoredSession {
   _id: string;
-  role?: string;
+  roles: string[];
   firstName?: string;
   lastName?: string;
   agencyId?: string;
@@ -57,6 +58,7 @@ export interface RegisterPayload {
   roleName: string;
   phoneNumber: string;
   location?: string;
+  agencyName?: string;
 }
 
 interface AuthApiResponse {
@@ -77,11 +79,19 @@ interface VerifyPasswordResetOtpResponse extends SimpleApiResponse {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function extractRole(raw: Record<string, unknown>): string | undefined {
+/** Handles both new `roles: [{name}]` array and legacy `role: string | {name}` shapes. */
+function extractRoles(raw: Record<string, unknown>): string[] {
+  const arr = raw['roles'];
+  if (Array.isArray(arr) && arr.length > 0) {
+    return arr
+      .filter((r): r is Record<string, unknown> => typeof r === 'object' && r != null)
+      .map((r) => (r['name'] as string | undefined)?.trim() ?? '')
+      .filter(Boolean);
+  }
   const r = raw['role'];
-  return typeof r === 'object' && r != null && 'name' in r
-    ? (r as { name: string }).name
-    : (r as string | undefined);
+  if (typeof r === 'object' && r != null && 'name' in r) return [(r as { name: string }).name];
+  if (typeof r === 'string' && r.trim()) return [r.trim()];
+  return [];
 }
 
 export function fromApiUser(raw: Record<string, unknown>): User {
@@ -92,6 +102,7 @@ export function fromApiUser(raw: Record<string, unknown>): User {
     typeof agency === 'object' && agency != null && '_id' in agency
       ? String((agency as { _id?: unknown })._id ?? '').trim() || undefined
       : undefined;
+  const roles     = extractRoles(raw);
   return {
     _id:             ((raw['_id'] ?? raw['id']) as string) || '',
     email:           (raw['email'] as string | undefined) ?? '',
@@ -101,7 +112,7 @@ export function fromApiUser(raw: Record<string, unknown>): User {
     phoneNumber:     (raw['phoneNumber']     as string | undefined)?.trim() || undefined,
     profileImageUrl: (raw['profileImageUrl'] as string | undefined)        || undefined,
     location:        (raw['location']        as string | undefined)?.trim() || undefined,
-    role:            extractRole(raw),
+    roles,
     agencyName:      typeof agency === 'object' && agency != null && 'name' in agency
                        ? (agency as { name: string }).name || undefined
                        : undefined,
@@ -117,7 +128,7 @@ function toStoredSession(raw: Record<string, unknown>): StoredSession {
       : undefined;
   return {
     _id:       ((raw['_id'] ?? raw['id']) as string) || '',
-    role:      extractRole(raw),
+    roles:     extractRoles(raw),
     firstName: (raw['firstName'] as string | undefined)?.trim() || undefined,
     lastName:  (raw['lastName']  as string | undefined)?.trim() || undefined,
     agencyId,
@@ -163,6 +174,7 @@ export class AuthService {
   isLoggedIn():     boolean       { return !!this.accessToken; }
   getAccessToken(): string | null { return this.accessToken; }
   peekRefreshToken(): string | null { return this.storage?.getItem(REFRESH_KEY) ?? null; }
+  hasRole(role: string): boolean  { return this.getCurrentUser()?.roles?.includes(role) ?? false; }
 
   getRoles(): Observable<string[]> { return this.roles$; }
 
@@ -310,6 +322,20 @@ export class AuthService {
       );
   }
 
+  // ── Agency ────────────────────────────────────────────────────────────────
+
+  checkAgencyNameAvailable(name: string): Observable<boolean> {
+    return this.http
+      .get<{ success?: boolean; data?: { available?: boolean } }>(
+        `${environment.apiUrl}/api/auth/check-agency-name`,
+        { params: { name: name.trim() } },
+      )
+      .pipe(
+        map((res) => res.data?.available ?? true),
+        catchError(() => of(true)),
+      );
+  }
+
   // ── Profile ────────────────────────────────────────────────────────────────
 
   fetchUserProfile(id: string): Observable<void> {
@@ -350,7 +376,7 @@ export class AuthService {
       this.userSubject.next({
         _id:       s._id,
         email:     '',
-        role:      s.role,
+        roles:     s.roles ?? [],
         firstName: s.firstName,
         lastName:  s.lastName,
         name:      [s.firstName, s.lastName].filter(Boolean).join(' ') || undefined,
@@ -386,4 +412,19 @@ export class AuthService {
     const e = err as { error?: { message?: string; errors?: Array<{ msg?: string }> }; message?: string };
     return e.error?.message ?? e.error?.errors?.[0]?.msg ?? e.message ?? fallback;
   }
+}
+
+// ── Agency name availability validator ────────────────────────────────────────
+
+/** Fires on blur (control uses updateOn: 'blur') — one API call per focus-out. Fails open on network errors. */
+export function agencyNameAvailableValidator(authService: AuthService): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    const name = (control.value ?? '').toString().trim();
+    if (name.length < 2) return of(null);
+
+    return authService.checkAgencyNameAvailable(name).pipe(
+      map((available) => (available ? null : { agencyNameTaken: true })),
+      catchError(() => of(null)),
+    );
+  };
 }
