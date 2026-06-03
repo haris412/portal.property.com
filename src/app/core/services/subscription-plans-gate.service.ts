@@ -31,11 +31,12 @@ export class SubscriptionPlansGateService {
     }
 
     const user = this.auth.getCurrentUser();
-    if (!user?._id || !user.role?.trim()) {
+    const roleName = primarySubscriptionRole(user?.roles);
+    if (!user?._id || !roleName) {
       return;
     }
 
-    if (isAdminRole(user.role)) {
+    if (user.roles.some((r) => isAdminRole(r))) {
       this.ranThisSession = true;
       return;
     }
@@ -50,6 +51,8 @@ export class SubscriptionPlansGateService {
           const sub = extractSubscriptionFromResponse(body);
           if (sub) {
             this.subscriptionSession.write(sub);
+          } else if (!responseIndicatesExistingSubscription(body)) {
+            this.subscriptionSession.clear();
           }
         }),
         map((body) => responseIndicatesExistingSubscription(body)),
@@ -59,7 +62,7 @@ export class SubscriptionPlansGateService {
             return of(undefined);
           }
           const data: SubscriptionPlansDialogData = {
-            roleName: user.role!.trim(),
+            roleName,
           };
           return this.dialog
             .open(SubscriptionPlansDialogComponent, {
@@ -75,4 +78,11 @@ export class SubscriptionPlansGateService {
       )
       .subscribe();
   }
+}
+
+/** First non-admin role for subscription-config lookup; falls back to first role. */
+function primarySubscriptionRole(roles: string[] | undefined): string | undefined {
+  const list = (roles ?? []).map((r) => r.trim()).filter(Boolean);
+  const nonAdmin = list.find((r) => !isAdminRole(r));
+  return nonAdmin ?? list[0];
 }
