@@ -16,8 +16,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, merge } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { forkJoin, merge, of } from 'rxjs';
+import { finalize, switchMap, take } from 'rxjs/operators';
 import { PageHeaderComponent, PageHeaderAction } from '../../../../shared/ui/page-header/page-header';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import {
@@ -54,6 +54,7 @@ import type { PropertyFeature } from '../../../../core/models/property-features.
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ADD_LISTING_HEADER_ACTIONS } from '../../constants/add-listing.constants';
 import { MediaUploadService, ListingImagePayload } from '../../../../core/services/media-upload.service';
+import { GooglePlacesService } from '../../../../core/services/google-places.service';
 import { applyServerFieldErrors } from '../../../../core/http/apply-server-field-errors';
 import { apiErrorSummary, parseHttpApiError } from '../../../../core/http/parse-http-api-error';
 import {
@@ -125,6 +126,46 @@ function mediaRequirementValidator(control: AbstractControl): ValidationErrors |
   const images = (control.get('images')?.value as File[] | null) ?? [];
   const video = (control.get('videoFiles')?.value as File[] | null) ?? [];
   return images.length >= 3 || video.length > 0 ? null : { mediaRequired: true };
+}
+
+function coerceCoordinate(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+/** Extracts lat/lng from common Google Maps URL formats when stored on the listing. */
+function parseLatLngFromMapLink(mapLink: string): { lat: number; lng: number } | null {
+  const text = mapLink.trim();
+  if (!text) {
+    return null;
+  }
+
+  const patterns = [
+    /[?&]q=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i,
+    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /[?&]ll=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i,
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match) {
+      continue;
+    }
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      return { lat, lng };
+    }
+  }
+
+  return null;
 }
 
 @Component({
@@ -235,12 +276,17 @@ export class AddListingPageComponent {
     this.listingFormsTick();
 
     const media = this.mediaForm.value;
-    const hasMedia = (media.images ?? []).length >= 3 || Boolean((media.videoFiles ?? []).length);
+    const newImageCount = (media.images ?? []).length;
+    const existingImageCount = this.existingPropertyImages().length;
+    const hasMedia =
+      existingImageCount + newImageCount >= 3 ||
+      Boolean((media.videoFiles ?? []).length) ||
+      Boolean(this.loadedProperty()?.videoTourUrl);
 
     return [
       { label: 'Add basic information', complete: this.basicInfoForm.valid },
       { label: 'Add pricing and details', complete: this.pricingForm.valid },
-      { label: 'Set property location', complete: this.locationForm.valid },
+      { label: 'Set property location', complete: this.locationForm.valid && this.hasValidCoordinates() },
       { label: 'Add media', complete: hasMedia },
       { label: 'Add contact information', complete: this.contactForm.valid },
       { label: 'Write description', complete: this.descriptionForm.valid },
@@ -263,7 +309,7 @@ export class AddListingPageComponent {
     const readinessByStep: Record<AddListingStepKey, boolean> = {
       'basic-info': this.basicInfoForm.valid,
       pricing: this.pricingForm.valid,
-      location: this.locationForm.valid,
+      location: this.locationForm.valid && this.hasValidCoordinates(),
       'features-media': hasFeaturesOrMedia,
       'contact-description': this.contactForm.valid && this.descriptionForm.valid,
       'review-publish': this.canSubmitListing(),
@@ -452,6 +498,7 @@ export class AddListingPageComponent {
   private readonly addListingService = inject(AddListingService);
   private readonly notifications = inject(NotificationService);
   private readonly mediaUploadService = inject(MediaUploadService);
+  private readonly googlePlaces = inject(GooglePlacesService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -645,21 +692,9 @@ export class AddListingPageComponent {
       if (this.isSubmitting()) {
         return;
       }
-      if (
-        this.basicInfoForm.invalid ||
-        this.pricingForm.invalid ||
-        this.mediaForm.invalid ||
-        this.contactForm.invalid ||
-        this.descriptionForm.invalid ||
-        this.locationForm.invalid
-      ) {
-        this.basicInfoForm.markAllAsTouched();
-        this.pricingForm.markAllAsTouched();
-        this.mediaForm.markAllAsTouched();
-        this.contactForm.markAllAsTouched();
-        this.descriptionForm.markAllAsTouched();
-        this.locationForm.markAllAsTouched();
-        this.notifications.warning('Please fill all required fields before uploading and submitting.');
+      if (!this.allCreateFormsValid()) {
+        this.markAllListingFormsTouched();
+        this.notifyMissingRequiredFields();
         return;
       }
 
@@ -813,19 +848,9 @@ export class AddListingPageComponent {
       return;
     }
 
-    if (
-      this.basicInfoForm.invalid ||
-      this.pricingForm.invalid ||
-      this.contactForm.invalid ||
-      this.descriptionForm.invalid ||
-      this.locationForm.invalid
-    ) {
-      this.basicInfoForm.markAllAsTouched();
-      this.pricingForm.markAllAsTouched();
-      this.contactForm.markAllAsTouched();
-      this.descriptionForm.markAllAsTouched();
-      this.locationForm.markAllAsTouched();
-      this.notifications.warning('Please fill all required fields before saving changes.');
+    if (!this.allEditFormsValid()) {
+      this.markAllListingFormsTouched();
+      this.notifyMissingRequiredFields();
       return;
     }
 
@@ -905,34 +930,31 @@ export class AddListingPageComponent {
     const purposeRaw = (doc.purpose ?? '').toString().toLowerCase();
     const purpose = purposeRaw.includes('sale') ? 'sale' : 'rent';
 
-    // Patch in two steps so the BasicInformationSection subscription can populate available subtypes.
-    // 1) Set category with emitEvent=true (it clears subtype internally).
-    // 2) Re-apply subtype after that (emitEvent=false to avoid a second clear).
+    // Patch without emitEvent so BasicInformationSection does not clear subtype mid-load.
     this.basicInfoForm.patchValue(
       {
         purpose,
         listingTitle,
+        propertyCategoryName: categoryName,
+        propertySubtypeName: subtypeName,
       },
       { emitEvent: false }
     );
-    this.basicInfoForm.get('propertyCategoryName')?.setValue(categoryName, { emitEvent: true });
-    this.basicInfoForm.get('propertySubtypeName')?.setValue(subtypeName, { emitEvent: false });
-    this.basicInfoForm.get('propertySubtypeName')?.updateValueAndValidity({ emitEvent: false });
+    this.applySubtypeValidatorsFromCatalog(catalog, categoryName);
 
     this.descriptionForm.patchValue({ propertyDescription }, { emitEvent: false });
 
     this.pricingForm.patchValue(
       {
-        price: doc.price ?? null,
-        areaSize: doc.areaSize ?? null,
+        price: doc.price ?? 0,
+        areaSize: doc.areaSize ?? 0,
         areaUnit: doc.areaUnit ?? 'sqft',
         numBedrooms: doc.numBedrooms ?? 0,
         numBathrooms: doc.numBathrooms ?? 0,
         numParkingSpaces: doc.numParkingSpaces ?? 0,
         numFloors: doc.numFloors ?? 0,
       },
-      // Emit once so the OnPush pricing section repaints counters/fields.
-      { emitEvent: true }
+      { emitEvent: false }
     );
 
     this.contactForm.patchValue(
@@ -945,24 +967,28 @@ export class AddListingPageComponent {
       { emitEvent: false }
     );
 
-    const locationHierarchy = Array.isArray((doc as any).location)
-      ? (doc as any).location as LocationHierarchyItem[]
-      : [];
+    const locationHierarchy = this.buildLocationHierarchyFromProperty(doc);
     const locationQueryDisplay = locationHierarchy.length
       ? locationHierarchy[locationHierarchy.length - 1].name
-      : '';
+      : (doc.neighborhood ?? doc.city ?? '').toString().trim();
+    const { latitude, longitude, mapLink } = this.resolvePropertyCoordinates(doc);
 
     this.locationForm.patchValue(
       {
         locationQuery: locationQueryDisplay,
         locationHierarchy,
         fullAddress: doc.fullAddress ?? '',
-        mapLink: doc.mapLink ?? '',
-        latitude: doc.latitude ?? null,
-        longitude: doc.longitude ?? null,
+        mapLink,
+        latitude,
+        longitude,
       },
-      { emitEvent: false }
+      // Emit when coordinates exist so the map picker moves the pin on edit load.
+      { emitEvent: latitude != null && longitude != null }
     );
+
+    if (latitude == null || longitude == null) {
+      this.resolveMissingCoordinatesViaGeocode(locationQueryDisplay, doc.fullAddress ?? '');
+    }
 
     this.isFeatured.set((doc as any).isFeatured === true);
     this.existingPropertyImages.set((doc.images ?? []) as ListingImagePayload[]);
@@ -972,11 +998,221 @@ export class AddListingPageComponent {
     this.amenitiesForm.patchValue({ selectedFeatureIds }, { emitEvent: true });
 
     // Media: existing uploads are URLs; current media form expects Files, so we don't prefill file inputs.
+    this.refreshListingFormValidity();
     this.basicInfoForm.markAsUntouched();
     this.descriptionForm.markAsUntouched();
     this.pricingForm.markAsUntouched();
     this.contactForm.markAsUntouched();
     this.locationForm.markAsUntouched();
+  }
+
+  /** Restores location hierarchy when API only persisted city/neighborhood strings. */
+  private buildLocationHierarchyFromProperty(doc: PropertyDetailDocument): LocationHierarchyItem[] {
+    if (Array.isArray(doc.location) && doc.location.length > 0) {
+      return doc.location.map((item) => ({
+        id: item.id,
+        level: item.level,
+        name: item.name,
+      }));
+    }
+
+    const hierarchy: LocationHierarchyItem[] = [];
+    const city = (doc.city ?? '').toString().trim();
+    const neighborhood = (doc.neighborhood ?? '').toString().trim();
+    if (city) {
+      hierarchy.push({ level: 2, name: city });
+    }
+    if (neighborhood) {
+      hierarchy.push({ level: 4, name: neighborhood });
+    }
+    if (hierarchy.length === 0) {
+      const fallback = (doc.fullAddress ?? '').toString().trim();
+      if (fallback) {
+        hierarchy.push({ level: 4, name: fallback.length > 120 ? `${fallback.slice(0, 117)}...` : fallback });
+      }
+    }
+    return hierarchy;
+  }
+
+  private resolvePropertyCoordinates(doc: PropertyDetailDocument): {
+    latitude: number | null;
+    longitude: number | null;
+    mapLink: string;
+  } {
+    const mapLink = (doc.mapLink ?? '').toString().trim();
+    let latitude = coerceCoordinate(doc.latitude);
+    let longitude = coerceCoordinate(doc.longitude);
+
+    if (latitude != null && longitude != null) {
+      return {
+        latitude,
+        longitude,
+        mapLink: mapLink || `https://maps.google.com/?q=${latitude},${longitude}`,
+      };
+    }
+
+    const fromLink = parseLatLngFromMapLink(mapLink);
+    if (fromLink) {
+      return {
+        latitude: fromLink.lat,
+        longitude: fromLink.lng,
+        mapLink: mapLink || `https://maps.google.com/?q=${fromLink.lat},${fromLink.lng}`,
+      };
+    }
+
+    return { latitude, longitude, mapLink };
+  }
+
+  /** Fills lat/lng on edit when the API omitted coordinates but address text is available. */
+  private resolveMissingCoordinatesViaGeocode(locationQuery: string, fullAddress: string): void {
+    const searchText = (fullAddress || locationQuery).trim();
+    if (!searchText) {
+      return;
+    }
+
+    const sessionToken = crypto.randomUUID();
+    this.googlePlaces
+      .searchPlaces(searchText, sessionToken)
+      .pipe(
+        take(1),
+        switchMap((suggestions) => {
+          const first = suggestions[0];
+          if (!first?.placeId) {
+            return of(null);
+          }
+          return this.googlePlaces.getPlaceDetails(first.placeId, sessionToken);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((details) => {
+        if (!details) {
+          return;
+        }
+
+        const currentLat = coerceCoordinate(this.locationForm.get('latitude')?.value);
+        const currentLng = coerceCoordinate(this.locationForm.get('longitude')?.value);
+        if (currentLat != null && currentLng != null) {
+          return;
+        }
+
+        const mapLink =
+          (this.locationForm.get('mapLink')?.value as string | null)?.trim() ||
+          `https://maps.google.com/?q=${details.latitude},${details.longitude}`;
+
+        this.locationForm.patchValue(
+          {
+            latitude: details.latitude,
+            longitude: details.longitude,
+            mapLink,
+            fullAddress:
+              (this.locationForm.get('fullAddress')?.value as string | null)?.trim() ||
+              details.formattedAddress,
+          },
+          { emitEvent: true }
+        );
+        this.refreshListingFormValidity();
+      });
+  }
+
+  private hasValidCoordinates(): boolean {
+    const lat = coerceCoordinate(this.locationForm.get('latitude')?.value);
+    const lng = coerceCoordinate(this.locationForm.get('longitude')?.value);
+    return lat != null && lng != null;
+  }
+
+  private applySubtypeValidatorsFromCatalog(
+    catalog: PropertyCatalogData,
+    categoryName: string
+  ): void {
+    const subtypeCtrl = this.basicInfoForm.get('propertySubtypeName');
+    if (!subtypeCtrl) {
+      return;
+    }
+    const category = (catalog.categories ?? []).find((c) => c.name === categoryName);
+    const subtypes = category?.subtypes ?? [];
+    if (subtypes.length > 0) {
+      subtypeCtrl.setValidators(Validators.required);
+    } else {
+      subtypeCtrl.clearValidators();
+    }
+    subtypeCtrl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private refreshListingFormValidity(): void {
+    for (const form of [
+      this.basicInfoForm,
+      this.pricingForm,
+      this.locationForm,
+      this.contactForm,
+      this.descriptionForm,
+    ]) {
+      form.updateValueAndValidity({ emitEvent: true });
+    }
+    this.listingFormsTick.update((n) => n + 1);
+  }
+
+  private allCreateFormsValid(): boolean {
+    return (
+      this.basicInfoForm.valid &&
+      this.pricingForm.valid &&
+      this.mediaForm.valid &&
+      this.contactForm.valid &&
+      this.descriptionForm.valid &&
+      this.locationForm.valid &&
+      this.hasValidCoordinates()
+    );
+  }
+
+  private allEditFormsValid(): boolean {
+    return (
+      this.basicInfoForm.valid &&
+      this.pricingForm.valid &&
+      this.contactForm.valid &&
+      this.descriptionForm.valid &&
+      this.locationForm.valid &&
+      this.hasValidCoordinates()
+    );
+  }
+
+  private markAllListingFormsTouched(): void {
+    this.basicInfoForm.markAllAsTouched();
+    this.pricingForm.markAllAsTouched();
+    this.mediaForm.markAllAsTouched();
+    this.contactForm.markAllAsTouched();
+    this.descriptionForm.markAllAsTouched();
+    this.locationForm.markAllAsTouched();
+  }
+
+  private notifyMissingRequiredFields(): void {
+    const sections = this.collectInvalidFormSectionLabels();
+    const detail = sections.length ? ` Check: ${sections.join(', ')}.` : '';
+    const message = this.editingId()
+      ? `Please fill all required fields before saving changes.${detail}`
+      : `Please fill all required fields before uploading and submitting.${detail}`;
+    this.notifications.warning(message);
+  }
+
+  private collectInvalidFormSectionLabels(): string[] {
+    const invalid: string[] = [];
+    if (this.basicInfoForm.invalid) {
+      invalid.push('Basic information');
+    }
+    if (this.pricingForm.invalid) {
+      invalid.push('Pricing');
+    }
+    if (this.locationForm.invalid || !this.hasValidCoordinates()) {
+      invalid.push('Location (map pin)');
+    }
+    if (this.contactForm.invalid) {
+      invalid.push('Contact');
+    }
+    if (this.descriptionForm.invalid) {
+      invalid.push('Description');
+    }
+    if (!this.editingId() && this.mediaForm.invalid) {
+      invalid.push('Media');
+    }
+    return invalid;
   }
 
   private resolveCategoryNameFromCatalog(
@@ -996,9 +1232,10 @@ export class AddListingPageComponent {
 
     const coarse = (input.propertyType ?? '').trim().toLowerCase();
     if (coarse) {
-      const foundByType = (catalog.categories ?? []).find((c) =>
-        c.name.trim().toLowerCase().includes(coarse)
-      );
+      const categories = catalog.categories ?? [];
+      const exactType = categories.find((c) => c.name.trim().toLowerCase() === coarse);
+      if (exactType) return exactType.name;
+      const foundByType = categories.find((c) => c.name.trim().toLowerCase().includes(coarse));
       if (foundByType) return foundByType.name;
     }
 

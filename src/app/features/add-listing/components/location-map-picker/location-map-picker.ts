@@ -158,15 +158,23 @@ export class LocationMapPickerComponent implements AfterViewInit {
   }
 
   private readFormLatLng(): LatLng | null {
-    const lat = this.form.get('latitude')?.value;
-    const lng = this.form.get('longitude')?.value;
-    if (typeof lat !== 'number' || typeof lng !== 'number') {
-      return null;
-    }
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    const lat = this.coerceCoordinate(this.form.get('latitude')?.value);
+    const lng = this.coerceCoordinate(this.form.get('longitude')?.value);
+    if (lat == null || lng == null) {
       return null;
     }
     return { lat, lng };
+  }
+
+  private coerceCoordinate(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
   }
 
   private writeFormLatLng(latLng: LatLng): void {

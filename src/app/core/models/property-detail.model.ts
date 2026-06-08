@@ -34,6 +34,8 @@ export interface PropertyDetailDocument {
 
   city?: string | null;
   neighborhood?: string | null;
+  /** GeoNames / Google hierarchy saved on create; may be absent on older listings. */
+  location?: { id?: string; level: number; name: string }[] | null;
   fullAddress?: string | null;
   mapLink?: string | null;
   latitude?: number | null;
