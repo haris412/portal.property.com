@@ -27,6 +27,12 @@ export interface SubscriptionCreateDTO {
   subscriptionDate: string;
 }
 
+/** PUT `/api/subscriptions/updateSubscription` — partial subscription update (e.g. quota decrement). */
+export interface SubscriptionUpdateDTO {
+  _id: string;
+  numberOfFeatureListing: number;
+}
+
 export interface SuccessResponseModel<T> {
   success: boolean;
   message: string;

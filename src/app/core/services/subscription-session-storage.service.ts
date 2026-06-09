@@ -3,21 +3,38 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import type { Subscription } from '../models/subscription.models';
 
 const STORAGE_KEY = 'subscriptionPlan';
+/** Legacy key from an earlier sessionStorage implementation. */
+const LEGACY_SESSION_KEY = 'subscriptionPlan';
 
 @Injectable({ providedIn: 'root' })
 export class SubscriptionSessionStorageService {
   private readonly platformId = inject(PLATFORM_ID);
 
   private store(): Storage | null {
-    return isPlatformBrowser(this.platformId) ? sessionStorage : null;
+    return isPlatformBrowser(this.platformId) ? localStorage : null;
   }
 
   read(): Subscription | null {
-    const raw = this.store()?.getItem(STORAGE_KEY);
-    if (!raw) return null;
+    const storage = this.store();
+    if (!storage) {
+      return null;
+    }
+
+    let raw = storage.getItem(STORAGE_KEY);
+    if (!raw && isPlatformBrowser(this.platformId)) {
+      const legacy = sessionStorage.getItem(LEGACY_SESSION_KEY);
+      if (legacy) {
+        storage.setItem(STORAGE_KEY, legacy);
+        sessionStorage.removeItem(LEGACY_SESSION_KEY);
+        raw = legacy;
+      }
+    }
+
+    if (!raw) {
+      return null;
+    }
     try {
-      const v = JSON.parse(raw) as Subscription;
-      return v;
+      return JSON.parse(raw) as Subscription;
     } catch {
       return null;
     }

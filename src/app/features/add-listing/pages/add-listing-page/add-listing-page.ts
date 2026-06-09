@@ -55,6 +55,13 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { ADD_LISTING_HEADER_ACTIONS } from '../../constants/add-listing.constants';
 import { MediaUploadService, ListingImagePayload } from '../../../../core/services/media-upload.service';
 import { GooglePlacesService } from '../../../../core/services/google-places.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { SubscriptionSessionStorageService } from '../../../../core/services/subscription-session-storage.service';
+import {
+  SubscriptionsApiService,
+  extractSubscriptionFromSuccessResponse,
+} from '../../../../core/services/subscriptions-api.service';
+import type { Subscription } from '../../../../core/models/subscription.models';
 import { applyServerFieldErrors } from '../../../../core/http/apply-server-field-errors';
 import { apiErrorSummary, parseHttpApiError } from '../../../../core/http/parse-http-api-error';
 import {
@@ -73,6 +80,9 @@ import {
   normalizeFeatureSlug,
 } from '../../../../core/constants/listing-payload.constants';
 import { CdkAutofill } from "@angular/cdk/text-field";
+
+const FEATURED_LISTING_QUOTA_MESSAGE =
+  'You are out of featured listing quota. Upgrade your plan or remove another featured property.';
 
 type AddListingStepKey =
   | 'basic-info'
@@ -205,6 +215,8 @@ export class AddListingPageComponent {
   readonly isSubmitting = signal(false);
   readonly isGeneratingDescription = signal(false);
   readonly isFeatured = signal(false);
+  /** Whether the loaded property was already featured (no quota decrement on re-save). */
+  private readonly wasFeaturedWhenLoaded = signal(false);
   readonly existingPropertyImages = signal<ListingImagePayload[]>([]);
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
   private readonly stepOrder: readonly AddListingStepKey[] = [
@@ -499,6 +511,9 @@ export class AddListingPageComponent {
   private readonly notifications = inject(NotificationService);
   private readonly mediaUploadService = inject(MediaUploadService);
   private readonly googlePlaces = inject(GooglePlacesService);
+  private readonly auth = inject(AuthService);
+  private readonly subscriptionStorage = inject(SubscriptionSessionStorageService);
+  private readonly subscriptionsApi = inject(SubscriptionsApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -698,8 +713,19 @@ export class AddListingPageComponent {
         return;
       }
 
+      const publishWithFeatured =
+        actionId === ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING && this.isBecomingFeatured();
+
+      if (publishWithFeatured && !this.assertFeaturedListingQuotaAvailable()) {
+        return;
+      }
+
       this.isSubmitting.set(true);
       try {
+        if (publishWithFeatured) {
+          await this.consumeFeaturedListingQuota();
+        }
+
         const uploadedMedia = await this.uploadSelectedMedia();
         const payload = this.buildPayload(uploadedMedia);
 
@@ -769,6 +795,25 @@ export class AddListingPageComponent {
 
   async onReviewSaveDraft(): Promise<void> {
     await this.onHeaderAction(ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT);
+  }
+
+  onFeaturedToggle(checked: boolean): void {
+    if (!checked) {
+      this.isFeatured.set(false);
+      return;
+    }
+
+    if (this.wasFeaturedWhenLoaded()) {
+      this.isFeatured.set(true);
+      return;
+    }
+
+    if (!this.assertFeaturedListingQuotaAvailable()) {
+      this.isFeatured.set(false);
+      return;
+    }
+
+    this.isFeatured.set(true);
   }
 
   private isAddListingStepKey(stepKey: string): stepKey is AddListingStepKey {
@@ -860,15 +905,32 @@ export class AddListingPageComponent {
       return;
     }
 
+    if (this.isBecomingFeatured() && !this.assertFeaturedListingQuotaAvailable()) {
+      return;
+    }
+
     this.isSubmitting.set(true);
     try {
+      if (this.isBecomingFeatured()) {
+        await this.consumeFeaturedListingQuota();
+      } else if (this.isRemovingFeatured()) {
+        await this.restoreFeaturedListingQuota();
+      }
+
       const uploadedMedia = await this.uploadSelectedMediaForEdit();
       const payload = this.buildPayload(uploadedMedia);
       await firstValueFrom(this.addListingService.updateProperty(id, payload));
       this.notifications.success('Property updated successfully');
       await this.router.navigate(['/properties']);
     } catch (error: unknown) {
-      this.handleAddListingSubmitError(error, 'update-property');
+      const summary = apiErrorSummary(error);
+      if (summary) {
+        this.notifications.error(summary);
+      } else if (error instanceof Error) {
+        this.notifications.error(error.message);
+      } else {
+        this.handleAddListingSubmitError(error, 'update-property');
+      }
     } finally {
       this.isSubmitting.set(false);
     }
@@ -990,7 +1052,9 @@ export class AddListingPageComponent {
       this.resolveMissingCoordinatesViaGeocode(locationQueryDisplay, doc.fullAddress ?? '');
     }
 
-    this.isFeatured.set((doc as any).isFeatured === true);
+    const alreadyFeatured = doc.isFeatured === true;
+    this.wasFeaturedWhenLoaded.set(alreadyFeatured);
+    this.isFeatured.set(alreadyFeatured);
     this.existingPropertyImages.set((doc.images ?? []) as ListingImagePayload[]);
 
     const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
@@ -1306,6 +1370,82 @@ export class AddListingPageComponent {
       ],
       this.destroyRef
     );
+  }
+
+  private getStoredSubscription(): Subscription | null {
+    const user = this.auth.getCurrentUser();
+    if (!user?._id) {
+      return null;
+    }
+    return this.subscriptionStorage.getForUser(user._id, user.agencyId ?? null);
+  }
+
+  private isBecomingFeatured(): boolean {
+    return this.isFeatured() && !this.wasFeaturedWhenLoaded();
+  }
+
+  /** Property was featured when loaded and user turned featured off before save. */
+  private isRemovingFeatured(): boolean {
+    return this.wasFeaturedWhenLoaded() && !this.isFeatured();
+  }
+
+  private assertFeaturedListingQuotaAvailable(): boolean {
+    const sub = this.getStoredSubscription();
+    if (!sub?._id) {
+      this.notifications.warning('No active subscription found. Choose a plan before featuring a listing.');
+      return false;
+    }
+    if ((sub.numberOfFeatureListing ?? 0) <= 0) {
+      this.notifications.warning(FEATURED_LISTING_QUOTA_MESSAGE);
+      return false;
+    }
+    return true;
+  }
+
+  private async persistFeaturedListingQuota(nextCount: number): Promise<void> {
+    const sub = this.getStoredSubscription();
+    if (!sub?._id) {
+      throw new Error('No active subscription found.');
+    }
+
+    const res = await firstValueFrom(
+      this.subscriptionsApi.updateSubscription({
+        _id: sub._id,
+        numberOfFeatureListing: Math.max(0, nextCount),
+      })
+    );
+
+    const updated = extractSubscriptionFromSuccessResponse(res);
+    if (!updated) {
+      throw new Error('Could not update subscription quota.');
+    }
+
+    this.subscriptionStorage.write(updated);
+  }
+
+  /** Decrements featured-listing quota via API and persists the updated subscription in localStorage. */
+  private async consumeFeaturedListingQuota(): Promise<void> {
+    const sub = this.getStoredSubscription();
+    if (!sub?._id) {
+      throw new Error('No active subscription found.');
+    }
+    if ((sub.numberOfFeatureListing ?? 0) <= 0) {
+      throw new Error(FEATURED_LISTING_QUOTA_MESSAGE);
+    }
+
+    await this.persistFeaturedListingQuota(sub.numberOfFeatureListing - 1);
+    this.wasFeaturedWhenLoaded.set(true);
+  }
+
+  /** Increments featured-listing quota when a listing is un-featured; syncs DB + localStorage. */
+  private async restoreFeaturedListingQuota(): Promise<void> {
+    const sub = this.getStoredSubscription();
+    if (!sub?._id) {
+      throw new Error('No active subscription found.');
+    }
+
+    await this.persistFeaturedListingQuota(sub.numberOfFeatureListing + 1);
+    this.wasFeaturedWhenLoaded.set(false);
   }
 
   private buildPayload(uploadedMedia: UploadedMediaPayload): CreateListingPayload {

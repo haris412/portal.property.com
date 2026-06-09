@@ -53,7 +53,9 @@ export class LayoutComponent implements OnInit {
       return;
     }
     this.auth.fetchUserProfile(user._id).subscribe(() => {
-      this.subscriptionPlansGate.tryOpenSubscriptionPlansIfNeeded();
+      this.subscriptionPlansGate.syncCurrentUserSubscription().subscribe(() => {
+        this.subscriptionPlansGate.tryOpenSubscriptionPlansIfNeeded();
+      });
     });
   }
 
