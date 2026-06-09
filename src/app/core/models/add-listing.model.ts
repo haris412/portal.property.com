@@ -30,6 +30,7 @@ export interface CreateListingPayload extends ListingAmenityBooleans {
   longitude: number | null;
   fullAddress: string | null;
   mapLink: string | null;
+  zipCode: string | null;
 
   // Contact
   contactName: string | null;

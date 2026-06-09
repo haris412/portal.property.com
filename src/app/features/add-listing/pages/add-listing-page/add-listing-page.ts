@@ -551,6 +551,7 @@ export class AddListingPageComponent {
       locationHierarchy: [[] as LocationHierarchyItem[], nonEmptyArrayValidator],
       fullAddress:       ['', Validators.required],
       mapLink:           [''],
+      zipCode:           [null as string | null],
       latitude:          [null as number | null],
       longitude:         [null as number | null],
     });
@@ -979,6 +980,7 @@ export class AddListingPageComponent {
         locationHierarchy,
         fullAddress: doc.fullAddress ?? '',
         mapLink,
+        zipCode: (doc as any).zipCode ?? null,
         latitude,
         longitude,
       },

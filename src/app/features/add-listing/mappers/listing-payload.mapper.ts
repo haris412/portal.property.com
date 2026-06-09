@@ -37,6 +37,7 @@ export interface ListingFormSnapshot {
     locationHierarchy: LocationHierarchyItem[];
     fullAddress: string | null;
     mapLink: string | null;
+    zipCode: string | null;
     latitude: number | null;
     longitude: number | null;
   };
@@ -76,6 +77,7 @@ export function buildListingPayload(
     longitude: location.longitude ?? null,
     fullAddress: location.fullAddress ?? null,
     mapLink: location.mapLink ?? null,
+    zipCode: location.zipCode ?? null,
     // Contact
     contactName: contact.contactName ?? null,
     contactEmail: contact.contactEmail ?? null,
