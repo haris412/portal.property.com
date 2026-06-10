@@ -148,6 +148,7 @@
       "dashboard": "ڈیش بورڈ",
       "properties": "پراپرٹیز",
       "addListing": "لسٹنگ شامل کریں",
+      "agents": "ایجنٹس",
       "users": "صارفین",
       "appointments": "اپوائنٹمنٹس",
       "inbox": "ان باکس",
@@ -266,6 +267,75 @@
       },
       "saveChanges":  "تبدیلیاں محفوظ کریں",
       "createAgency": "ایجنسی بنائیں"
+    }
+  },
+  "agents": {
+    "title": "ایجنٹس",
+    "subtitle": "اپنی ایجنسی کے ایجنٹس منظم کریں۔",
+    "create": "ایجنٹ شامل کریں",
+    "loading": "ایجنٹس لوڈ ہو رہے ہیں…",
+    "loadingError": "ایجنٹس لوڈ نہیں ہو سکے۔",
+    "grid": {
+      "title": "ایجنسی ایجنٹس",
+      "description": "آپ کی ایجنسی سے منسلک Agent رول والے صارفین۔"
+    },
+    "tc": {
+      "name": "نام",
+      "email": "ای میل",
+      "phone": "فون",
+      "status": "حیثیت",
+      "createdAt": "تاریخ تخلیق"
+    },
+    "statuses": {
+      "active": "فعال",
+      "inactive": "غیر فعال"
+    },
+    "errors": {
+      "noAgency": "آپ کے اکاؤنٹ سے کوئی ایجنسی منسلک نہیں ہے۔ اگر یہ غلط لگے تو سپورٹ سے رابطہ کریں۔"
+    },
+    "actions": {
+      "edit": "ترمیم",
+      "deactivate": "غیر فعال کریں",
+      "activate": "فعال کریں"
+    },
+    "messages": {
+      "deactivated": "ایجنٹ کامیابی سے غیر فعال کر دیا گیا۔",
+      "activated": "ایجنٹ کامیابی سے فعال کر دیا گیا۔"
+    },
+    "confirm": {
+      "deactivateTitle": "ایجنٹ غیر فعال کریں؟",
+      "deactivateMessage": "{{name}} دوبارہ فعال ہونے تک سائن ان نہیں کر سکے گا۔",
+      "deactivateConfirm": "غیر فعال کریں",
+      "activateTitle": "ایجنٹ فعال کریں؟",
+      "activateMessage": "{{name}} کو دوبارہ سائن ان کی اجازت دیں۔",
+      "activateConfirm": "فعال کریں",
+      "cancel": "منسوخ"
+    },
+    "form": {
+      "personalInfo": "ذاتی معلومات",
+      "personalInfoSubtitle": "نئے ایجنٹ اکاؤنٹ کی تفصیلات۔",
+      "firstName": "پہلا نام",
+      "lastName": "آخری نام",
+      "email": "ای میل پتہ",
+      "phone": "فون نمبر",
+      "phonePlaceholder": "+923001234567",
+      "inviteBanner": "دعوتی ای میل بھیجی جائے گی",
+      "inviteBannerCopy": "ایجنٹ کو پاس ورڈ سیٹ کرنے اور اکاؤنٹ فعال کرنے کے لیے ای میل موصول ہوگی۔",
+      "createSubtitle": "اپنی ایجنسی کے لیے نیا ایجنٹ بنائیں۔",
+      "editSubtitle": "اس ایجنٹ کی پروفائل تفصیلات اپ ڈیٹ کریں۔",
+      "loadingAgent": "ایجنٹ لوڈ ہو رہا ہے…",
+      "newAgent": "نیا ایجنٹ",
+      "firstNameRequired": "پہلا نام ضروری ہے",
+      "lastNameRequired": "آخری نام ضروری ہے",
+      "emailRequired": "ای میل ضروری ہے",
+      "emailInvalid": "درست ای میل درج کریں",
+      "phoneRequired": "فون نمبر ضروری ہے",
+      "phoneInvalid": "درست فون نمبر درج کریں (10–15 ہندسے)",
+      "cancel": "منسوخ",
+      "createAgent": "ایجنٹ بنائیں",
+      "saveAgent": "تبدیلیاں محفوظ کریں",
+      "createSuccess": "ایجنٹ کامیابی سے بنایا گیا۔ دعوتی ای میل بھیج دی گئی ہے۔",
+      "updateSuccess": "ایجنٹ کامیابی سے اپ ڈیٹ ہو گیا۔"
     }
   },
   "users": {

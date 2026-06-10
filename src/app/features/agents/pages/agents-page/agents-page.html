@@ -1,0 +1,30 @@
+<div class="agents-page container-fluid">
+  <app-page-header
+    [title]="'agents.title' | translate"
+    [subtitle]="'agents.subtitle' | translate"
+    [actions]="headerActions"
+    (actionClicked)="onHeaderAction($event)"
+  />
+
+  <app-section-card
+    [title]="'agents.grid.title' | translate"
+    [description]="'agents.grid.description' | translate"
+  >
+    @if (loadError(); as err) {
+      <app-info-banner class="d-block mb-3" icon="error_outline" [text]="err" />
+    }
+
+    @if (loading()) {
+      <p class="text-muted mb-3">{{ 'agents.loading' | translate }}</p>
+    }
+
+    <app-data-grid
+      [rowData]="agentRows()"
+      [columnDefs]="agentColumnDefs"
+      [gridOptionsInput]="gridOptions"
+      [heightPx]="520"
+      [pagination]="true"
+      (gridReady)="onGridReady($event)"
+    />
+  </app-section-card>
+</div>

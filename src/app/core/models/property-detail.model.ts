@@ -43,6 +43,7 @@ export interface PropertyDetailDocument {
 
   images?: { url?: string }[] | null;
   videoTourUrl?: string | null;
+  isFeatured?: boolean | null;
 }
 
 export interface PropertyDetailApiResponse {
