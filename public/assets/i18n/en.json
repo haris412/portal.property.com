@@ -152,6 +152,7 @@
       "dashboard": "Dashboard",
       "properties": "Properties",
       "addListing": "Add Listing",
+      "agents": "Agents",
       "users": "Users",
       "appointments": "Appointments",
       "inbox": "Inbox",
@@ -270,6 +271,75 @@
       },
       "saveChanges":  "Save Changes",
       "createAgency": "Create agency"
+    }
+  },
+  "agents": {
+    "title": "Agents",
+    "subtitle": "Manage agents in your agency.",
+    "create": "Add agent",
+    "loading": "Loading agents…",
+    "loadingError": "Could not load agents.",
+    "grid": {
+      "title": "Agency agents",
+      "description": "Users with the Agent role linked to your agency."
+    },
+    "tc": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "status": "Status",
+      "createdAt": "Created"
+    },
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "errors": {
+      "noAgency": "No agency is linked to your account. Contact support if this is unexpected."
+    },
+    "actions": {
+      "edit": "Edit",
+      "deactivate": "Deactivate",
+      "activate": "Activate"
+    },
+    "messages": {
+      "deactivated": "Agent deactivated successfully.",
+      "activated": "Agent activated successfully."
+    },
+    "confirm": {
+      "deactivateTitle": "Deactivate agent?",
+      "deactivateMessage": "{{name}} will no longer be able to sign in until reactivated.",
+      "deactivateConfirm": "Deactivate",
+      "activateTitle": "Activate agent?",
+      "activateMessage": "Reactivate {{name}} so they can sign in again.",
+      "activateConfirm": "Activate",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "personalInfo": "Personal information",
+      "personalInfoSubtitle": "Details for the new agent account.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email address",
+      "phone": "Phone number",
+      "phonePlaceholder": "+923001234567",
+      "inviteBanner": "Invite email will be sent",
+      "inviteBannerCopy": "The agent will receive an email to set their password and activate their account.",
+      "createSubtitle": "Create a new agent for your agency.",
+      "editSubtitle": "Update this agent's profile details.",
+      "loadingAgent": "Loading agent…",
+      "newAgent": "New agent",
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email address",
+      "phoneRequired": "Phone number is required",
+      "phoneInvalid": "Enter a valid phone number (10–15 digits)",
+      "cancel": "Cancel",
+      "createAgent": "Create agent",
+      "saveAgent": "Save changes",
+      "createSuccess": "Agent created successfully. An invite email has been sent.",
+      "updateSuccess": "Agent updated successfully."
     }
   },
   "users": {

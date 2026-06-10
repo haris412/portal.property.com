@@ -7,11 +7,20 @@ import { HeaderComponent } from './header/header.component';
 import { NotificationContainerComponent } from '../shared/ui/notification-container/notification-container.component';
 import { AuthService } from '../core/services/auth.service';
 import { SubscriptionPlansGateService } from '../core/services/subscription-plans-gate.service';
+import { hasPrimaryAgencyAdminRole } from '../core/models/role.models';
+
+const AGENTS_NAV_ITEM: SidebarNavItem = {
+  label: 'sidebar.nav.agents',
+  route: '/agents',
+  icon: 'groups',
+  exact: true,
+};
 
 const ALL_NAV_ITEMS: readonly SidebarNavItem[] = [
   { label: 'sidebar.nav.dashboard',    route: '/dashboard',    icon: 'dashboard',    exact: true  },
   { label: 'sidebar.nav.properties',   route: '/properties',   icon: 'home_work',    exact: true  },
   { label: 'sidebar.nav.addListing',   route: '/add-listing',  icon: 'add_business'               },
+  AGENTS_NAV_ITEM,
   { label: 'sidebar.nav.inbox',        route: '/inbox',        icon: 'inbox'                      },
   { label: 'sidebar.nav.appointments', route: '/appointments', icon: 'event'                      },
   { label: 'sidebar.nav.settings',     route: '/settings',     icon: 'settings'                   },
@@ -19,6 +28,7 @@ const ALL_NAV_ITEMS: readonly SidebarNavItem[] = [
 ];
 
 const BUYER_HIDDEN_ROUTES = new Set(['/dashboard', '/properties', '/add-listing']);
+const PRIMARY_AGENCY_ADMIN_ONLY_ROUTES = new Set(['/agents']);
 
 @Component({
   selector: 'app-layout',
@@ -38,10 +48,20 @@ export class LayoutComponent implements OnInit {
   readonly mobileSidebarOpen = signal(false);
 
   readonly navItems = computed(() => {
-    const isBuyer = this.currentUser()?.roles?.includes('Buyer') ?? false;
-    return isBuyer
-      ? ALL_NAV_ITEMS.filter((item) => !BUYER_HIDDEN_ROUTES.has(item.route))
-      : ALL_NAV_ITEMS;
+    const user = this.currentUser();
+    const roles = user?.roles ?? [];
+    const isBuyer = roles.some((r) => r.trim().toLowerCase() === 'buyer');
+    const canManageAgents = hasPrimaryAgencyAdminRole(roles);
+
+    return ALL_NAV_ITEMS.filter((item) => {
+      if (PRIMARY_AGENCY_ADMIN_ONLY_ROUTES.has(item.route) && !canManageAgents) {
+        return false;
+      }
+      if (isBuyer && BUYER_HIDDEN_ROUTES.has(item.route)) {
+        return false;
+      }
+      return true;
+    });
   });
 
   ngOnInit(): void {
@@ -53,9 +73,7 @@ export class LayoutComponent implements OnInit {
       return;
     }
     this.auth.fetchUserProfile(user._id).subscribe(() => {
-      this.subscriptionPlansGate.syncCurrentUserSubscription().subscribe(() => {
-        this.subscriptionPlansGate.tryOpenSubscriptionPlansIfNeeded();
-      });
+      this.subscriptionPlansGate.runAfterProfileLoaded().subscribe();
     });
   }
 

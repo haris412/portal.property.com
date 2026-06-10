@@ -1,0 +1,136 @@
+.add-agent-page {
+  min-height: 100%;
+
+  &__container {
+    padding: 1rem;
+
+    @media (min-width: 768px) {
+      padding: 1.5rem;
+    }
+  }
+
+  &__breadcrumb {
+    margin-bottom: 1rem;
+  }
+
+  &__breadcrumb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+
+    mat-icon {
+      font-size: var(--font-size-h5);
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__header {
+    margin-bottom: 1.5rem;
+  }
+
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  &__avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    background: var(--primary-soft, #e8edf8);
+    color: var(--primary);
+  }
+
+  &__title {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  &__subtitle {
+    margin: 0;
+    color: var(--font-secondary);
+  }
+
+  &__error {
+    color: var(--error-strong);
+    margin: 0;
+  }
+
+  &__card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-soft);
+  }
+
+  &__card-header {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+
+    h3 {
+      margin: 0 0 0.25rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    p {
+      margin: 0;
+      color: var(--font-secondary);
+      font-size: 0.9rem;
+    }
+  }
+
+  &__card-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: var(--primary-soft, #e8edf8);
+    color: var(--primary);
+  }
+
+  &__invite-banner {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: var(--surface-muted, #f6f8fc);
+    border: 1px solid var(--border-soft);
+
+    mat-icon {
+      color: var(--primary);
+    }
+
+    p {
+      margin: 0.25rem 0 0;
+      color: var(--font-secondary);
+      font-size: 0.9rem;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+}
