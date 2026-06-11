@@ -26,6 +26,8 @@ export interface CreateAgentDTO {
   firstName: string;
   lastName: string;
   phoneNumber: string;
+  location?: string;
+  profileImageUrl?: string;
 }
 
 /** Body for PUT `/api/agents/updateAgent`. */
