@@ -216,19 +216,6 @@ export class SignupCardComponent implements OnInit {
     });
   }
 
-  // —— Keep location search term in sync with form value (for autocomplete filter) ——
-  private setLocationSearchFromValue(value: string | ICountry | null): void {
-    if (value == null) {
-      this.locationCountrySearchTerm.set('');
-      return;
-    }
-    const term =
-      typeof value === 'object' && 'name' in value
-        ? (value as ICountry).name ?? ''
-        : String(value);
-    this.locationCountrySearchTerm.set(term);
-  }
-
   // —— Prefill (inquiry link) ——
 
   private applyPrefill(prefill: SignupPrefill): void {
@@ -274,79 +261,56 @@ export class SignupCardComponent implements OnInit {
     return { isoCode: DEFAULT_PHONE_COUNTRY_CODE, local: digits };
   }
 
-  // —— Build form and wire validity, search terms, and phone validation ——
   private buildForm(): FormGroup<SignupFormControls> {
-    const form = this.createFormGroup();
-    form.controls.phone.addValidators(
-      phoneNumberValidator(
-        form.controls.phoneCountryCode,
-        DEFAULT_PHONE_VALIDATION_CONFIG
-      )
-    );
-    this.wireFormReactivity(form);
-    return form;
-  }
-
-  private createFormGroup(): FormGroup<SignupFormControls> {
-    return new FormGroup<SignupFormControls>({
-      firstName: this.fb.nonNullable.control('', [
-        Validators.required,
-        Validators.minLength(2)
-      ]),
-      lastName: this.fb.nonNullable.control('', [
-        Validators.required,
-        Validators.minLength(2)
-      ]),
-      email: this.fb.nonNullable.control('', [
-        Validators.required,
-        Validators.email
-      ]),
-      phoneCountryCode: this.fb.nonNullable.control(DEFAULT_PHONE_COUNTRY_CODE, [
-        Validators.required,
-        validCountryCodeValidator(this.countries)
-      ]),
-      phone: this.fb.nonNullable.control('', [Validators.required]),
-      locationCountryCode: this.fb.control<string | ICountry | null>('', [
-        Validators.required,
-        validLocationCountryValidator(this.countries)
-      ]),
-      userType: this.fb.nonNullable.control('Seller', [
-        Validators.required
-      ]),
-      agencyName: this.fb.nonNullable.control('', { updateOn: 'blur' }),
-      password: this.fb.nonNullable.control('', [Validators.required]),
-      agree: this.fb.nonNullable.control(false, [Validators.requiredTrue])
+    const f = this.fb;
+    const form = new FormGroup<SignupFormControls>({
+      firstName:           f.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
+      lastName:            f.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
+      email:               f.nonNullable.control('', [Validators.required, Validators.email]),
+      phoneCountryCode:    f.nonNullable.control(DEFAULT_PHONE_COUNTRY_CODE, [Validators.required, validCountryCodeValidator(this.countries)]),
+      phone:               f.nonNullable.control('', [Validators.required]),
+      locationCountryCode: f.control<string | ICountry | null>('', [Validators.required, validLocationCountryValidator(this.countries)]),
+      userType:            f.nonNullable.control('Seller', [Validators.required]),
+      agencyName:          f.nonNullable.control('', { updateOn: 'blur' }),
+      password:            f.nonNullable.control('', [Validators.required]),
+      agree:               f.nonNullable.control(false, [Validators.requiredTrue]),
     });
-  }
 
-  private wireFormReactivity(form: FormGroup<SignupFormControls>): void {
+    // Phone validator needs the country code control to compute the dial code
+    form.controls.phone.addValidators(
+      phoneNumberValidator(form.controls.phoneCountryCode, DEFAULT_PHONE_VALIDATION_CONFIG)
+    );
+
+    // Keep formValid signal in sync with overall form status
     form.statusChanges
       .pipe(startWith(form.status), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.formValid.set(form.valid));
 
-    this.phoneCountrySearchTerm.set(
-      form.controls.phoneCountryCode.value ?? ''
-    );
+    // When country code changes: update search term + re-validate phone
     form.controls.phoneCountryCode.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value: string | null) =>
-        this.phoneCountrySearchTerm.set((value ?? '').toString())
-      );
+      .subscribe(value => {
+        this.phoneCountrySearchTerm.set(value ?? '');
+        form.controls.phone.updateValueAndValidity();
+      });
 
-    this.setLocationSearchFromValue(form.controls.locationCountryCode.value);
+    // Keep location search term in sync so the autocomplete filters correctly
     form.controls.locationCountryCode.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value: string | ICountry | null) =>
-        this.setLocationSearchFromValue(value)
-      );
+      .subscribe(value => {
+        if (value == null) {
+          this.locationCountrySearchTerm.set('');
+        } else if (typeof value === 'object' && 'name' in value) {
+          this.locationCountrySearchTerm.set(value.name ?? '');
+        } else {
+          this.locationCountrySearchTerm.set(String(value));
+        }
+      });
 
-    form.controls.phoneCountryCode.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => form.controls.phone.updateValueAndValidity());
-
+    // Show/hide agency name field and toggle its validators based on user type
     form.controls.userType.valueChanges
       .pipe(startWith(form.controls.userType.value), takeUntilDestroyed(this.destroyRef))
-      .subscribe((type) => {
+      .subscribe(type => {
         const isAgent = type === 'Agent';
         this.showAgencyName.set(isAgent);
         const ctrl = form.controls.agencyName;
@@ -360,43 +324,36 @@ export class SignupCardComponent implements OnInit {
         }
         ctrl.updateValueAndValidity({ emitEvent: false });
       });
+
+    return form;
   }
 
-  // —— Map form value to API payload (role sent as-is to backend) ——
   private buildRegisterPayload(value: SignupFormValue): RegisterPayload {
-    const phoneNumber = this.formatPhoneNumber(value);
-    const location = this.formatLocation(value);
+    // Build full international phone number: +{dialCode}{localNumber}
+    const country = findCountryByCode(this.countries, value.phoneCountryCode);
+    const dialCode = (country?.phonecode ?? '').replace(/\D/g, '');
+    const localNumber = (value.phone ?? '').replace(/\D/g, '').replace(/^0+/, '');
+    const phoneNumber = dialCode ? `+${dialCode}${localNumber}` : localNumber;
+
+    // Build location JSON from selected country
+    const isoCode = getLocationIsoCode(value.locationCountryCode);
+    const locationCountry = findCountryByCode(this.countries, isoCode);
+    const location = locationCountry
+      ? JSON.stringify({ country: locationCountry.name, countryCode: isoCode })
+      : undefined;
 
     const payload: RegisterPayload = {
-      email: value.email.trim(),
-      password: value.password,
-      firstName: value.firstName.trim(),
-      lastName: value.lastName.trim(),
-      roleName: value.userType?.trim() ?? '',
-      phoneNumber
+      email:       value.email.trim(),
+      password:    value.password,
+      firstName:   value.firstName.trim(),
+      lastName:    value.lastName.trim(),
+      roleName:    value.userType?.trim() ?? '',
+      phoneNumber,
     };
     if (location) payload.location = location;
     if (value.userType === 'Agent' && value.agencyName?.trim()) {
       payload.agencyName = value.agencyName.trim();
     }
     return payload;
-  }
-
-  private formatPhoneNumber(value: SignupFormValue): string {
-    const country = findCountryByCode(this.countries, value.phoneCountryCode);
-    const codeDigits = (country?.phonecode ?? '').replace(/\D/g, '');
-    const numberDigits =
-      (value.phone ?? '').replace(/\D/g, '').replace(/^0+/, '') || '';
-    return codeDigits ? `+${codeDigits}${numberDigits}` : numberDigits;
-  }
-
-  private formatLocation(value: SignupFormValue): string | undefined {
-    const isoCode = getLocationIsoCode(value.locationCountryCode);
-    const country = findCountryByCode(this.countries, isoCode);
-    if (!country) return undefined;
-    return JSON.stringify({
-      country: country.name,
-      countryCode: isoCode
-    });
   }
 }

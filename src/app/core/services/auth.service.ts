@@ -169,7 +169,9 @@ export class AuthService {
 
   // ── Getters ────────────────────────────────────────────────────────────────
 
-  getCurrentUser(): User | null  { return this.userSubject.getValue(); }
+  getCurrentUser(): User | null  { 
+    return this.userSubject.getValue(); 
+  }
   getUserId():      string | null { return this.getCurrentUser()?._id ?? null; }
   isLoggedIn():     boolean       { return !!this.accessToken; }
   getAccessToken(): string | null { return this.accessToken; }
@@ -253,6 +255,11 @@ export class AuthService {
     });
   }
 
+  
+
+  checkTokenValidityAndExpiry(data: any): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/api/auth/verify-token`, data);
+  }
   // ── Password reset ─────────────────────────────────────────────────────────
 
   forgotPassword(email: string): Observable<void> {

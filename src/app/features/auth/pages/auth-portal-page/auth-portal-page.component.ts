@@ -37,18 +37,19 @@ export class AuthPortalPageComponent {
   ];
 
   readonly activeSegment  = signal<'signup' | 'login'>('login');
-  readonly successMessage = signal<string | null>(null);
-  readonly prefill        = signal<SignupPrefill | null>(null);
+  readonly message = signal<EInvitationState>(EInvitationState.Processing);
+  readonly prefill = signal<SignupPrefill | null>(null);
 
   constructor() {
     if (this.isAdminMode) return;
 
-    const msg = this.auth.getAndClearRedirectMessage();
-    if (msg) this.successMessage.set(msg);
+    // const msg = this.auth.getAndClearRedirectMessage();
+    // if (msg) this.message.set(msg);
 
     const queryParams = this.route.snapshot.queryParamMap;
     if (queryParams.keys.length === 0) return;
-
+    const token = queryParams.get('token');
+    this.checkTokenExpiry(token);
     if (queryParams.get('ref') === 'inquiry' || queryParams.has('roleName')) {
       this.prefill.set({
         email:     queryParams.get('email')     ?? undefined,
@@ -59,10 +60,36 @@ export class AuthPortalPageComponent {
       this.activeSegment.set('signup');
     }
 
-    this.location.replaceState('/auth');
+    //this.location.replaceState('/auth');
   }
 
   onTabChanged(tab: string): void {
     this.activeSegment.set(tab as 'login' | 'signup');
   }
+
+  checkTokenExpiry(token: string | null): void {
+    if (!token) return;
+    let verificationPayload:any = { 
+      email: this.route.snapshot.queryParamMap.get('email') ?? undefined,
+      token };
+
+    this.auth.checkTokenValidityAndExpiry(verificationPayload).subscribe({
+      next: (result) => {
+        // if (!result.success) {
+        //   this.message.set('Your session has expired. Please log in again to continue.');
+        // }
+      },
+      error: (err: unknown) => {
+        // const msg = (err as { error: { message?: string } })?.error?.message;
+        this.message.set(EInvitationState.Invalid);
+      }
+    });
+  } 
+}
+
+export enum EInvitationState {
+  Processing,
+  SignupSuccess,
+  Valid,
+  Invalid,
 }
