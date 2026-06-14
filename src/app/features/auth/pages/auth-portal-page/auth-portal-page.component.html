@@ -3,7 +3,16 @@
     <div class="col-lg-6 d-none d-lg-block auth-visual-column">
       <app-auth-hero-panel />
     </div>
-
+    <!-- @if (error()) {
+      <div class="alert alert-danger mb-3" role="alert">
+        {{ error() }}
+      </div>
+    } -->
+    @if (message()) {
+      <div class="alert alert-success mb-3" role="alert">
+        {{ message() }}
+      </div>
+    }
     <div class="col-12 col-lg-6 auth-form-column">
       <section class="auth-form-shell d-flex flex-column">
         <!-- <div class="auth-form-top d-flex justify-content-end">
@@ -17,7 +26,7 @@
           <div class="auth-form-content w-100">
             @if (isAdminMode) {
               <header class="auth-page-intro auth-page-intro--admin">
-                <p class="auth-page-kicker">LocateHome Admin</p>
+                <p class="auth-page-kicker">Easiestworld Admin</p>
                 <h2 class="auth-page-title">Secure Admin Access</h2>
                 <p class="auth-page-copy">
                   Sign in with your existing admin credentials to manage the platform.
@@ -32,9 +41,9 @@
                 Open the standard member sign in
               </a>
             } @else {
-              @if (successMessage()) {
+              @if (message()) {
                 <div class="alert alert-success auth-alert" role="status">
-                  {{ successMessage() }}
+                  {{ message() }}
                 </div>
               }
 

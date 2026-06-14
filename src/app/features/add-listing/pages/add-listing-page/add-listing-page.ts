@@ -563,7 +563,7 @@ export class AddListingPageComponent {
 
     this.locationForm = this.fb.group({
       locationQuery:     [''],
-      locationHierarchy: [[] as LocationHierarchyItem[], nonEmptyArrayValidator],
+      locationHierarchy: [[] as LocationHierarchyItem[]],
       fullAddress:       ['', Validators.required],
       mapLink:           [''],
       zipCode:           [null as string | null],
@@ -765,6 +765,7 @@ export class AddListingPageComponent {
   }
 
   goToNextStep(): void {
+    console.log(this.locationForm);
     const nextIndex = this.activeStepIndex() + 1;
     if (nextIndex >= this.stepOrder.length) {
       return;
@@ -1062,7 +1063,7 @@ export class AddListingPageComponent {
     const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
     // Emit so FeaturesAmenitiesSection syncs chip selection.
     this.amenitiesForm.patchValue({ selectedFeatureIds }, { emitEvent: true });
-
+    console.log(this.locationForm);
     // Media: existing uploads are URLs; current media form expects Files, so we don't prefill file inputs.
     this.refreshListingFormValidity();
     this.basicInfoForm.markAsUntouched();

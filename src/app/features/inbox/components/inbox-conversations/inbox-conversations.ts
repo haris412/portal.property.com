@@ -2,21 +2,31 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewChecked,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
+  OnInit,
   ViewChild,
   computed,
   effect,
+  inject,
   signal
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { SegmentedTabsComponent } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
 import {
   ConversationItem,
   ConversationMessage,
-  INBOX_CONVERSATIONS,
   InboxTab
 } from '../../inbox.data';
+import { ConversationService } from '../../services/conversations.service';
+import { SmartTimePipe } from '../../../../shared/pipes/smart-time.pipe';
+import { map } from 'rxjs';
+import { MessagingService } from '../../services/messaging.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { Message } from '../../models/message.model';
 
 interface SegmentedTabItem {
   key: string;
@@ -26,42 +36,46 @@ interface SegmentedTabItem {
 @Component({
   selector: 'app-inbox-conversations',
   standalone: true,
-  imports: [CommonModule, FormsModule, SegmentedTabsComponent],
+  imports: [CommonModule, FormsModule, SegmentedTabsComponent, SmartTimePipe],
   templateUrl: './inbox-conversations.html',
   styleUrl: './inbox-conversations.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InboxConversations implements AfterViewChecked {
+export class InboxConversations implements AfterViewChecked, OnInit {
+  private readonly conversationService = inject(ConversationService);
+  private readonly destroyRef = inject(DestroyRef);
   @ViewChild('messagesContainer') messagesContainer?: ElementRef<HTMLDivElement>;
-
+  private readonly messageService = inject(MessagingService);
+  private readonly auth = inject(AuthService);
+  readonly currentUserId = this.auth.getUserId();
   readonly replyText = signal('');
   readonly activeTab = signal<InboxTab>('all');
-  readonly selectedConversationId = signal<string>('emma');
+  readonly selectedConversationId = signal<string>('');
 
-  readonly conversations = signal<ConversationItem[]>(structuredClone(INBOX_CONVERSATIONS));
+  readonly conversations = signal<ConversationItem[]>([]);
+  readonly messages = signal<any[]>([]);
 
   readonly tabs = computed<SegmentedTabItem[]>(() => {
     const items = this.conversations();
-    const unreadCount = items.filter(item => item.unread).length;
-    const readCount = items.filter(item => !item.unread).length;
+    const unreadCount = items.filter((item) => item.unread).length;
+    const readCount = items.filter((item) => !item.unread).length;
 
     return [
       { key: 'all', label: `All (${items.length})` },
       { key: 'read', label: `Read (${readCount})` },
-      { key: 'unread', label: `Unread (${unreadCount})` }
+      { key: 'unread', label: `Unread (${unreadCount})` },
     ];
   });
 
   readonly filteredConversations = computed(() => {
     const active = this.activeTab();
     const items = this.conversations();
-
-    if (active === 'read') {
-      return items.filter(item => !item.unread);
-    }
+    // if (active === 'read') {
+    //   return items.filter(item => !item.unread);
+    // }
 
     if (active === 'unread') {
-      return items.filter(item => item.unread);
+      return items.filter((item) => item.unread);
     }
 
     return items;
@@ -71,25 +85,82 @@ export class InboxConversations implements AfterViewChecked {
     const filtered = this.filteredConversations();
     const selectedId = this.selectedConversationId();
 
-    return filtered.find(item => item.id === selectedId) ?? filtered[0] ?? null;
+    return filtered.find((item) => item._id === selectedId) ?? filtered[0] ?? null;
   });
 
   private shouldScrollToBottom = false;
 
-  constructor() {
+  ngOnInit(): void {
+    this.loadConversations();
+    const token = this.auth.getAccessToken();
+    this.messageService.connect(token ?? '');
+
+    this.messageService.onError()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(err => console.error('[Socket]', err));
+
+    this.messageService.onNewMessage()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(msg => {
+        if (msg.conversationId !== this.selectedConversationId()) return;
+        this.messages.update(msgs => {
+          // replace optimistic temp bubble if text matches, otherwise append
+          const tempIdx = msgs.findIndex(m => m._id?.startsWith('temp_') && m.text === msg.text);
+          if (tempIdx !== -1) {
+            const updated = [...msgs];
+            updated[tempIdx] = msg;
+            return updated;
+          }
+          return [...msgs, msg];
+        });
+        this.shouldScrollToBottom = true;
+        this.cdr.markForCheck();
+      });
+  }
+
+  loadMessages(id: string): void {
+    this.conversationService
+      .getMessages(id)
+      .pipe(map((res) => res?.data?.messages ?? []))
+      .subscribe({
+        next: (msgs) => {
+          this.messages.set(msgs);
+          this.shouldScrollToBottom = true;
+        },
+        error: (err) => console.error('Failed to load messages:', err),
+      });
+  }
+
+  loadConversations(): void {
+    this.conversationService
+      .getConversations()
+      .pipe(map((res) => res?.data?.conversations ?? []))
+      .subscribe({
+        next: (conversations) => {
+          this.conversations.set(conversations);
+        },
+        error: (err) => console.error('Failed to load conversations:', err),
+      });
+  }
+
+  constructor(private cdr: ChangeDetectorRef) {
     effect(() => {
       const filtered = this.filteredConversations();
       const selectedId = this.selectedConversationId();
 
-      if (!filtered.length) {
-        return;
-      }
+      if (!filtered.length) return;
 
-      const stillExists = filtered.some(item => item.id === selectedId);
-
+      const stillExists = filtered.some((item) => item._id === selectedId);
       if (!stillExists) {
-        this.selectedConversationId.set(filtered[0].id);
+        this.selectedConversationId.set(filtered[0]._id);
       }
+    });
+
+    effect(() => {
+      const id = this.selectedConversationId();
+      if (!id) return;
+      this.messageService.joinConversation(id);
+      this.loadMessages(id);
     });
   }
 
@@ -109,81 +180,71 @@ export class InboxConversations implements AfterViewChecked {
     this.selectedConversationId.set(id);
     this.markConversationAsRead(id);
     this.shouldScrollToBottom = true;
+    //   this.auth.currentUser$.subscribe(user => {
+    //   if (user) {
+    //     // getToken() reads it from localStorage or memory
+    //     const token = this.auth.getAccessToken();
+    //     this.messageService.connect(token ?? ''); // ← passed here
+    //   }
+    // });
   }
 
-  sendMessage(): void {
+  // chat-window.component.ts
+  send(): void {
     const text = this.replyText().trim();
-    const activeConversation = this.selectedConversation();
+    if (!text) return; // don't send empty messages
 
-    if (!text || !activeConversation) {
-      return;
-    }
-
-    const nextMessage: ConversationMessage = {
-      id: this.generateId(),
-      sender: 'me',
+    // Step 1 — show message instantly (optimistic UI)
+    const optimistic: Message = {
+      _id: 'temp_' + Date.now(),
+      conversationId: this.selectedConversation()?._id,
+      senderId: this.auth.getUserId() ?? 'me',
       text,
-      time: this.getCurrentTime()
+      updatedAt: new Date(),
+      readBy: [this.auth.getUserId() ?? 'me'],
+      createdAt: new Date(),
+      status: 'sending', // grey tick
     };
+    this.messages.update((msgs) => [...msgs, optimistic]);
 
-    this.conversations.update(items =>
-      items.map(item =>
-        item.id === activeConversation.id
-          ? {
-              ...item,
-              unread: false,
-              listTime: 'Just now',
-              messages: [...item.messages, nextMessage]
-            }
-          : item
-      )
-    );
+    // Step 2 — send via socket
 
+    this.messageService.sendMessage(this.selectedConversation()?._id, text);
+
+    // Step 3 — clear input
     this.replyText.set('');
-    this.shouldScrollToBottom = true;
+    this.cdr.markForCheck();
   }
-
+ 
   onReplyKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      this.sendMessage();
+      this.send();
     }
   }
 
   getPreview(item: ConversationItem): string {
-    const lastMessage = item.messages[item.messages.length - 1];
-    return lastMessage?.text ?? '';
+    return item.lastMessage?.text ?? '';
   }
 
   trackByConversation(_: number, item: ConversationItem): string {
-    return item.id;
+    return item._id;
   }
 
   trackByMessage(_: number, item: ConversationMessage): string {
-    return item.id;
+    return item._id;
   }
 
   private markConversationAsRead(id: string): void {
-    this.conversations.update(items =>
-      items.map(item =>
-        item.id === id
+    this.conversations.update((items) =>
+      items.map((item) =>
+        item._id === id
           ? {
               ...item,
-              unread: false
+              unread: false,
             }
-          : item
-      )
+          : item,
+      ),
     );
-  }
-
-  private getCurrentTime(): string {
-    return new Date().toLocaleTimeString([], {
-      hour: 'numeric',
-      minute: '2-digit'
-    });
-  }
-
-  private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 }
