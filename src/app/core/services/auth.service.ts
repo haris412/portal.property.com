@@ -15,6 +15,7 @@ import {
 } from 'rxjs';
 import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
 import { environment } from '../../../environments/environment';
+import { hasPrimaryAgencyAdminRole } from '../models/role.models';
 import { SubscriptionSessionStorageService } from './subscription-session-storage.service';
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
@@ -79,29 +80,83 @@ interface VerifyPasswordResetOtpResponse extends SimpleApiResponse {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Handles both new `roles: [{name}]` array and legacy `role: string | {name}` shapes. */
+function isLikelyObjectId(value: string): boolean {
+  return /^[a-f0-9]{24}$/i.test(value);
+}
+
+/** Handles `roles: [{name}]`, `roles: ['Agent']`, and legacy `role: string | {name}` shapes. */
 function extractRoles(raw: Record<string, unknown>): string[] {
   const arr = raw['roles'];
   if (Array.isArray(arr) && arr.length > 0) {
     return arr
-      .filter((r): r is Record<string, unknown> => typeof r === 'object' && r != null)
-      .map((r) => (r['name'] as string | undefined)?.trim() ?? '')
+      .map((r) => {
+        if (typeof r === 'string') {
+          const name = r.trim();
+          return name && !isLikelyObjectId(name) ? name : '';
+        }
+        if (typeof r === 'object' && r != null) {
+          return (r as Record<string, unknown>)['name'] as string | undefined;
+        }
+        return '';
+      })
+      .map((name) => name?.trim() ?? '')
       .filter(Boolean);
   }
   const r = raw['role'];
-  if (typeof r === 'object' && r != null && 'name' in r) return [(r as { name: string }).name];
-  if (typeof r === 'string' && r.trim()) return [r.trim()];
+  if (typeof r === 'object' && r != null && 'name' in r) {
+    const name = String((r as { name: unknown }).name ?? '').trim();
+    return name ? [name] : [];
+  }
+  if (typeof r === 'string' && r.trim() && !isLikelyObjectId(r.trim())) {
+    return [r.trim()];
+  }
+
+  const roleName = raw['roleName'];
+  if (typeof roleName === 'string' && roleName.trim() && !isLikelyObjectId(roleName.trim())) {
+    return [roleName.trim()];
+  }
+
   return [];
+}
+
+function mergeRoleLists(...lists: Array<string[] | undefined>): string[] {
+  const merged = new Set<string>();
+  for (const list of lists) {
+    for (const role of list ?? []) {
+      const trimmed = role.trim();
+      if (trimmed) {
+        merged.add(trimmed);
+      }
+    }
+  }
+  return [...merged];
+}
+
+function extractAgencyId(raw: Record<string, unknown>): string | undefined {
+  const agency = raw['agency'];
+  if (typeof agency === 'object' && agency != null && '_id' in agency) {
+    const fromAgency = String((agency as { _id?: unknown })._id ?? '').trim();
+    if (fromAgency) {
+      return fromAgency;
+    }
+  }
+
+  const agencyIdRaw = raw['agencyId'];
+  if (typeof agencyIdRaw === 'string' && agencyIdRaw.trim()) {
+    return agencyIdRaw.trim();
+  }
+  if (typeof agencyIdRaw === 'object' && agencyIdRaw != null && '_id' in agencyIdRaw) {
+    return String((agencyIdRaw as { _id?: unknown })._id ?? '').trim() || undefined;
+  }
+
+  return undefined;
 }
 
 export function fromApiUser(raw: Record<string, unknown>): User {
   const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
   const lastName  = (raw['lastName']  as string | undefined)?.trim() || undefined;
   const agency    = raw['agency'];
-  const agencyId =
-    typeof agency === 'object' && agency != null && '_id' in agency
-      ? String((agency as { _id?: unknown })._id ?? '').trim() || undefined
-      : undefined;
+  const agencyId  = extractAgencyId(raw);
   const roles     = extractRoles(raw);
   return {
     _id: ((raw['_id'] ?? raw['id']) as string) || '',
@@ -116,21 +171,6 @@ export function fromApiUser(raw: Record<string, unknown>): User {
     agencyName:      typeof agency === 'object' && agency != null && 'name' in agency
                        ? (agency as { name: string }).name || undefined
                        : undefined,
-    agencyId,
-  };
-}
-
-function toStoredSession(raw: Record<string, unknown>): StoredSession {
-  const agency = raw['agency'];
-  const agencyId =
-    typeof agency === 'object' && agency != null && '_id' in agency
-      ? String((agency as { _id?: unknown })._id ?? '').trim() || undefined
-      : undefined;
-  return {
-    _id:       ((raw['_id'] ?? raw['id']) as string) || '',
-    roles:     extractRoles(raw),
-    firstName: (raw['firstName'] as string | undefined)?.trim() || undefined,
-    lastName:  (raw['lastName']  as string | undefined)?.trim() || undefined,
     agencyId,
   };
 }
@@ -177,6 +217,11 @@ export class AuthService {
   getAccessToken(): string | null { return this.accessToken; }
   peekRefreshToken(): string | null { return this.storage?.getItem(REFRESH_KEY) ?? null; }
   hasRole(role: string): boolean  { return this.getCurrentUser()?.roles?.includes(role) ?? false; }
+
+  /** Primary Agency Admin — can manage agency agents (agencyId required for API calls). */
+  canManageAgencyAgents(): boolean {
+    return hasPrimaryAgencyAdminRole(this.getCurrentUser()?.roles);
+  }
 
   getRoles(): Observable<string[]> { return this.roles$; }
 
@@ -351,7 +396,22 @@ export class AuthService {
         `${environment.apiUrl}/api/users/${encodeURIComponent(id)}`,
       )
       .pipe(
-        map((res) => { if (res.data?.user) this.userSubject.next(fromApiUser(res.data.user)); }),
+        map((res) => {
+          if (!res.data?.user) {
+            return;
+          }
+          const fresh = fromApiUser(res.data.user);
+          const current = this.getCurrentUser();
+          const merged: User = {
+            ...current,
+            ...fresh,
+            email: fresh.email || current?.email || '',
+            roles: mergeRoleLists(current?.roles, fresh.roles),
+            agencyId: fresh.agencyId ?? current?.agencyId ?? extractAgencyId(res.data.user),
+          };
+          this.userSubject.next(merged);
+          this.persistStoredSession(merged);
+        }),
         catchError(() => of(undefined)),
       );
   }
@@ -395,9 +455,43 @@ export class AuthService {
   private storeAuthData(data: AuthApiResponse): void {
     if (!this.storage || !data.accessToken || !data.refreshToken || !data.user) return;
     this.accessToken = data.accessToken;
-    this.userSubject.next(fromApiUser(data.user));
+    const user = fromApiUser(data.user);
+    const existing = this.getCurrentUser();
+    const merged: User = {
+      ...user,
+      roles: mergeRoleLists(existing?.roles, user.roles),
+      agencyId: user.agencyId ?? existing?.agencyId ?? extractAgencyId(data.user),
+    };
+    this.userSubject.next(merged);
     this.storage.setItem(REFRESH_KEY, data.refreshToken);
-    this.storage.setItem(USER_KEY, JSON.stringify(toStoredSession(data.user)));
+    this.persistStoredSession(merged);
+  }
+
+  private persistStoredSession(user: User): void {
+    if (!this.storage || !user._id) {
+      return;
+    }
+    const existing = this.readStoredSession();
+    const session: StoredSession = {
+      _id: user._id,
+      roles: user.roles?.length ? user.roles : (existing?.roles ?? []),
+      firstName: user.firstName ?? existing?.firstName,
+      lastName: user.lastName ?? existing?.lastName,
+      agencyId: user.agencyId ?? existing?.agencyId,
+    };
+    this.storage.setItem(USER_KEY, JSON.stringify(session));
+  }
+
+  private readStoredSession(): StoredSession | null {
+    const raw = this.storage?.getItem(USER_KEY);
+    if (!raw) {
+      return null;
+    }
+    try {
+      return JSON.parse(raw) as StoredSession;
+    } catch {
+      return null;
+    }
   }
 
   private clearSession(): void {

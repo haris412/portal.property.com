@@ -97,7 +97,7 @@
                aria-label="Review actions">
             <mat-slide-toggle class="add-listing-page__featured-toggle"
                               [checked]="isFeatured()"
-                              (change)="isFeatured.set($event.checked)">
+                              (change)="onFeaturedToggle($event.checked)">
               Featured listing
             </mat-slide-toggle>
 

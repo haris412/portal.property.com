@@ -24,3 +24,15 @@ export const dashboardGuard: CanActivateFn = () => {
 
   return true;
 };
+
+/** Agency agent management — Primary Agency Admin only. */
+export const primaryAgencyAdminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.canManageAgencyAgents()) {
+    return true;
+  }
+
+  return router.createUrlTree(['/dashboard']);
+};

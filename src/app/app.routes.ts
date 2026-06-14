@@ -82,6 +82,12 @@ export const routes: Routes = [
         title: 'Listings',
       },
       {
+        path: 'agents',
+        loadChildren: () =>
+          import('./features/agents/agents.routes').then((m) => m.AGENTS_ROUTES),
+        title: 'Agents',
+      },
+      {
         path: 'profile',
         loadChildren: () =>
           import('./features/profile/profile.routes').then((m) => m.PROFILE_ROUTES),

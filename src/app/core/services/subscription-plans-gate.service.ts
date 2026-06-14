@@ -1,19 +1,19 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { catchError, map, of, switchMap, take, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, take } from 'rxjs';
 import { AuthService } from './auth.service';
 import { SubscriptionSessionStorageService } from './subscription-session-storage.service';
 import {
   SubscriptionsApiService,
   extractSubscriptionFromResponse,
-  responseIndicatesExistingSubscription,
 } from './subscriptions-api.service';
+import type { Subscription } from '../models/subscription.models';
 import {
   SubscriptionPlansDialogComponent,
   type SubscriptionPlansDialogData,
 } from '../../shared/dialogs/subscription-plans-dialog/subscription-plans-dialog.component';
-import { isAdminRole } from '../models/role.models';
+import { isAdminRole, isBuyerRole, isSubscriptionPlansGateExcluded } from '../models/role.models';
 
 @Injectable({ providedIn: 'root' })
 export class SubscriptionPlansGateService {
@@ -23,66 +23,93 @@ export class SubscriptionPlansGateService {
   private readonly subscriptionSession = inject(SubscriptionSessionStorageService);
   private readonly dialog = inject(MatDialog);
 
-  private ranThisSession = false;
-
-  tryOpenSubscriptionPlansIfNeeded(): void {
-    if (!isPlatformBrowser(this.platformId) || this.ranThisSession) {
-      return;
+  /**
+   * GET `/api/subscriptions` for the current user and persist the result in **localStorage**.
+   * Clears storage when the API has no subscription (including `{ subscription: null }`).
+   */
+  syncCurrentUserSubscription(): Observable<Subscription | null> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of(null);
     }
 
     const user = this.auth.getCurrentUser();
-    const roleName = primarySubscriptionRole(user?.roles);
-    if (!user?._id || !roleName) {
-      return;
+    if (!user?._id) {
+      return of(null);
     }
 
-    if (user.roles.some((r) => isAdminRole(r))) {
-      this.ranThisSession = true;
-      return;
+    return this.subscriptionsApi.getSubscriptionsForUser(user._id, user.agencyId ?? undefined).pipe(
+      take(1),
+      map((body) => {
+        const sub = extractSubscriptionFromResponse(body);
+        if (sub) {
+          this.subscriptionSession.write(sub);
+          return sub;
+        }
+        this.subscriptionSession.clear();
+        return null;
+      }),
+      catchError(() => {
+        return of(null);
+      }),
+    );
+  }
+
+  /**
+   * Syncs subscription from the API, then opens the plan picker when none exists.
+   * Shown for all roles except **Admin** and **Buyer**.
+   */
+  runAfterProfileLoaded(): Observable<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of(undefined);
     }
 
-    this.ranThisSession = true;
+    const user = this.auth.getCurrentUser();
+    if (!user?._id) {
+      return of(undefined);
+    }
 
-    this.subscriptionsApi
-      .getSubscriptionsForUser(user._id, user.agencyId ?? undefined)
-      .pipe(
-        take(1),
-        tap((body) => {
-          const sub = extractSubscriptionFromResponse(body);
-          if (sub) {
-            this.subscriptionSession.write(sub);
-          } else if (!responseIndicatesExistingSubscription(body)) {
-            this.subscriptionSession.clear();
-          }
-        }),
-        map((body) => responseIndicatesExistingSubscription(body)),
-        catchError(() => of(true)),
-        switchMap((hasSubscription) => {
-          if (hasSubscription) {
-            return of(undefined);
-          }
-          const data: SubscriptionPlansDialogData = {
-            roleName,
-          };
-          return this.dialog
-            .open(SubscriptionPlansDialogComponent, {
-              width: 'min(1120px, 96vw)',
-              maxWidth: '96vw',
-              disableClose: true,
-              autoFocus: 'first-heading',
-              panelClass: 'subscription-plans-dialog-shell',
-              data,
-            })
-            .afterClosed();
-        })
-      )
-      .subscribe();
+    if (isSubscriptionPlansGateExcluded(user.roles)) {
+      return of(undefined);
+    }
+
+    const roleName = primarySubscriptionRole(user.roles);
+    if (!roleName) {
+      return of(undefined);
+    }
+
+    return this.syncCurrentUserSubscription().pipe(
+      switchMap((sub) => {
+        if (sub != null) {
+          return of(undefined);
+        }
+        return this.openPlansDialog(roleName);
+      }),
+    );
+  }
+
+  /** @deprecated Use {@link runAfterProfileLoaded} — kept for layout call sites during transition. */
+  tryOpenSubscriptionPlansIfNeeded(): void {
+    this.runAfterProfileLoaded().subscribe();
+  }
+
+  private openPlansDialog(roleName: string): Observable<void> {
+    const data: SubscriptionPlansDialogData = { roleName };
+    return this.dialog
+      .open(SubscriptionPlansDialogComponent, {
+        width: 'min(1120px, 96vw)',
+        maxWidth: '96vw',
+        disableClose: true,
+        autoFocus: 'first-heading',
+        panelClass: 'subscription-plans-dialog-shell',
+        data,
+      })
+      .afterClosed()
+      .pipe(switchMap(() => this.syncCurrentUserSubscription().pipe(map(() => undefined))));
   }
 }
 
-/** First non-admin role for subscription-config lookup; falls back to first role. */
+/** Role used to load subscription-config cards (first non-admin, non-buyer role). */
 function primarySubscriptionRole(roles: string[] | undefined): string | undefined {
   const list = (roles ?? []).map((r) => r.trim()).filter(Boolean);
-  const nonAdmin = list.find((r) => !isAdminRole(r));
-  return nonAdmin ?? list[0];
+  return list.find((r) => !isAdminRole(r) && !isBuyerRole(r));
 }
