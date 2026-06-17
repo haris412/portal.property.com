@@ -173,6 +173,7 @@
     "notifications": "Notifications",
     "userMenu": {
       "settings": "Settings",
+      "subscriptionPlans": "Subscription plans",
       "userPortal": "User portal",
       "logout": "Logout"
     }

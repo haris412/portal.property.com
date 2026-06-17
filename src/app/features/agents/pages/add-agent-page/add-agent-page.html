@@ -103,10 +103,18 @@
           }
 
           <div class="add-agent-page__actions">
-            <button mat-stroked-button type="button" routerLink="/agents">
+            <button
+              type="button"
+              class="add-agent-page__action-button add-agent-page__action-button--secondary"
+              routerLink="/agents"
+            >
               {{ 'agents.form.cancel' | translate }}
             </button>
-            <button mat-flat-button color="primary" type="submit" [disabled]="submitting()">
+            <button
+              type="submit"
+              class="add-agent-page__action-button add-agent-page__action-button--primary"
+              [disabled]="submitting()"
+            >
               @if (submitting()) {
                 <mat-spinner diameter="20" />
               } @else {

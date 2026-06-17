@@ -1,21 +1,54 @@
 .subscription-plans-dialog {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+
+  &__heading {
+    position: relative;
+    display: grid;
+    gap: 0.5rem;
+    justify-items: center;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 2rem 1.5rem 1.25rem;
+    text-align: center;
+  }
+
+  &__close {
+    display: none;
+  }
+
   &__title {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-    padding-inline: 8px;
+    color: var(--font-main);
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-heavy);
+    line-height: var(--line-height-heading);
+  }
+
+  &__subtitle {
+    max-width: 34rem;
+    margin: 0;
+    color: var(--font-secondary);
+    font-size: var(--font-size-body-lg);
+    line-height: var(--line-height-body);
   }
 
   &__body {
-    padding-block: 12px 8px !important;
-    max-height: min(78vh, 720px);
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 1.25rem 2rem 2rem;
+    overflow: hidden;
+    background: var(--surface);
   }
 
   &__hint,
   &__error {
     margin: 0;
-    padding: 12px;
-    font-size: 0.95rem;
+    padding: 0.75rem;
   }
 
   &__error {
@@ -23,156 +56,396 @@
   }
 
   &__retry {
-    margin: 0 12px 12px;
+    margin: 0 0.75rem 0.75rem;
   }
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(3, minmax(17rem, 19.75rem));
     align-items: stretch;
+    justify-content: center;
+    gap: 1.25rem;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
   }
 
   &__card {
-    display: flex;
-    flex-direction: column;
-    border-radius: 16px;
-    padding: 1.5rem 1.35rem;
+    position: relative;
+    display: grid;
+    grid-template-rows: 8.25rem 8.25rem minmax(0, 1fr) auto;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
     background: var(--surface);
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--border-card-soft);
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-soft);
-    color: var(--font-main);
-    min-height: 100%;
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
 
-    &--emphasis {
-      background: var(--subscription-emphasis-bg, #141c3a);
-      border-color: transparent;
-      color: var(--surface);
-      box-shadow: 0 12px 32px rgba(20, 28, 58, 0.35);
+    &::before {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 0.35rem;
+      background: var(--border-soft);
+      content: '';
+      opacity: 0;
+      transition: opacity 180ms ease, background-color 180ms ease;
+    }
 
-      .subscription-plans-dialog__card-sub {
-        color: rgba(255, 255, 255, 0.72);
+    &:hover,
+    &:focus-within {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-soft);
+      transform: translateY(-0.25rem);
+
+      &::before {
+        opacity: 1;
+        background: var(--primary);
+      }
+    }
+
+    &--recommended {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+
+      &::before {
+        opacity: 1;
+        background: var(--primary);
       }
 
-      .subscription-plans-dialog__feature {
-        color: rgba(255, 255, 255, 0.95);
-      }
-
-      .subscription-plans-dialog__check {
-        background: var(--surface);
-        color: var(--subscription-emphasis-bg, #141c3a);
+      &:hover,
+      &:focus-within {
+        transform: translateY(-0.45rem);
       }
     }
 
     &--current {
-      border-color: var(--subscription-emphasis-bg, #141c3a);
-      box-shadow: 0 0 0 2px rgba(20, 28, 58, 0.2);
+      background: var(--surface-muted);
+      border-color: var(--border-soft-strong);
+
+      &::before {
+        opacity: 1;
+        background: var(--border-soft-strong);
+      }
     }
   }
 
   &__card-head {
-    margin-bottom: 1rem;
+    display: grid;
+    align-content: space-between;
+    gap: 1rem;
+    padding: 1.55rem 1.5rem 1.25rem;
+    background: var(--surface-soft);
+    border-bottom: 1px solid var(--border-soft);
   }
 
-  &__card-title {
-    margin: 0 0 0.35rem;
-    font-size: 1.1rem;
-    font-weight: 700;
+  &__card--recommended &__card-head {
+    background: var(--primary-soft);
   }
 
-  &__card-sub {
-    margin: 0 0 0.75rem;
-    font-size: 0.875rem;
+  &__card--current &__card-head {
+    background: var(--surface-muted);
+  }
+
+  &__card-kicker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+  }
+
+  &__plan-icon {
+    display: inline-grid;
+    width: 3.25rem;
+    height: 3.25rem;
+    place-items: center;
+    color: var(--primary);
+    background: var(--surface);
+    border: 1px solid var(--border-card-soft);
+    border-radius: var(--radius-lg);
+
+    mat-icon {
+      width: 1.65rem;
+      height: 1.65rem;
+      font-size: 1.65rem;
+    }
+  }
+
+  &__card--recommended &__plan-icon { border-color: var(--primary); }
+
+  &__card--current &__plan-icon {
+    color: var(--font-secondary);
+    border-color: var(--border-soft-strong);
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+
+    mat-icon {
+      width: 0.9rem;
+      height: 0.9rem;
+      font-size: var(--font-size-caption);
+    }
+
+    &--recommended {
+      color: var(--surface);
+      background: var(--primary);
+    }
+
+    &--current {
+      color: var(--primary);
+      background: var(--surface);
+      border: 1px solid var(--border-soft-strong);
+    }
+  }
+
+  &__plan-copy {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  &__plan-label {
+    margin: 0;
+    color: var(--primary);
+    font-size: var(--font-size-overline);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-compact);
+    text-transform: uppercase;
+  }
+
+  &__card--current &__plan-label {
     color: var(--font-secondary);
   }
 
-  &__price {
+  &__card-title {
     margin: 0;
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
+    color: var(--font-main);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-heavy);
+    line-height: var(--line-height-heading);
+  }
+
+  &__card-sub {
+    margin: 0;
+    color: var(--font-secondary);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+
+  &__price-panel {
+    display: grid;
+    align-content: center;
+    gap: 0.5rem;
+    min-height: 8.5rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  &__price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin: 0;
+    color: var(--font-main);
+    line-height: var(--line-height-display);
+
+    span {
+      font-size: var(--font-size-display);
+      font-weight: var(--font-weight-heavy);
+      letter-spacing: 0;
+    }
+
+    small {
+      color: var(--font-secondary);
+      font-size: var(--font-size-body);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-compact);
+      white-space: nowrap;
+    }
+  }
+
+  &__card--recommended &__price span {
+    color: var(--primary);
   }
 
   &__current-badge {
-    margin: 0.65rem 0 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 700;
+    margin: 0;
+    color: var(--primary);
+    font-size: var(--font-size-overline);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-compact);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--subscription-emphasis-bg, #141c3a);
   }
 
   &__quota-hint {
     margin: 0;
-    font-size: 0.8rem;
     color: var(--font-secondary);
-    line-height: 1.35;
-  }
-
-  &__card--emphasis &__current-badge {
-    color: rgba(255, 255, 255, 0.95);
-  }
-
-  &__card--emphasis &__quota-hint {
-    color: rgba(255, 255, 255, 0.78);
+    font-size: var(--font-size-caption);
+    line-height: var(--line-height-compact);
   }
 
   &__features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+    margin: 0;
+    padding: 1.35rem 1.5rem;
+    overflow: hidden;
     list-style: none;
-    margin: 0 0 1.25rem;
-    padding: 0;
-    flex: 1 1 auto;
   }
 
   &__feature {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.55rem;
-    margin-bottom: 0.65rem;
-    font-size: 0.9rem;
-    line-height: 1.35;
+    display: grid;
+    grid-template-columns: 1.1rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.7rem;
+    color: var(--font-secondary);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
   }
 
   &__check {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--subscription-emphasis-bg, #141c3a);
-    color: var(--surface);
-
-    mat-icon {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
-      font-weight: 700;
-    }
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.05rem;
+    color: var(--primary);
+    font-size: 1.1rem;
   }
 
   &__footer {
-    margin-top: auto;
-    padding-top: 0.5rem;
+    display: flex;
+    align-items: end;
+    padding: 0 1.5rem 1.5rem;
   }
 
   &__cta {
     width: 100%;
-    border-radius: 999px !important;
-    font-weight: 600 !important;
-    padding: 0.55rem 1rem !important;
+    min-height: 3rem;
+    border-radius: var(--radius-field) !important;
+    font-weight: var(--font-weight-bold) !important;
+    transition: transform 180ms ease;
 
-    &--inverse {
-      background: var(--surface) !important;
-      color: var(--subscription-emphasis-bg, #141c3a) !important;
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+      transform: translateY(-0.1rem);
     }
   }
 }
 
-@media (max-width: 991.98px) {
-  .subscription-plans-dialog__grid {
-    grid-template-columns: 1fr;
+@media (max-width: 1199.98px) {
+  .subscription-plans-dialog {
+    &__body {
+      overflow: auto;
+    }
+
+    &__grid {
+      grid-template-columns: repeat(2, minmax(17rem, 20rem));
+      height: auto;
+    }
+
+    &__card {
+      min-height: 38rem;
+    }
+  }
+}
+
+@media (max-width: 767.98px) {
+  .subscription-plans-dialog {
+    height: 100%;
+    overflow: hidden;
+
+    &__heading {
+      align-items: start;
+      justify-items: start;
+      padding: 1.5rem 3.75rem 0.75rem 1rem;
+      text-align: left;
+    }
+
+    &__close {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      display: inline-grid;
+      width: 2.5rem;
+      height: 2.5rem;
+      place-items: center;
+      color: var(--font-main);
+      background: var(--surface-soft);
+      border: 0;
+      border-radius: var(--radius-pill);
+
+      mat-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 1.25rem;
+      }
+    }
+
+    &__body {
+      display: block;
+      min-height: 0;
+      padding: 1rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    &__grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      height: auto;
+    }
+
+    &__card {
+      display: grid;
+      grid-template-rows: auto auto auto auto;
+      height: auto;
+      min-height: 0;
+      overflow: hidden;
+      transform: none;
+    }
+
+    &__card:hover,
+    &__card:focus-within,
+    &__card--recommended:hover,
+    &__card--recommended:focus-within {
+      transform: none;
+    }
+
+    &__card-head {
+      min-height: 0;
+      gap: 0.85rem;
+    }
+
+    &__price-panel {
+      min-height: 0;
+      align-content: start;
+    }
+
+    &__features {
+      min-height: 0;
+      overflow: visible;
+    }
+
+    &__card-head,
+    &__price-panel,
+    &__features,
+    &__footer {
+      padding-inline: 1.25rem;
+    }
   }
 }

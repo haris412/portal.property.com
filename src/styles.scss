@@ -535,6 +535,9 @@ div.mat-mdc-autocomplete-panel {
   .ag-row {
     background-color: transparent;
     border-bottom: none;
+    &-selected::before {
+      background-color: transparent;
+    }
   }
 
   .ag-paging-panel {
@@ -752,6 +755,14 @@ div.mat-mdc-autocomplete-panel {
 
 /** Subscription plan picker dialog (see `panelClass` on open). */
 .subscription-plans-dialog-shell .mat-mdc-dialog-container {
-  border-radius: 16px;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
   padding: 0;
+}
+
+.subscription-plans-dialog-shell .mat-mdc-dialog-surface {
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
 }

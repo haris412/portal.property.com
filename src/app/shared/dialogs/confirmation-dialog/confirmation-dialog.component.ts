@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
@@ -15,7 +14,6 @@ import type { ConfirmationDialogData } from './confirmation-dialog.models';
   selector: 'app-confirmation-dialog',
   standalone: true,
   imports: [
-    MatButtonModule,
     MatDialogTitle,
     MatDialogContent,
     MatDialogActions,

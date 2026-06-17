@@ -3,7 +3,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs';
-import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,7 +21,6 @@ import type { AgentListItem } from '../../../../core/models/agent.models';
     TranslateModule,
     ReactiveFormsModule,
     RouterLink,
-    MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
@@ -149,7 +147,7 @@ export class AddAgentPageComponent {
     }
 
     this.loadingAgent.set(true);
-    this.agentsApi.getAgentById(this.editAgentId).pipe(take(1)).subscribe({
+    this.agentsApi.getAgentById(this.editAgentId, this.agencyId).pipe(take(1)).subscribe({
       next: (agent) => {
         this.loadedAgent = agent;
         this.form.patchValue({

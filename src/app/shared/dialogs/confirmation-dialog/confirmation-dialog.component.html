@@ -11,14 +11,18 @@
 
 <mat-dialog-actions align="end" class="confirmation-dialog__actions">
   @if (!data.alertOnly) {
-    <button mat-stroked-button type="button" [mat-dialog-close]="false">
+    <button
+      type="button"
+      class="confirmation-dialog__button confirmation-dialog__button--secondary"
+      [mat-dialog-close]="false"
+    >
       {{ data.cancelLabel ?? ('base.cancel' | translate) }}
     </button>
   }
   <button
-    mat-flat-button
     type="button"
-    [color]="data.tone === 'warn' ? 'warn' : 'primary'"
+    class="confirmation-dialog__button confirmation-dialog__button--primary"
+    [class.confirmation-dialog__button--warn]="data.tone === 'warn'"
     [mat-dialog-close]="true"
   >
     {{ data.confirmLabel }}

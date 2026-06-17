@@ -60,6 +60,17 @@
               <span>{{ 'header.userMenu.settings' | translate }}</span>
             </a>
 
+            @if (canOpenSubscriptionPlans()) {
+              <button
+                type="button"
+                class="header__dropdown-item"
+                (click)="openSubscriptionPlans()"
+              >
+                <mat-icon fontIcon="workspace_premium" aria-hidden="true"></mat-icon>
+                <span>{{ 'header.userMenu.subscriptionPlans' | translate }}</span>
+              </button>
+            }
+
             <div class="header__dropdown-divider"></div>
 
             <button

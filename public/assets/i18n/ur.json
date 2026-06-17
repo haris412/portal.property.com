@@ -154,6 +154,7 @@
       "inbox": "ان باکس",
       "analytics": "تجزیات",
       "settings": "ترتیبات",
+      "subscriptionPlans": "Subscription plans",
       "profile": "پروفائل"
     }
   },
@@ -169,6 +170,7 @@
     "notifications": "اطلاعات",
     "userMenu": {
       "settings": "ترتیبات",
+      "subscriptionPlans": "Subscription plans",
       "userPortal": "صارف پورٹل",
       "logout": "لاگ آؤٹ"
     }
