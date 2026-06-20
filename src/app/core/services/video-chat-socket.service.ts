@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { socketIoNamespaceOptions } from '../http/socket-io-url';
 import { environment } from '../../../environments/environment';
 import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
@@ -37,18 +38,17 @@ export class VideoChatSocketService {
     return this.paymentCaptureFailedSubject.asObservable();
   }
 
-  /** Connects to Socket.IO namespace `/video-chat` on the same host as `environment.apiUrl`. */
+  /** Connects to Socket.IO namespace `/video-chat` on `environment.wsUrl`. */
   connect(token?: string | null): void {
     if (this.socket) return;
 
-    const base = (environment.apiUrl ?? '').replace(/\/+$/, '');
-    const url = `${base || 'http://localhost:3000'}/video-chat`;
-
     const trimmed = token?.trim();
-    this.socket = io(url, {
-      transports: ['websocket'],
-      ...(trimmed ? { auth: { token: trimmed } } : {}),
-    });
+    const { url, options } = socketIoNamespaceOptions(
+      '/video-chat',
+      environment.wsUrl,
+      trimmed ? { auth: { token: trimmed } } : {}
+    );
+    this.socket = io(url, options);
 
     this.socket.on('connect', () => this.connected$.next(true));
     this.socket.on('disconnect', () => this.connected$.next(false));

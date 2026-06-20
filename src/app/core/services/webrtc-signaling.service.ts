@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { socketIoNamespaceOptions } from '../http/socket-io-url';
 import { environment } from '../../../environments/environment';
 import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
@@ -46,15 +47,6 @@ export class WebRtcSignalingService {
   private readonly errorSubject = new Subject<unknown>();
   private readonly sessionExpiredSubject = new Subject<void>();
 
-  /**
-   * Same host as REST `environment.apiUrl`, namespace `/webrtc`
-   * (see LocateHome API README: `io(\`${API_BASE_URL}/webrtc\`, { ... })`).
-   */
-  private webrtcSocketUrl(): string {
-    const base = (environment.apiUrl ?? '').replace(/\/+$/, '');
-    return `${base || 'http://localhost:3000'}/webrtc`;
-  }
-
   get isConnected$(): Observable<boolean> {
     return this.connected$.asObservable();
   }
@@ -86,17 +78,18 @@ export class WebRtcSignalingService {
   connect(token?: string | null): void {
     if (this.socket) return;
 
-    const url = this.webrtcSocketUrl();
     const trimmed = token?.trim();
+    const { url, options } = socketIoNamespaceOptions(
+      '/webrtc',
+      environment.wsUrl,
+      trimmed ? { auth: { token: trimmed } } : {}
+    );
 
     /**
      * Omit `auth` when there is no token. Some servers treat `auth: { token: '' }` as “verify
      * empty JWT” and respond with INVALID_TOKEN; anonymous joins need no auth object.
      */
-    this.socket = io(url, {
-      transports: ['websocket'],
-      ...(trimmed ? { auth: { token: trimmed } } : {}),
-    });
+    this.socket = io(url, options);
 
     this.socket.on('connect', () => this.connected$.next(true));
     this.socket.on('disconnect', () => this.connected$.next(false));

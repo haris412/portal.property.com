@@ -9,7 +9,13 @@
 
     <section class="add-agent-page__header">
       <div class="add-agent-page__identity">
-        <div class="add-agent-page__avatar">{{ userInitials }}</div>
+        @if (imagePreviewUrl()) {
+          <div class="add-agent-page__avatar add-agent-page__avatar--img">
+            <img [src]="imagePreviewUrl()" alt="Profile preview" />
+          </div>
+        } @else {
+          <div class="add-agent-page__avatar">{{ userInitials }}</div>
+        }
         <div>
           <h1 class="add-agent-page__title">{{ fullName }}</h1>
           <p class="add-agent-page__subtitle">
@@ -26,6 +32,8 @@
     } @else {
       <form [formGroup]="form" (ngSubmit)="submit()">
         <div class="add-agent-page__card">
+
+          <!-- Card header -->
           <div class="add-agent-page__card-header">
             <div class="add-agent-page__card-icon">
               <mat-icon>person</mat-icon>
@@ -37,6 +45,8 @@
           </div>
 
           <div class="row g-3">
+
+            <!-- First Name -->
             <div class="col-12 col-md-6">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>{{ 'agents.form.firstName' | translate }}</mat-label>
@@ -47,6 +57,7 @@
               </mat-form-field>
             </div>
 
+            <!-- Last Name -->
             <div class="col-12 col-md-6">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>{{ 'agents.form.lastName' | translate }}</mat-label>
@@ -57,6 +68,7 @@
               </mat-form-field>
             </div>
 
+            <!-- Email -->
             <div class="col-12">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>{{ 'agents.form.email' | translate }}</mat-label>
@@ -71,7 +83,8 @@
               </mat-form-field>
             </div>
 
-            <div class="col-12">
+            <!-- Phone -->
+            <div class="col-12 col-md-6">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>{{ 'agents.form.phone' | translate }}</mat-label>
                 <mat-icon matPrefix>phone</mat-icon>
@@ -90,6 +103,71 @@
                 }
               </mat-form-field>
             </div>
+
+            <!-- Location -->
+            <div class="col-12 col-md-6">
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>{{ 'agents.form.location' | translate }}</mat-label>
+                <mat-icon matPrefix>location_on</mat-icon>
+                <input
+                  matInput
+                  formControlName="location"
+                  autocomplete="off"
+                  [placeholder]="'agents.form.locationPlaceholder' | translate"
+                  [matAutocomplete]="locationAuto"
+                  (input)="onLocationInput($any($event.target).value)"
+                />
+                @if (locationSearchLoading()) {
+                  <mat-hint>{{ 'addListing.location.search.loading' | translate }}</mat-hint>
+                }
+                <mat-autocomplete
+                  #locationAuto="matAutocomplete"
+                  [displayWith]="displayLocation"
+                  (optionSelected)="onLocationSelected($event)"
+                >
+                  @for (suggestion of locationSuggestions(); track suggestion.placeId) {
+                    <mat-option [value]="suggestion">
+                      <span class="add-agent-page__location-main">{{ suggestion.mainText }}</span>
+                      @if (suggestion.secondaryText) {
+                        <span class="add-agent-page__location-secondary"> — {{ suggestion.secondaryText }}</span>
+                      }
+                    </mat-option>
+                  }
+                </mat-autocomplete>
+              </mat-form-field>
+            </div>
+
+            <!-- Profile Image -->
+            <div class="col-12">
+              <label class="field-label">{{ 'agents.form.profileImage' | translate }}</label>
+
+              @if (!imagePreviewUrl() || selectedImageFile()) {
+                <app-upload-dropzone
+                  icon="person"
+                  [title]="'agents.form.uploadPhotoTitle' | translate"
+                  subtitle="PNG, JPG (max. 10MB)"
+                  accept=".png,.jpg,.jpeg"
+                  [multiple]="false"
+                  (filesSelected)="onImageSelected($event)"
+                />
+              }
+
+              @if (imagePreviewUrl()) {
+                <div class="add-agent-page__image-preview">
+                  <img [src]="imagePreviewUrl()" alt="Profile preview" class="add-agent-page__preview-img" />
+                  <div class="add-agent-page__preview-meta">
+                    @if (selectedImageFile()) {
+                      <span class="add-agent-page__file-name">{{ selectedImageFile()?.name }}</span>
+                    }
+                    <button type="button" class="add-agent-page__remove-img" (click)="removeImage()">
+                      <mat-icon fontIcon="delete_outline" aria-hidden="true" />
+                      {{ 'agents.form.removePhoto' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+
           </div>
 
           @if (!isEditMode()) {
@@ -122,6 +200,7 @@
               }
             </button>
           </div>
+
         </div>
       </form>
     }
