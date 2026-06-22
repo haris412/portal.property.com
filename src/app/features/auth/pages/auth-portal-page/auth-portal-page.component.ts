@@ -3,11 +3,11 @@ import { Location } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuthHeroPanelComponent } from '../../components/auth-hero-panel/auth-hero-panel.component';
-import { SignupCardComponent } from '../../components/signup-card/signup-card.component';
-import { LoginCardComponent } from '../../components/login-card/login-card.component';
+import { SignupComponent } from '../../components/signup/signup.component';
+import { LoginComponent } from '../../components/login/login.component';
 import { SegmentedTabsComponent, SegmentedTabItem } from '../../../../shared/ui/segmented-tabs/segmented-tabs.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { SignupPrefill } from '../../components/signup-card/signup-card.component';
+import { UserRole } from '../../../../core/interfaces/user.interface';
 
 @Component({
   selector: 'app-auth-portal-page',
@@ -16,8 +16,8 @@ import { SignupPrefill } from '../../components/signup-card/signup-card.componen
     TranslateModule,
     RouterLink,
     AuthHeroPanelComponent,
-    SignupCardComponent,
-    LoginCardComponent,
+    SignupComponent,
+    LoginComponent,
     SegmentedTabsComponent,
   ],
   templateUrl: './auth-portal-page.component.html',
@@ -27,7 +27,7 @@ import { SignupPrefill } from '../../components/signup-card/signup-card.componen
 export class AuthPortalPageComponent {
   private readonly location = inject(Location);
   private readonly route    = inject(ActivatedRoute);
-  private readonly auth     = inject(AuthService);
+  public  readonly auth     = inject(AuthService);
 
   readonly isAdminMode = this.route.snapshot.data['mode'] === 'admin';
 
@@ -36,9 +36,8 @@ export class AuthPortalPageComponent {
     { key: 'signup', label: 'Create Account' },
   ];
 
-  readonly activeSegment  = signal<'signup' | 'login'>('login');
+  
   readonly message = signal<EInvitationState>(EInvitationState.Processing);
-  readonly prefill = signal<SignupPrefill | null>(null);
 
   constructor() {
     if (this.isAdminMode) return;
@@ -51,20 +50,20 @@ export class AuthPortalPageComponent {
     const token = queryParams.get('token');
     this.checkTokenExpiry(token);
     if (queryParams.get('ref') === 'inquiry' || queryParams.has('roleName')) {
-      this.prefill.set({
-        email:     queryParams.get('email')     ?? undefined,
-        firstName: queryParams.get('firstName') ?? undefined,
-        rawPhone:  queryParams.get('phone')     ?? undefined,
-        roleName:  queryParams.get('roleName')  ?? undefined,
+      this.auth.userData.set({
+        email:     queryParams.get('email')     ?? '',
+        name: queryParams.get('firstName') ?? '',
+        phoneNumber:  queryParams.get('phone')     ?? '',
+        role:  (queryParams.get('roleName')  ?? 'buyer') as UserRole,
       });
-      this.activeSegment.set('signup');
+      this.auth.activeSegment.set('signup');
     }
 
     //this.location.replaceState('/auth');
   }
 
   onTabChanged(tab: string): void {
-    this.activeSegment.set(tab as 'login' | 'signup');
+    this.auth.activeSegment.set(tab as 'login' | 'signup');
   }
 
   checkTokenExpiry(token: string | null): void {

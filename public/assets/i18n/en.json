@@ -81,13 +81,13 @@
     "signUp": {
       "heading":      "Create an account",
       "description":  "Join EstatePortal to save properties, contact agents and manage your activity in one place.",
-      "firstName":    "First name",
+      "name":    "Name",
       "lastName":     "Last name",
       "email":        "Email address",
       "mobile":       "Mobile number",
       "phoneCode":    "Code",
       "location":     "Location",
-      "userType":     "User type",
+      "userType":     "Are you?",
       "agencyName":          "Agency name",
       "agencyNameChecking":  "Checking availability…",
       "agencyNameAvailable": "Available",
@@ -173,6 +173,7 @@
     "notifications": "Notifications",
     "userMenu": {
       "settings": "Settings",
+      "subscriptionPlans": "Subscription plans",
       "userPortal": "User portal",
       "logout": "Logout"
     }
@@ -318,7 +319,7 @@
     "form": {
       "personalInfo": "Personal information",
       "personalInfoSubtitle": "Details for the new agent account.",
-      "firstName": "First name",
+      "name": "Name",
       "lastName": "Last name",
       "email": "Email address",
       "phone": "Phone number",
@@ -329,7 +330,7 @@
       "editSubtitle": "Update this agent's profile details.",
       "loadingAgent": "Loading agent…",
       "newAgent": "New agent",
-      "firstNameRequired": "First name is required",
+      "nameRequired": "Name is required",
       "lastNameRequired": "Last name is required",
       "emailRequired": "Email is required",
       "emailInvalid": "Enter a valid email address",

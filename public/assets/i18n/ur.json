@@ -81,7 +81,7 @@
     "signUp": {
       "heading":        "اکاؤنٹ بنائیں",
       "description":    "پراپرٹیز محفوظ کرنے، ایجنٹس سے رابطہ کرنے اور اپنی سرگرمی ایک جگہ منظم کرنے کے لیے EstatePortal سے جڑیں۔",
-      "firstName":      "پہلا نام",
+      "name":      "نام",
       "lastName":       "آخری نام",
       "email":          "ای میل پتہ",
       "mobile":         "موبائل نمبر",
@@ -154,6 +154,7 @@
       "inbox": "ان باکس",
       "analytics": "تجزیات",
       "settings": "ترتیبات",
+      "subscriptionPlans": "Subscription plans",
       "profile": "پروفائل"
     }
   },
@@ -169,6 +170,7 @@
     "notifications": "اطلاعات",
     "userMenu": {
       "settings": "ترتیبات",
+      "subscriptionPlans": "Subscription plans",
       "userPortal": "صارف پورٹل",
       "logout": "لاگ آؤٹ"
     }

@@ -13,7 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { SelectableChipGridComponent } from '../../../../shared/ui/selectable-chip-grid/selectable-chip-grid';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
-import { SelectableChipItem } from '../../../../core/models/ui.models';
+import { SelectableChipItem } from '../../../../core/interfaces/ui.models';
 import { PropertyFeature } from '../../../../core/models/property-features.model';
 import { AddListingService } from '../../../../core/services/add-listing.service';
 import { TranslateModule } from '@ngx-translate/core';

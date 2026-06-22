@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
+import { socketIoBaseOptions } from '../../../core/http/socket-io-url';
 import { environment } from '../../../../environments/environment';
 import { CreateConversationDto } from '../models/createConversation.model';
 import { Message } from '../models/message.model';
@@ -39,22 +40,20 @@ export class MessagingService implements OnDestroy {
     // Don't create duplicate connections
     if (this.socket?.connected) return;
 
-    this.socket = io(environment.wsUrl, {
-      auth: { token },              // JWT sent on handshake
-      reconnection: true,           // auto reconnect if connection drops
-      reconnectionDelay: 1000,      // wait 1s before trying
-      reconnectionAttempts: 10,     // try 10 times then give up
-      transports: ['websocket'],    // skip long-polling, use WS directly
+    const { url, options } = socketIoBaseOptions(environment.wsUrl, {
+      auth: { token },
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 10,
     });
+    this.socket = io(url, options);
 
     // ─── Connection lifecycle events ────────────────────────────────
     this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket.id);
       this.connectionStatus$.next('connected');
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
       this.connectionStatus$.next('disconnected');
     });
 
@@ -69,7 +68,6 @@ export class MessagingService implements OnDestroy {
 
     // ─── Incoming real time events ──────────────────────────────────
     this.socket.on('new_message', (message: Message) => {
-      console.log('Received new message:', message);
       this.newMessage$.next(message);
     });
 
@@ -114,9 +112,6 @@ export class MessagingService implements OnDestroy {
 
   // Send a message — via socket, not REST
   sendMessage(conversationId: string, text: string): void {
-    console.log('socket.emit send_message:', { conversationId, text });
-    console.log('socket connected:', this.socket?.connected);
-    console.log('socket id:', this.socket?.id);
     this.socket.emit('send_message', { conversationId, text });
   }
 

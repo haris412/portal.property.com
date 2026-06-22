@@ -17,7 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
-import { ActionChipData } from '../../../../core/models/ui.models';
+import { ActionChipData } from '../../../../core/interfaces/ui.models';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({

@@ -7,7 +7,7 @@ import type {
   SubscriptionConfig,
   SubscriptionConfigBulkPayload,
   SubscriptionFeaturesListDto,
-} from '../models/subscription.models';
+} from '../interfaces/subscription.models';
 import { ResponseModel } from '../models/response.model';
 
 @Injectable({ providedIn: 'root' })

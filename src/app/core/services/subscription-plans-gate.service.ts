@@ -8,7 +8,7 @@ import {
   SubscriptionsApiService,
   extractSubscriptionFromResponse,
 } from './subscriptions-api.service';
-import type { Subscription } from '../models/subscription.models';
+import type { Subscription } from '../interfaces/subscription.models';
 import {
   SubscriptionPlansDialogComponent,
   type SubscriptionPlansDialogData,
@@ -82,7 +82,7 @@ export class SubscriptionPlansGateService {
         if (sub != null) {
           return of(undefined);
         }
-        return this.openPlansDialog(roleName);
+        return this.openPlansDialog(roleName, true);
       }),
     );
   }
@@ -92,14 +92,34 @@ export class SubscriptionPlansGateService {
     this.runAfterProfileLoaded().subscribe();
   }
 
-  private openPlansDialog(roleName: string): Observable<void> {
-    const data: SubscriptionPlansDialogData = { roleName };
+  openPlansDialogForCurrentUser(): Observable<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return of(undefined);
+    }
+
+    const user = this.auth.getCurrentUser();
+    if (!user?._id || isSubscriptionPlansGateExcluded(user.roles)) {
+      return of(undefined);
+    }
+
+    const roleName = primarySubscriptionRole(user.roles);
+    if (!roleName) {
+      return of(undefined);
+    }
+
+    return this.openPlansDialog(roleName, false);
+  }
+
+  private openPlansDialog(roleName: string, disableClose: boolean): Observable<void> {
+    const data: SubscriptionPlansDialogData = { roleName, canClose: !disableClose };
     return this.dialog
       .open(SubscriptionPlansDialogComponent, {
-        width: 'min(1120px, 96vw)',
+        width: 'min(1500px, 96vw)',
+        height: '94vh',
         maxWidth: '96vw',
-        disableClose: true,
-        autoFocus: 'first-heading',
+        maxHeight: '94vh',
+        disableClose,
+        autoFocus: false,
         panelClass: 'subscription-plans-dialog-shell',
         data,
       })

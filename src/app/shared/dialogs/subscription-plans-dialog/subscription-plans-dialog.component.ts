@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { finalize } from 'rxjs/operators';
@@ -18,12 +18,13 @@ import type {
   SubscriptionConfigListDto,
   SubscriptionCreateDTO,
   SubscriptionType,
-} from '../../../core/models/subscription.models';
+} from '../../../core/interfaces/subscription.models';
 import type { ResponseModel } from '../../../core/models/response.model';
 import { NotificationService } from '../../../core/services/notification.service';
 
 export interface SubscriptionPlansDialogData {
   roleName: string;
+  canClose?: boolean;
 }
 
 export interface PlanCardViewModel {
@@ -31,7 +32,9 @@ export interface PlanCardViewModel {
   subscriptionType: SubscriptionType;
   title: string;
   subtitle: string;
+  icon: string;
   priceDisplay: string;
+  billingLabel: string;
   emphasis: boolean;
   lines: string[];
   numberOfFeatureListing: number;
@@ -42,7 +45,7 @@ export interface PlanCardViewModel {
 @Component({
   selector: 'app-subscription-plans-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule],
   templateUrl: './subscription-plans-dialog.component.html',
   styleUrl: './subscription-plans-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +72,10 @@ export class SubscriptionPlansDialogComponent {
 
   retryLoad(): void {
     this.loadPlans();
+  }
+
+  closeDialog(): void {
+    this.dialogRef.close();
   }
 
   subscribePlan(card: PlanCardViewModel): void {
@@ -219,7 +226,9 @@ export function buildPlanCards(
       subscriptionType: 'Free',
       title: 'Free Plan',
       subtitle: 'For personal',
+      icon: 'home',
       priceDisplay: '$0',
+      billingLabel: 'forever',
       emphasis: false,
       lines: freeLines.length > 0 ? freeLines : ['Basic access'],
       numberOfFeatureListing: quotasFree.numberOfFeatureListing,
@@ -231,7 +240,9 @@ export function buildPlanCards(
       subscriptionType: 'Monthly',
       title: 'Monthly Plan',
       subtitle: 'For small business',
+      icon: 'calendar_month',
       priceDisplay: `$${monthlyTotal.toFixed(monthlyTotal % 1 === 0 ? 0 : 2)}`,
+      billingLabel: 'month',
       emphasis: true,
       lines: monthlyLines.length > 0 ? monthlyLines : ['No features configured'],
       numberOfFeatureListing: quotasAll.numberOfFeatureListing,
@@ -243,7 +254,9 @@ export function buildPlanCards(
       subscriptionType: 'Annual',
       title: 'Annual Plan',
       subtitle: 'For enterprise',
+      icon: 'domain',
       priceDisplay: `$${annualTotal.toFixed(annualTotal % 1 === 0 ? 0 : 2)}`,
+      billingLabel: 'year',
       emphasis: false,
       lines: annualLines.length > 0 ? annualLines : ['No features configured'],
       numberOfFeatureListing: quotasAll.numberOfFeatureListing,

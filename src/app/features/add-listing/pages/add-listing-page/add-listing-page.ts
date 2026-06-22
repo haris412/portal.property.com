@@ -61,7 +61,7 @@ import {
   SubscriptionsApiService,
   extractSubscriptionFromSuccessResponse,
 } from '../../../../core/services/subscriptions-api.service';
-import type { Subscription } from '../../../../core/models/subscription.models';
+import type { Subscription } from '../../../../core/interfaces/subscription.models';
 import { applyServerFieldErrors } from '../../../../core/http/apply-server-field-errors';
 import { apiErrorSummary, parseHttpApiError } from '../../../../core/http/parse-http-api-error';
 import {
@@ -127,10 +127,6 @@ function contactPhoneFormatValidator(control: AbstractControl): ValidationErrors
   return null;
 }
 
-function nonEmptyArrayValidator(control: AbstractControl): ValidationErrors | null {
-  const value = control.value;
-  return Array.isArray(value) && value.length > 0 ? null : { required: true };
-}
 
 function mediaRequirementValidator(control: AbstractControl): ValidationErrors | null {
   const images = (control.get('images')?.value as File[] | null) ?? [];
@@ -765,7 +761,6 @@ export class AddListingPageComponent {
   }
 
   goToNextStep(): void {
-    console.log(this.locationForm);
     const nextIndex = this.activeStepIndex() + 1;
     if (nextIndex >= this.stepOrder.length) {
       return;
@@ -1063,7 +1058,6 @@ export class AddListingPageComponent {
     const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
     // Emit so FeaturesAmenitiesSection syncs chip selection.
     this.amenitiesForm.patchValue({ selectedFeatureIds }, { emitEvent: true });
-    console.log(this.locationForm);
     // Media: existing uploads are URLs; current media form expects Files, so we don't prefill file inputs.
     this.refreshListingFormValidity();
     this.basicInfoForm.markAsUntouched();

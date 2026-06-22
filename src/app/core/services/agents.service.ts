@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type {
   AgentListItem,
@@ -91,9 +92,24 @@ export class AgentsService {
     return this.http.get<unknown>(this.baseUrl, { params }).pipe(map((body) => normalizeAgentsList(body)));
   }
 
-  getAgentById(agentId: string): Observable<AgentListItem> {
-    return this.http.get<unknown>(`${this.baseUrl}/${encodeURIComponent(agentId)}`).pipe(
+  getAgentById(agentId: string, agencyId?: string): Observable<AgentListItem> {
+    const encodedId = encodeURIComponent(agentId.trim());
+    return this.http.get<unknown>(`${this.baseUrl}/${encodedId}`).pipe(
       map((body) => this.extractAgentFromResponse(body)),
+      catchError((err: unknown) => {
+        if (!(err instanceof HttpErrorResponse) || err.status !== 404 || !agencyId?.trim()) {
+          return throwError(() => err);
+        }
+        return this.getAgentsByAgency(agencyId).pipe(
+          map((result) => {
+            const agent = result.agents.find((row) => row._id === agentId);
+            if (!agent) {
+              throw err;
+            }
+            return agent;
+          }),
+        );
+      }),
     );
   }
 

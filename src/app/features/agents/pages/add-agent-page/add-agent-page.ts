@@ -252,7 +252,7 @@ export class AddAgentPageComponent implements OnDestroy {
     if (!this.editAgentId) return;
 
     this.loadingAgent.set(true);
-    this.agentsApi.getAgentById(this.editAgentId).pipe(take(1)).subscribe({
+    this.agentsApi.getAgentById(this.editAgentId, this.agencyId).pipe(take(1)).subscribe({
       next: (agent) => {
         this.loadedAgent = agent;
         this.form.patchValue({
