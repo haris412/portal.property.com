@@ -25,7 +25,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 interface LoginFeatureItem { icon: string; titleKey: string; descriptionKey: string; }
 
 @Component({
-  selector: 'app-login-card',
+  selector: 'app-login',
   standalone: true,
   imports: [
     TranslateModule,
@@ -39,11 +39,11 @@ interface LoginFeatureItem { icon: string; titleKey: string; descriptionKey: str
     SocialButtonComponent,
     FormFieldErrorComponent,
   ],
-  templateUrl: './login-card.component.html',
-  styleUrl: './login-card.component.scss',
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginCardComponent {
+export class LoginComponent {
   /** Pass true from admin portal — enables OTP flow via AdminAuthService */
   @Input() isAdmin    = false;
   readonly showIntro = input(true);

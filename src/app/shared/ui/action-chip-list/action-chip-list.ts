@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { ActionChipData } from '../../../core/models/ui.models';
+import { ActionChipData } from '../../../core/interfaces/ui.models';
 
 @Component({
   selector: 'app-action-chip-list',

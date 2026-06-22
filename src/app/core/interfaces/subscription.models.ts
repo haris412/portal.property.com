@@ -1,5 +1,5 @@
-export type { RoleName } from './role.models';
-export { ROLE_NAME_VALUES } from './role.models';
+export type { RoleName } from '../models/role.models';
+export { ROLE_NAME_VALUES } from '../models/role.models';
 
 export const SUBSCRIPTION_TYPE_VALUES = ['Free', 'Monthly', 'Annual'] as const;
 export type SubscriptionType = (typeof SUBSCRIPTION_TYPE_VALUES)[number];

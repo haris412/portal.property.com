@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { SelectableChipItem } from '../../../core/models/ui.models';
+import { SelectableChipItem } from '../../../core/interfaces/ui.models';
 
 @Component({
   selector: 'app-selectable-chip-grid',

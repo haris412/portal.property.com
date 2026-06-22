@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { OptionItem } from '../../../core/models/ui.models';
+import { OptionItem } from '../../../core/interfaces/ui.models';
 
 @Component({
   selector: 'app-segmented-option-group',

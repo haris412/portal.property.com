@@ -34,7 +34,7 @@
               </header>
 
               <div class="auth-card-host">
-                <app-login-card [isAdmin]="true" [showIntro]="false" />
+                <app-login [isAdmin]="true" [showIntro]="false" />
               </div>
 
               <a routerLink="/auth" class="admin-portal-link">
@@ -50,14 +50,14 @@
               <header class="auth-page-intro">
                 <h1 class="auth-page-title">
                   {{
-                    activeSegment() === 'signup'
+                    auth.activeSegment() === 'signup'
                       ? ('public.signUp.heading' | translate)
                       : ('public.signIn.heading' | translate)
                   }}
                 </h1>
                 <p class="auth-page-copy">
                   {{
-                    activeSegment() === 'signup'
+                    auth.activeSegment() === 'signup'
                       ? ('public.signUp.description' | translate)
                       : ('public.signIn.description' | translate)
                   }}
@@ -66,7 +66,7 @@
 
               <div class="auth-tabs-wrap">
                 <app-segmented-tabs
-                  [active]="activeSegment()"
+                  [active]="auth.activeSegment()"
                   [tabs]="authTabs"
                   density="compact"
                   ariaLabel="Authentication mode"
@@ -75,10 +75,10 @@
               </div>
 
               <div class="auth-card-host">
-                @if (activeSegment() === 'signup') {
-                  <app-signup-card [prefill]="prefill()" [showIntro]="false" />
+                @if (auth.activeSegment() === 'signup') {
+                  <app-signup  [showIntro]="false" />
                 } @else {
-                  <app-login-card [showIntro]="false" />
+                  <app-login [showIntro]="false" />
                 }
               </div>
             }

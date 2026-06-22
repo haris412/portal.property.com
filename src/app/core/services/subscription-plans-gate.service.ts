@@ -8,7 +8,7 @@ import {
   SubscriptionsApiService,
   extractSubscriptionFromResponse,
 } from './subscriptions-api.service';
-import type { Subscription } from '../models/subscription.models';
+import type { Subscription } from '../interfaces/subscription.models';
 import {
   SubscriptionPlansDialogComponent,
   type SubscriptionPlansDialogData,

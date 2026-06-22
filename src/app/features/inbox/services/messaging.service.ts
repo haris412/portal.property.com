@@ -50,12 +50,10 @@ export class MessagingService implements OnDestroy {
 
     // ─── Connection lifecycle events ────────────────────────────────
     this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket.id);
       this.connectionStatus$.next('connected');
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
       this.connectionStatus$.next('disconnected');
     });
 
@@ -70,7 +68,6 @@ export class MessagingService implements OnDestroy {
 
     // ─── Incoming real time events ──────────────────────────────────
     this.socket.on('new_message', (message: Message) => {
-      console.log('Received new message:', message);
       this.newMessage$.next(message);
     });
 
@@ -115,9 +112,6 @@ export class MessagingService implements OnDestroy {
 
   // Send a message — via socket, not REST
   sendMessage(conversationId: string, text: string): void {
-    console.log('socket.emit send_message:', { conversationId, text });
-    console.log('socket connected:', this.socket?.connected);
-    console.log('socket id:', this.socket?.id);
     this.socket.emit('send_message', { conversationId, text });
   }
 

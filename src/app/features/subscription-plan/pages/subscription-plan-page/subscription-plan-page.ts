@@ -27,7 +27,7 @@ import type {
   SubscriptionConfigListDto,
   SubscriptionFeatures,
   SubscriptionFeaturesListDto,
-} from '../../../../core/models/subscription.models';
+} from '../../../../core/interfaces/subscription.models';
 import type { ResponseModel } from '../../../../core/models/response.model';
 import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
 

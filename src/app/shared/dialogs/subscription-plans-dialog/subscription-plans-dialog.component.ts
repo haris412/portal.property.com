@@ -18,7 +18,7 @@ import type {
   SubscriptionConfigListDto,
   SubscriptionCreateDTO,
   SubscriptionType,
-} from '../../../core/models/subscription.models';
+} from '../../../core/interfaces/subscription.models';
 import type { ResponseModel } from '../../../core/models/response.model';
 import { NotificationService } from '../../../core/services/notification.service';
 

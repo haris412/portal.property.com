@@ -20,7 +20,6 @@ const SIGNUP_EXCLUDED_ROLES = new Set(['Admin', 'Buyer', 'PrimaryAgencyAdmin']);
 /** Maps backend roles to signup options, excluding roles not available for self-registration. */
 export function rolesToUserTypeOptions(roleNames: string[]): UserTypeOption[] {
   return roleNames
-    .filter((r): r is string => typeof r === 'string' && r.trim().length > 0)
     .filter((r) => !SIGNUP_EXCLUDED_ROLES.has(r.trim()))
     .map((r) => {
       const trimmed = r.trim();
