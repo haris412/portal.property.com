@@ -2,135 +2,108 @@
                   [description]="'addListing.pricing.description' | translate"
                   icon="payments"
                   variant="dashboard">
-  <div class="row g-4 pricing-details-form"
-       [formGroup]="form">
+  <div class="row g-4 pricing-details-form" [formGroup]="form">
+
+    <!-- Price -->
     <div class="col-12 col-md-6 col-xl-4">
       <label class="field-label">
         {{ 'addListing.pricing.price.label' | translate }}
         <span class="field-hint">{{ 'addListing.pricing.price.hint' | translate }}</span>
       </label>
-      <mat-form-field appearance="outline"
-                      class="w-100 number-stepper-field">
+      <mat-form-field appearance="outline" class="w-100 number-stepper-field">
         <span matTextPrefix>Rs&nbsp;</span>
-
         <input matInput
                type="number"
                formControlName="price"
                placeholder="75000"
                min="0"
-               step="1"
-               (keydown)="blockMinusOnNonNegativeNumberInput($event)" />
-
-        <div matSuffix
-             class="number-stepper-field__suffix number-stepper-field__suffix--controls-only">
+               (keydown)="blockMinus($event)" />
+        <div matSuffix class="number-stepper-field__suffix number-stepper-field__suffix--controls-only">
           <div class="number-stepper-field__stepper">
-            <button mat-icon-button
-                    type="button"
-                    class="number-stepper-field__step-btn"
-                    aria-label="Increase price"
-                    (click)="stepNumberControl('price', 1)">
-              <mat-icon fontSet="material-symbols-outlined"
-                        inline>keyboard_arrow_up</mat-icon>
+            <button mat-icon-button type="button" class="number-stepper-field__step-btn"
+                    aria-label="Increase price" (click)="stepControl('price', 1)">
+              <mat-icon fontSet="material-symbols-outlined" inline>keyboard_arrow_up</mat-icon>
             </button>
-
-            <button mat-icon-button
-                    type="button"
-                    class="number-stepper-field__step-btn"
-                    aria-label="Decrease price"
-                    (click)="stepNumberControl('price', -1)">
-              <mat-icon fontSet="material-symbols-outlined"
-                        inline>keyboard_arrow_down</mat-icon>
+            <button mat-icon-button type="button" class="number-stepper-field__step-btn"
+                    aria-label="Decrease price" (click)="stepControl('price', -1)">
+              <mat-icon fontSet="material-symbols-outlined" inline>keyboard_arrow_down</mat-icon>
             </button>
           </div>
         </div>
-
         <mat-error>
-          @if (form.get('price')?.hasError('server')) {
-          {{ form.get('price')?.getError('server') }}
-          } @else if (form.get('price')?.hasError('required')) {
-          {{ 'addListing.pricing.price.required' | translate }}
+          @if (form.controls.price.hasError('server')) {
+            {{ form.controls.price.getError('server') }}
+          } @else if (form.controls.price.hasError('required')) {
+            {{ 'addListing.pricing.price.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
+    <!-- Area size -->
     <div class="col-12 col-md-6 col-xl-4">
       <label class="field-label">{{ 'addListing.pricing.areaSize.label' | translate }}</label>
-      <mat-form-field appearance="outline"
-                      class="w-100 number-stepper-field">
+      <mat-form-field appearance="outline" class="w-100 number-stepper-field">
         <input matInput
                type="number"
                formControlName="areaSize"
                placeholder="1200"
                min="0"
-               step="1"
-               (keydown)="blockMinusOnNonNegativeNumberInput($event)" />
-
-        <div matSuffix
-             class="number-stepper-field__suffix">
+               (keydown)="blockMinus($event)" />
+        <div matSuffix class="number-stepper-field__suffix">
           <div class="number-stepper-field__stepper">
-            <button mat-icon-button
-                    type="button"
-                    class="number-stepper-field__step-btn"
-                    aria-label="Increase area size"
-                    (click)="stepNumberControl('areaSize', 1)">
+            <button mat-icon-button type="button" class="number-stepper-field__step-btn"
+                    aria-label="Increase area size" (click)="stepControl('areaSize', 1)">
               <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>
             </button>
-
-            <button mat-icon-button
-                    type="button"
-                    class="number-stepper-field__step-btn"
-                    aria-label="Decrease area size"
-                    (click)="stepNumberControl('areaSize', -1)">
+            <button mat-icon-button type="button" class="number-stepper-field__step-btn"
+                    aria-label="Decrease area size" (click)="stepControl('areaSize', -1)">
               <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
             </button>
           </div>
-
-          <span class="number-stepper-field__unit">
-            {{ form.get('areaUnit')?.value }}
-          </span>
+          <span class="number-stepper-field__unit">{{ form.controls.areaUnit.value }}</span>
         </div>
-
         <mat-error>
-          @if (form.get('areaSize')?.hasError('server')) {
-          {{ form.get('areaSize')?.getError('server') }}
-          } @else if (form.get('areaSize')?.hasError('required')) {
-          {{ 'addListing.pricing.areaSize.required' | translate }}
+          @if (form.controls.areaSize.hasError('server')) {
+            {{ form.controls.areaSize.getError('server') }}
+          } @else if (form.controls.areaSize.hasError('required')) {
+            {{ 'addListing.pricing.areaSize.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
+    <!-- Area unit -->
     <div class="col-12 col-md-6">
       <label class="field-label">{{ 'addListing.pricing.areaUnit.label' | translate }}</label>
-      <mat-form-field appearance="outline"
-                      class="w-100">
-        <input matInput
-               formControlName="areaUnit"
-               placeholder="sqft" />
+      <mat-form-field appearance="outline" class="w-100">
+        <input matInput formControlName="areaUnit" placeholder="sqft" />
         <mat-error>
-          @if (form.get('areaUnit')?.hasError('server')) {
-          {{ form.get('areaUnit')?.getError('server') }}
-          } @else if (form.get('areaUnit')?.hasError('required')) {
-          {{ 'addListing.pricing.areaUnit.required' | translate }}
+          @if (form.controls.areaUnit.hasError('server')) {
+            {{ form.controls.areaUnit.getError('server') }}
+          } @else if (form.controls.areaUnit.hasError('required')) {
+            {{ 'addListing.pricing.areaUnit.required' | translate }}
           }
         </mat-error>
       </mat-form-field>
     </div>
 
-    @for (counter of counters(); track counter.id) {
-    <div class="col-12 col-md-6">
-      <app-counter-field [label]="counter.label"
-                         [value]="form.get(counter.id)?.value ?? counter.value"
-                         (decremented)="decrementCounter(counter.id)"
-                         (incremented)="incrementCounter(counter.id)" />
-      @if (form.get(counter.id)?.hasError('server')) {
-      <div class="field-validation-msg"
-           role="alert">
-        {{ form.get(counter.id)?.getError('server') }}
+    <!-- Counters: Bedrooms / Bathrooms / Parking / Floors -->
+    @for (counter of counters; track counter.id) {
+      <div class="col-12 col-md-6">
+        <app-counter-field
+          [label]="counter.label"
+          [value]="form.get(counter.id)?.value ?? 0"
+          (decremented)="stepControl(counter.id, -1)"
+          (incremented)="stepControl(counter.id, 1)"
+        />
+        @if (form.get(counter.id)?.hasError('server')) {
+          <div class="field-validation-msg" role="alert">
+            {{ form.get(counter.id)?.getError('server') }}
+          </div>
+        }
       </div>
-      }
-    </div>
     }
+
   </div>
 </app-section-card>

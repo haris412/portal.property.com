@@ -200,10 +200,9 @@ function parseLatLngFromMapLink(mapLink: string): { lat: number; lng: number } |
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AddListingPageComponent {
-  // basicInfoForm is created inside BasicInformationSectionComponent
-  // parent receives it via (formReady) output binding
+  // forms created inside their step components — parent receives via (formReady) output
   basicInfoForm!: FormGroup;
-  readonly pricingForm: FormGroup;
+  pricingForm!: FormGroup;
   readonly amenitiesForm: FormGroup;
   readonly mediaForm: FormGroup;
   readonly contactForm: FormGroup;
@@ -294,7 +293,7 @@ export class AddListingPageComponent {
 
     return [
       { label: 'Add basic information', complete: this.basicInfoForm?.valid ?? false },
-      { label: 'Add pricing and details', complete: this.pricingForm.valid },
+      { label: 'Add pricing and details', complete: this.pricingForm?.valid ?? false },
       { label: 'Set property location', complete: this.locationForm.valid && this.hasValidCoordinates() },
       { label: 'Add media', complete: hasMedia },
       { label: 'Add contact information', complete: this.contactForm.valid },
@@ -317,7 +316,7 @@ export class AddListingPageComponent {
 
     const readinessByStep: Record<AddListingStepKey, boolean> = {
       'basic-info': this.basicInfoForm?.valid ?? false,
-      pricing: this.pricingForm.valid,
+      pricing: this.pricingForm?.valid ?? false,
       location: this.locationForm.valid && this.hasValidCoordinates(),
       'features-media': hasFeaturesOrMedia,
       'contact-description': this.contactForm.valid && this.descriptionForm.valid,
@@ -338,13 +337,12 @@ export class AddListingPageComponent {
   );
   readonly progressTrayOpen = signal(false);
 
-  // drives the Continue button — each step will be wired here as we migrate them
+  // drives the Continue button — each migrated step added here
   readonly currentStepCanContinue = computed(() => {
     this.listingFormsTick();
-    const key = this.activeStepKey();
-    switch (key) {
+    switch (this.activeStepKey()) {
       case 'basic-info': return this.basicInfoForm?.valid ?? false;
-      // other steps will be added here as we migrate them one by one
+      case 'pricing':    return this.pricingForm?.valid   ?? false;
       default:           return true;
     }
   });
@@ -539,21 +537,11 @@ export class AddListingPageComponent {
   readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
 
   constructor(private readonly fb: FormBuilder) {
-    // basicInfoForm is NOT built here — BasicInformationSectionComponent owns it
-    // parent receives it via onBasicInfoFormReady() when child emits (formReady)
+    // basicInfoForm + pricingForm are owned by their step components
+    // parent receives them via onBasicInfoFormReady() / onPricingFormReady()
 
     this.descriptionForm = this.fb.group({
       propertyDescription: ['', [Validators.required, Validators.minLength(20)]],
-    });
-
-    this.pricingForm = this.fb.group({
-      price: [75000, [Validators.required, Validators.min(0)]],
-      areaSize: [1200, [Validators.required, Validators.min(0)]],
-      areaUnit: ['sqft', Validators.required],
-      numBedrooms: [2, [Validators.required, Validators.min(0)]],
-      numBathrooms: [2, [Validators.required, Validators.min(0)]],
-      numParkingSpaces: [0, [Validators.required, Validators.min(0)]],
-      numFloors: [0, [Validators.required, Validators.min(0)]],
     });
 
     this.amenitiesForm = this.fb.group({
@@ -582,9 +570,8 @@ export class AddListingPageComponent {
       longitude:         [null as number | null],
     });
 
-    // basicInfoForm streams are wired in onBasicInfoFormReady() after child emits it
+    // basicInfoForm + pricingForm streams wired in their onXxxFormReady() handlers
     merge(
-      this.pricingForm.valueChanges,
       this.locationForm.valueChanges,
       this.amenitiesForm.valueChanges
     )
@@ -592,8 +579,6 @@ export class AddListingPageComponent {
       .subscribe(() => this.aiListingFormsTick.update((n: number) => n + 1));
 
     merge(
-      this.pricingForm.valueChanges,
-      this.pricingForm.statusChanges,
       this.locationForm.valueChanges,
       this.locationForm.statusChanges,
       this.amenitiesForm.valueChanges,
@@ -645,7 +630,7 @@ export class AddListingPageComponent {
   }
 
   private evalAiDescriptionContextReady(): boolean {
-    if (this.basicInfoForm.invalid || this.pricingForm.invalid || this.locationForm.invalid) {
+    if (!this.basicInfoForm?.valid || !this.pricingForm?.valid || this.locationForm.invalid) {
       return false;
     }
     const ids = (this.amenitiesForm.get('selectedFeatureIds')?.value ?? []) as string[];
@@ -760,22 +745,31 @@ export class AddListingPageComponent {
     this.activeStepKey.set(stepKey);
   }
 
-  // called by (formReady) output from BasicInformationSectionComponent
+  // called by (formReady) from BasicInformationSectionComponent
   onBasicInfoFormReady(form: FormGroup): void {
-    console.log('[AddListing] basicInfoForm received from child');
+    console.log('[AddListing] basicInfoForm received');
     this.basicInfoForm = form;
+    this.wireFormToTicks(form, true);
+  }
 
-    // wire basicInfoForm into both tick streams so computed signals re-evaluate on change
+  // called by (formReady) from PricingDetailsSectionComponent
+  onPricingFormReady(form: FormGroup): void {
+    console.log('[AddListing] pricingForm received');
+    this.pricingForm = form;
+    this.wireFormToTicks(form, true);
+  }
+
+  // wires a step form into listingFormsTick (and optionally aiListingFormsTick)
+  // so all computed signals re-evaluate when the form changes
+  private wireFormToTicks(form: FormGroup, includeAi: boolean): void {
     merge(form.valueChanges, form.statusChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.aiListingFormsTick.update(n => n + 1);
         this.listingFormsTick.update(n => n + 1);
+        if (includeAi) this.aiListingFormsTick.update(n => n + 1);
       });
-
-    // trigger once so currentStepCanContinue and publishRequirements reflect initial state
+    // initial tick so computed signals reflect the form's starting state
     this.listingFormsTick.update(n => n + 1);
-    console.log('[AddListing] basicInfoForm wired to tick streams');
   }
 
   goToPreviousStep(): void {
@@ -1034,15 +1028,15 @@ export class AddListingPageComponent {
 
     this.descriptionForm.patchValue({ propertyDescription }, { emitEvent: false });
 
-    this.pricingForm.patchValue(
+    this.pricingForm?.patchValue(
       {
-        price: doc.price ?? 0,
-        areaSize: doc.areaSize ?? 0,
-        areaUnit: doc.areaUnit ?? 'sqft',
-        numBedrooms: doc.numBedrooms ?? 0,
-        numBathrooms: doc.numBathrooms ?? 0,
+        price:            doc.price            ?? 0,
+        areaSize:         doc.areaSize         ?? 0,
+        areaUnit:         doc.areaUnit         ?? 'sqft',
+        numBedrooms:      doc.numBedrooms      ?? 0,
+        numBathrooms:     doc.numBathrooms     ?? 0,
         numParkingSpaces: doc.numParkingSpaces ?? 0,
-        numFloors: doc.numFloors ?? 0,
+        numFloors:        doc.numFloors        ?? 0,
       },
       { emitEvent: false }
     );

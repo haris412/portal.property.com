@@ -1,37 +1,27 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
-  Input,
+  EventEmitter,
   OnInit,
+  Output,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { merge } from 'rxjs';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { startWith } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { CounterFieldComponent } from '../../../../shared/ui/counter-field/counter-field';
 import { TranslateModule } from '@ngx-translate/core';
-import { MatIconModule } from '@angular/material/icon';
 
-interface PricingField {
-  id: string;
-  label: string;
-  value: string;
-  prefix?: string;
-  suffix?: string;
-  hint?: string;
-}
-
-interface CounterItem {
-  id: string;
-  label: string;
-  value: number;
-}
+// numeric fields that must stay ≥ 0
+const NUMERIC_CONTROLS = [
+  'price', 'areaSize', 'numBedrooms', 'numBathrooms', 'numParkingSpaces', 'numFloors',
+] as const;
 
 @Component({
   selector: 'app-pricing-details-section',
@@ -42,109 +32,82 @@ interface CounterItem {
     MatInputModule,
     MatIconModule,
     SectionCardComponent,
-    CounterFieldComponent
+    CounterFieldComponent,
   ],
   templateUrl: './pricing-details-section.html',
   styleUrl: './pricing-details-section.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PricingDetailsSectionComponent implements OnInit {
-  @Input({ required: true }) form!: FormGroup;
+  private readonly fb          = inject(FormBuilder);
+  private readonly destroyRef  = inject(DestroyRef);
 
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
+  // declared before buildForm() — buildForm() subscribes to statusChanges immediately
+  readonly canContinue = signal(false);
+  readonly form        = this.buildForm();
 
-  private static readonly NON_NEGATIVE_FIELDS = [
-    'price',
-    'areaSize',
-    'numBedrooms',
-    'numBathrooms',
-    'numParkingSpaces',
-    'numFloors',
-  ] as const;
+  // static list — label + id only, form is the source of truth for values
+  readonly counters: readonly { id: string; label: string }[] = [
+    { id: 'numBedrooms',      label: 'Bedrooms'       },
+    { id: 'numBathrooms',     label: 'Bathrooms'      },
+    { id: 'numParkingSpaces', label: 'Parking Spaces' },
+    { id: 'numFloors',        label: 'Floors'         },
+  ];
 
-  readonly counters = signal<CounterItem[]>([
-    { id: 'numBedrooms', label: 'Bedrooms', value: 2 },
-    { id: 'numBathrooms', label: 'Bathrooms', value: 2 },
-    { id: 'numParkingSpaces', label: 'Parking Spaces', value: 0 },
-    { id: 'numFloors', label: 'Floors', value: 0 }
-  ]);
+  // parent receives the form reference once, on init
+  @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   ngOnInit(): void {
-    // Ensure the section updates under OnPush when parent patches the same FormGroup instance
-    // (e.g. edit mode loads data and calls `form.patchValue`).
-    const controls = PricingDetailsSectionComponent.NON_NEGATIVE_FIELDS.map((name) => this.form.get(name))
-      .filter(Boolean)
-      .map((c) => merge(c!.valueChanges, c!.statusChanges));
-    if (controls.length) {
-      merge(...controls)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.cdr.markForCheck());
-    }
-
-    for (const name of PricingDetailsSectionComponent.NON_NEGATIVE_FIELDS) {
-      this.form
-        .get(name)
-        ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.clampToNonNegative(name));
-    }
+    console.log('[Pricing] init');
+    this.formReady.emit(this.form);
   }
 
-  /** Price / area: user cannot type `-` (paste / programmatic values still clamped). */
-  blockMinusOnNonNegativeNumberInput(event: KeyboardEvent): void {
+  // single method for both +/- on counters and price/area steppers
+  stepControl(controlName: string, direction: 1 | -1): void {
+    const ctrl = this.form.get(controlName);
+    if (!ctrl) return;
+    const next = Math.max(0, Number(ctrl.value ?? 0) + direction);
+    ctrl.setValue(next);
+    ctrl.markAsTouched();
+  }
+
+  // prevents user typing '-' into number inputs — paste/programmatic values still clamped in buildForm
+  blockMinus(event: KeyboardEvent): void {
     if (event.key === '-' || event.key === '−' || event.code === 'NumpadSubtract') {
       event.preventDefault();
     }
   }
 
-  private clampToNonNegative(controlName: string): void {
-    const c = this.form.get(controlName);
-    if (!c) {
-      return;
-    }
-    const raw = c.value;
-    const n = typeof raw === 'number' ? raw : Number(raw);
-    if (Object.is(n, -0) || (Number.isFinite(n) && n < 0)) {
-      this.setNonNegativeControlValue(c, 0);
-    }
-  }
+  // —— private ——
 
-  private setNonNegativeControlValue(c: AbstractControl, v: number): void {
-    c.setValue(v, { emitEvent: false });
-    c.updateValueAndValidity({ emitEvent: false });
-    this.cdr.markForCheck();
-  }
+  private buildForm() {
+    const form = this.fb.nonNullable.group({
+      price:            [75000,  [Validators.required, Validators.min(0)]],
+      areaSize:         [1200,   [Validators.required, Validators.min(0)]],
+      areaUnit:         ['sqft',  Validators.required],
+      numBedrooms:      [2,      [Validators.required, Validators.min(0)]],
+      numBathrooms:     [2,      [Validators.required, Validators.min(0)]],
+      numParkingSpaces: [0,      [Validators.required, Validators.min(0)]],
+      numFloors:        [0,      [Validators.required, Validators.min(0)]],
+    });
 
-  decrementCounter(id: string): void {
-    const control = this.form.get(id);
-    if (!control) {
-      return;
-    }
+    // gate the Continue button
+    form.statusChanges
+      .pipe(startWith(form.status), takeUntilDestroyed(this.destroyRef))
+      .subscribe(status => this.canContinue.set(status === 'VALID'));
 
-    const current = Number(control.value) || 0;
-    const next = Math.max(0, current - 1);
-    control.setValue(next);
-  }
-
-  incrementCounter(id: string): void {
-    const control = this.form.get(id);
-    if (!control) {
-      return;
+    // clamp all numeric fields to ≥ 0 (handles paste and programmatic negative values)
+    for (const name of NUMERIC_CONTROLS) {
+      form.controls[name].valueChanges
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(val => {
+          const n = Number(val);
+          if (Number.isFinite(n) && n < 0) {
+            form.controls[name].setValue(0, { emitEvent: false });
+          }
+        });
     }
 
-    const current = Number(control.value) || 0;
-    const next = current + 1;
-    control.setValue(next);
-  }
-  stepNumberControl(controlName: string, direction: 1 | -1): void {
-    const control = this.form.get(controlName);
-    if (!control) return;
-
-    const current = Number(control.value ?? 0);
-    const next = Math.max(0, current + direction);
-
-    control.setValue(next);
-    control.markAsDirty();
-    control.markAsTouched();
+    return form;
   }
 }
