@@ -1,16 +1,17 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
-  Input,
+  EventEmitter,
   OnInit,
+  Output,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormGroup, Validators } from '@angular/forms';
-import { merge } from 'rxjs';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { startWith } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -20,10 +21,7 @@ import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-bann
 import { SegmentedOptionGroupComponent } from '../../../../shared/ui/segmented-option-group/segmented-option-group';
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
 import { OptionItem, ActionChipData } from '../../../../core/interfaces/ui.models';
-import {
-  PropertyCatalogCategory,
-  PropertyCatalogSubtype
-} from '../../../../core/models/property-catalog.model';
+import { PropertyCatalogCategory } from '../../../../core/models/property-catalog.model';
 import { AddListingService } from '../../../../core/services/add-listing.service';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -45,125 +43,134 @@ type ListingPurpose = 'sale' | 'rent';
   ],
   templateUrl: './basic-information-section.html',
   styleUrl: './basic-information-section.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BasicInformationSectionComponent implements OnInit {
+  private readonly fb                = inject(FormBuilder);
   private readonly addListingService = inject(AddListingService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef        = inject(DestroyRef);
 
-  readonly purposeOptions = signal<readonly OptionItem<ListingPurpose>[]>([
+  // declared before buildForm() — buildForm() subscribes to statusChanges immediately on creation
+  readonly canContinue = signal(false);
+  readonly form        = this.buildForm();
+
+  // catalog
+  readonly catalogStatus = signal<'loading' | 'ready' | 'error'>('loading');
+  readonly categories    = signal<readonly PropertyCatalogCategory[]>([]);
+
+  // tracks the selected category _id — set when user picks or when edit-mode patch arrives
+  private readonly selectedCategoryId = signal('');
+
+  // derived automatically — no manual .set() anywhere, just reads two signals
+  readonly availableSubtypes = computed(() =>
+    this.categories().find(c => c._id === this.selectedCategoryId())?.subtypes ?? []
+  );
+
+  readonly purposeOptions: readonly OptionItem<ListingPurpose>[] = [
     { value: 'sale', label: 'For Sale' },
-    { value: 'rent', label: 'For Rent' }
-  ]);
+    { value: 'rent', label: 'For Rent' },
+  ];
 
-  readonly categories = signal<readonly PropertyCatalogCategory[]>([]);
-  readonly availableSubtypes = signal<readonly PropertyCatalogSubtype[]>([]);
-  readonly catalogLoading = signal(true);
-  readonly catalogError = signal(false);
-
-  readonly titleActions = signal<readonly ActionChipData[]>([
+  readonly titleActions: readonly ActionChipData[] = [
     { id: 'generate-title', label: 'AI can help generate title' },
-    { id: 'title-loading', label: 'Generating and populating field', muted: true, disabled: true },
-  ]);
+    { id: 'title-loading',  label: 'Generating and populating field', muted: true, disabled: true },
+  ];
 
-  @Input({ required: true }) form!: FormGroup;
+  // parent receives the form reference once, on init
+  @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   ngOnInit(): void {
+    console.log('[BasicInfo] init');
+    this.formReady.emit(this.form);
     this.loadCatalog();
-
-    const purpose = this.form.get('purpose');
-    const propertyType = this.form.get('propertyCategoryName');
-    const categoryField = this.form.get('propertySubtypeName');
-    const title = this.form.get('listingTitle');
-    const streams = [purpose, propertyType, categoryField, title]
-      .filter(Boolean)
-      .map((c) => merge(c!.valueChanges, c!.statusChanges));
-    if (streams.length) {
-      merge(...streams)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.cdr.markForCheck());
-    }
-
-    this.form
-      .get('propertyCategoryName')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((categoryName) => {
-        this.form.get('propertySubtypeName')?.setValue('', { emitEvent: false });
-        this.applyCategorySelection(categoryName ?? '');
-      });
   }
 
+  // parent calls this after patching form with emitEvent:false in edit mode
+  // emitEvent:false skips propertyTypeId.valueChanges so we sync manually
+  refreshCategory(): void {
+    const id = this.form.controls.propertyTypeId.value;
+    console.log('[BasicInfo] refreshCategory — id:', id || 'none');
+    this.selectedCategoryId.set(id);
+    this.toggleSubtypeValidator(id);
+  }
+
+  // —— template events ——
+
   onPurposeChange(value: string): void {
-    const c = this.form.get('purpose');
-    c?.setValue(value as ListingPurpose);
-    c?.markAsTouched();
-    this.cdr.markForCheck();
+    this.form.controls.purpose.setValue(value as ListingPurpose);
+    this.form.controls.purpose.markAsTouched();
   }
 
   onPropertyTypePanelToggle(opened: boolean): void {
-    if (!opened) {
-      this.form.get('propertyCategoryName')?.markAsTouched();
-      this.cdr.markForCheck();
-    }
+    if (!opened) this.form.controls.propertyTypeId.markAsTouched();
   }
 
-  onCategoryFieldPanelToggle(opened: boolean): void {
-    if (!opened) {
-      this.form.get('propertySubtypeName')?.markAsTouched();
-      this.cdr.markForCheck();
-    }
+  onSubtypePanelToggle(opened: boolean): void {
+    if (!opened) this.form.controls.subtypeId.markAsTouched();
   }
 
   onListingTitleBlur(): void {
-    this.form.get('listingTitle')?.markAsTouched();
-    this.cdr.markForCheck();
+    this.form.controls.listingTitle.markAsTouched();
   }
 
   retryLoadCatalog(): void {
     this.addListingService.invalidatePropertyCatalogCache();
-    this.catalogError.set(false);
-    this.catalogLoading.set(true);
+    this.catalogStatus.set('loading');
     this.loadCatalog();
   }
 
+  // —— private ——
+
+  private buildForm() {
+    const form = this.fb.nonNullable.group({
+      purpose:        ['rent' as ListingPurpose, Validators.required],
+      propertyTypeId: ['', Validators.required], // category _id → payload
+      subtypeId:      [''],                       // subtype  _id → payload
+      listingTitle:   ['', [Validators.required, Validators.maxLength(120)]],
+    });
+
+    // gate the Continue button — valid only when all required fields are filled
+    form.statusChanges
+      .pipe(startWith(form.status), takeUntilDestroyed(this.destroyRef))
+      .subscribe(status => this.canContinue.set(status === 'VALID'));
+
+    // user changed category → reset subtype, sync signal so availableSubtypes recomputes
+    form.controls.propertyTypeId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(id => {
+        form.controls.subtypeId.setValue('', { emitEvent: false });
+        this.selectedCategoryId.set(id);
+        this.toggleSubtypeValidator(id);
+      });
+
+    return form;
+  }
+
+  // single responsibility — fetches categories, sets catalogStatus, nothing else
   private loadCatalog(): void {
-    this.addListingService
-      .getPropertyCatalog()
+    this.addListingService.getPropertyCatalog()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (data) => {
-          this.categories.set(data.categories ?? []);
-          this.catalogLoading.set(false);
-          this.catalogError.set(false);
-          const categoryName = this.form.get('propertyCategoryName')?.value;
-          if (categoryName) {
-            this.applyCategorySelection(categoryName);
-          }
+        next: ({ categories }) => {
+          this.categories.set(categories ?? []);
+          this.catalogStatus.set('ready');
+          console.log('[BasicInfo] catalog ready —', categories.length, 'categories');
+          // sync selectedCategoryId in case form was pre-filled (edit mode)
+          // so availableSubtypes computed reflects the already-patched value
+          this.refreshCategory();
         },
-        error: () => {
-          this.catalogLoading.set(false);
-          this.catalogError.set(true);
-        }
+        error: (err) => {
+          console.error('[BasicInfo] catalog error:', err);
+          this.catalogStatus.set('error');
+        },
       });
   }
 
-  private applyCategorySelection(categoryName: string): void {
-    const category = this.categories().find((c) => c.name === categoryName);
-    const subtypes = category?.subtypes ?? [];
-    this.availableSubtypes.set(subtypes);
-
-    const subtypeCtrl = this.form.get('propertySubtypeName');
-    if (!subtypeCtrl) {
-      return;
-    }
-
-    if (subtypes.length > 0) {
-      subtypeCtrl.setValidators(Validators.required);
-    } else {
-      subtypeCtrl.clearValidators();
-      subtypeCtrl.setValue('', { emitEvent: false });
-    }
-    subtypeCtrl.updateValueAndValidity({ emitEvent: false });
+  // only toggles subtypeId required validator based on whether the category has subtypes
+  private toggleSubtypeValidator(categoryId: string): void {
+    const hasSubtypes = this.categories().some(c => c._id === categoryId && c.subtypes.length > 0);
+    const ctrl = this.form.controls.subtypeId;
+    hasSubtypes ? ctrl.setValidators(Validators.required) : ctrl.clearValidators();
+    ctrl.updateValueAndValidity({ emitEvent: false });
   }
 }

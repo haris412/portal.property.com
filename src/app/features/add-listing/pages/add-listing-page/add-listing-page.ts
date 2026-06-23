@@ -5,6 +5,7 @@ import {
   DestroyRef,
   inject,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -79,7 +80,6 @@ import {
   FEATURE_SLUG_TO_AMENITY_KEY,
   normalizeFeatureSlug,
 } from '../../../../core/constants/listing-payload.constants';
-import { CdkAutofill } from "@angular/cdk/text-field";
 
 const FEATURED_LISTING_QUOTA_MESSAGE =
   'You are out of featured listing quota. Upgrade your plan or remove another featured property.';
@@ -194,14 +194,15 @@ function parseLatLngFromMapLink(mapLink: string): { lat: number; lng: number } |
     PropertyLocationStepComponent,
     ContactInformationStepComponent,
     PropertyDescriptionStepComponent,
-    CdkAutofill
 ],
   templateUrl: './add-listing-page.html',
   styleUrl: './add-listing-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AddListingPageComponent {
-  readonly basicInfoForm: FormGroup;
+  // basicInfoForm is created inside BasicInformationSectionComponent
+  // parent receives it via (formReady) output binding
+  basicInfoForm!: FormGroup;
   readonly pricingForm: FormGroup;
   readonly amenitiesForm: FormGroup;
   readonly mediaForm: FormGroup;
@@ -292,7 +293,7 @@ export class AddListingPageComponent {
       Boolean(this.loadedProperty()?.videoTourUrl);
 
     return [
-      { label: 'Add basic information', complete: this.basicInfoForm.valid },
+      { label: 'Add basic information', complete: this.basicInfoForm?.valid ?? false },
       { label: 'Add pricing and details', complete: this.pricingForm.valid },
       { label: 'Set property location', complete: this.locationForm.valid && this.hasValidCoordinates() },
       { label: 'Add media', complete: hasMedia },
@@ -315,7 +316,7 @@ export class AddListingPageComponent {
     );
 
     const readinessByStep: Record<AddListingStepKey, boolean> = {
-      'basic-info': this.basicInfoForm.valid,
+      'basic-info': this.basicInfoForm?.valid ?? false,
       pricing: this.pricingForm.valid,
       location: this.locationForm.valid && this.hasValidCoordinates(),
       'features-media': hasFeaturesOrMedia,
@@ -336,6 +337,18 @@ export class AddListingPageComponent {
     () => this.progressPanelSteps().filter((step) => step.readiness === 'complete').length
   );
   readonly progressTrayOpen = signal(false);
+
+  // drives the Continue button — each step will be wired here as we migrate them
+  readonly currentStepCanContinue = computed(() => {
+    this.listingFormsTick();
+    const key = this.activeStepKey();
+    switch (key) {
+      case 'basic-info': return this.basicInfoForm?.valid ?? false;
+      // other steps will be added here as we migrate them one by one
+      default:           return true;
+    }
+  });
+
   readonly canSubmitListing = computed(() =>
     this.publishRequirements()
       .filter((item) => item.label !== 'Add media')
@@ -378,11 +391,14 @@ export class AddListingPageComponent {
           },
           {
             label: 'Property type',
-            value: this.formatReviewValue(basic.propertySubtypeName || basic.propertyCategoryName),
+            value: this.formatReviewValue(
+              this.addListingService.getSubtypeNameById(basic.propertyTypeId, basic.subtypeId)
+              || this.addListingService.getCategoryNameById(basic.propertyTypeId)
+            ),
           },
           {
             label: 'Category',
-            value: this.formatReviewValue(basic.propertyCategoryName),
+            value: this.formatReviewValue(this.addListingService.getCategoryNameById(basic.propertyTypeId)),
           },
         ],
       },
@@ -503,6 +519,9 @@ export class AddListingPageComponent {
     ] as const;
   });
 
+  @ViewChild(BasicInformationSectionComponent)
+  private readonly basicStep?: BasicInformationSectionComponent;
+
   private readonly addListingService = inject(AddListingService);
   private readonly notifications = inject(NotificationService);
   private readonly mediaUploadService = inject(MediaUploadService);
@@ -520,12 +539,8 @@ export class AddListingPageComponent {
   readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
 
   constructor(private readonly fb: FormBuilder) {
-    this.basicInfoForm = this.fb.group({
-      purpose: ['rent', Validators.required],
-      propertyCategoryName: ['', Validators.required],
-      propertySubtypeName: [''],
-      listingTitle: ['', [Validators.required, Validators.maxLength(120)]],
-    });
+    // basicInfoForm is NOT built here — BasicInformationSectionComponent owns it
+    // parent receives it via onBasicInfoFormReady() when child emits (formReady)
 
     this.descriptionForm = this.fb.group({
       propertyDescription: ['', [Validators.required, Validators.minLength(20)]],
@@ -567,8 +582,8 @@ export class AddListingPageComponent {
       longitude:         [null as number | null],
     });
 
+    // basicInfoForm streams are wired in onBasicInfoFormReady() after child emits it
     merge(
-      this.basicInfoForm.valueChanges,
       this.pricingForm.valueChanges,
       this.locationForm.valueChanges,
       this.amenitiesForm.valueChanges
@@ -577,8 +592,6 @@ export class AddListingPageComponent {
       .subscribe(() => this.aiListingFormsTick.update((n: number) => n + 1));
 
     merge(
-      this.basicInfoForm.valueChanges,
-      this.basicInfoForm.statusChanges,
       this.pricingForm.valueChanges,
       this.pricingForm.statusChanges,
       this.locationForm.valueChanges,
@@ -649,15 +662,11 @@ export class AddListingPageComponent {
     const contact = this.contactForm.getRawValue();
     const location = this.locationForm.getRawValue();
 
-    const purpose =
-      basic.purpose === 'sale' ? ('For Sale' as const) : ('For Rent' as const);
-    const propertyType = this.addListingService.getCoarsePropertyTypeFromLabels(
-      basic.propertyCategoryName,
-      basic.propertySubtypeName
-    );
-    const categoryName = (basic.propertyCategoryName ?? '').trim();
-    const subtypeName = (basic.propertySubtypeName ?? '').trim();
-    const subtype = (subtypeName || categoryName).trim();
+    const purpose     = basic.purpose === 'sale' ? ('For Sale' as const) : ('For Rent' as const);
+    const coarseType  = this.addListingService.getCoarseTypeById(basic.propertyTypeId);
+    const categoryName = this.addListingService.getCategoryNameById(basic.propertyTypeId);
+    const subtypeName  = this.addListingService.getSubtypeNameById(basic.propertyTypeId, basic.subtypeId);
+    const subtype      = (subtypeName || categoryName).trim();
     const amenityBooleans = this.addListingService.buildAmenityBooleanPayload(
       amenities.selectedFeatureIds ?? []
     );
@@ -669,7 +678,7 @@ export class AddListingPageComponent {
     return {
       title: (basic.listingTitle ?? '').trim(),
       purpose,
-      propertyType,
+      propertyType: coarseType,  // coarseType from catalog e.g. "Homes" — for AI context
       subtype,
       price: pricing.price,
       areaSize: pricing.areaSize,
@@ -749,6 +758,24 @@ export class AddListingPageComponent {
     }
 
     this.activeStepKey.set(stepKey);
+  }
+
+  // called by (formReady) output from BasicInformationSectionComponent
+  onBasicInfoFormReady(form: FormGroup): void {
+    console.log('[AddListing] basicInfoForm received from child');
+    this.basicInfoForm = form;
+
+    // wire basicInfoForm into both tick streams so computed signals re-evaluate on change
+    merge(form.valueChanges, form.statusChanges)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.aiListingFormsTick.update(n => n + 1);
+        this.listingFormsTick.update(n => n + 1);
+      });
+
+    // trigger once so currentStepCanContinue and publishRequirements reflect initial state
+    this.listingFormsTick.update(n => n + 1);
+    console.log('[AddListing] basicInfoForm wired to tick streams');
   }
 
   goToPreviousStep(): void {
@@ -975,31 +1002,35 @@ export class AddListingPageComponent {
     catalog: PropertyCatalogData,
     features: PropertyFeature[]
   ): void {
-    const listingTitle = (doc.listingTitle ?? doc.title ?? '').toString();
+    const listingTitle        = (doc.listingTitle ?? doc.title ?? '').toString();
     const propertyDescription = (doc.propertyDescription ?? doc.description ?? '').toString();
-    const contactPhoneNumber = (doc.contactPhoneNumber ?? doc.contactPhone ?? doc.phone ?? '').toString();
-    const subtypeName = (doc.subtype ?? doc.propertySubtypeName ?? doc.propertySubtype ?? '').toString();
+    const contactPhoneNumber  = (doc.contactPhoneNumber ?? doc.contactPhone ?? doc.phone ?? '').toString();
+
+    // resolve names from stored doc (handles old + new field aliases)
+    const subtypeName  = (doc.subtype ?? doc.propertySubtypeName ?? doc.propertySubtype ?? '').toString();
     const categoryName = this.resolveCategoryNameFromCatalog(catalog, {
-      subtype: subtypeName,
-      propertyType: (doc.propertyType ?? '').toString(),
+      subtype:              subtypeName,
+      propertyType:         (doc.propertyType         ?? '').toString(),
       propertyCategoryName: (doc.propertyCategoryName ?? '').toString(),
     });
 
-    // UI control uses 'sale'|'rent' while API often stores labels like "For Sale".
-    const purposeRaw = (doc.purpose ?? '').toString().toLowerCase();
-    const purpose = purposeRaw.includes('sale') ? 'sale' : 'rent';
+    // resolve IDs from names so form stores _id values
+    const category     = catalog.categories.find(c => c.name === categoryName);
+    const propertyTypeId = category?._id ?? '';
+    const subtypeId      = category?.subtypes.find(s => s.name === subtypeName)?._id ?? '';
+    console.log('[AddListing] edit patch — categoryName:', categoryName, '→ id:', propertyTypeId,
+                '| subtypeName:', subtypeName, '→ id:', subtypeId);
 
-    // Patch without emitEvent so BasicInformationSection does not clear subtype mid-load.
+    const purposeRaw = (doc.purpose ?? '').toString().toLowerCase();
+    const purpose    = purposeRaw.includes('sale') ? 'sale' : 'rent';
+
+    // emitEvent:false so child's propertyTypeId valueChanges doesn't reset subtypeId mid-patch
     this.basicInfoForm.patchValue(
-      {
-        purpose,
-        listingTitle,
-        propertyCategoryName: categoryName,
-        propertySubtypeName: subtypeName,
-      },
+      { purpose, listingTitle, propertyTypeId, subtypeId },
       { emitEvent: false }
     );
-    this.applySubtypeValidatorsFromCatalog(catalog, categoryName);
+    // child owns category/subtype logic — tell it to re-apply now that IDs are patched
+    this.basicStep?.refreshCategory();
 
     this.descriptionForm.patchValue({ propertyDescription }, { emitEvent: false });
 
@@ -1179,24 +1210,6 @@ export class AddListingPageComponent {
     const lat = coerceCoordinate(this.locationForm.get('latitude')?.value);
     const lng = coerceCoordinate(this.locationForm.get('longitude')?.value);
     return lat != null && lng != null;
-  }
-
-  private applySubtypeValidatorsFromCatalog(
-    catalog: PropertyCatalogData,
-    categoryName: string
-  ): void {
-    const subtypeCtrl = this.basicInfoForm.get('propertySubtypeName');
-    if (!subtypeCtrl) {
-      return;
-    }
-    const category = (catalog.categories ?? []).find((c) => c.name === categoryName);
-    const subtypes = category?.subtypes ?? [];
-    if (subtypes.length > 0) {
-      subtypeCtrl.setValidators(Validators.required);
-    } else {
-      subtypeCtrl.clearValidators();
-    }
-    subtypeCtrl.updateValueAndValidity({ emitEvent: false });
   }
 
   private refreshListingFormValidity(): void {

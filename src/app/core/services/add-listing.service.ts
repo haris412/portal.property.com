@@ -14,7 +14,6 @@ import type {
 } from '../models/properties-list.model';
 import type { PropertyDetailApiResponse, PropertyDetailDocument } from '../models/property-detail.model';
 import {
-  CoarsePropertyType,
   FEATURE_SLUG_TO_AMENITY_KEY,
   ListingAmenityBooleans,
   createDefaultListingAmenityBooleans,
@@ -125,25 +124,22 @@ export class AddListingService {
     this.catalogRequest$ = null;
   }
 
-  /**
-   * Coarse `propertyType` for the listing API: House | Apartment | Plot.
-   * Uses only the selected display names from the form (no catalog lookup).
-   */
-  getCoarsePropertyTypeFromLabels(
-    categoryName?: string | null,
-    subtypeName?: string | null
-  ): CoarsePropertyType {
-    const text = `${subtypeName ?? ''} ${categoryName ?? ''}`.trim().toLowerCase();
-    if (!text) {
-      return 'House';
-    }
-    if (/plot|plots|land|commercial\s*plot|residential\s*plot/.test(text)) {
-      return 'Plot';
-    }
-    if (/apartment|flat|penthouse|studio|condo/.test(text)) {
-      return 'Apartment';
-    }
-    return 'House';
+  // reads coarseType directly from the catalog — no regex needed
+  getCoarseTypeById(categoryId: string): string {
+    const category = this.catalogCache?.categories.find(c => c._id === categoryId);
+    const coarseType = category?.coarseType ?? 'Homes';
+    console.log('[AddListingService] getCoarseTypeById:', categoryId, '→', coarseType);
+    return coarseType;
+  }
+
+  // resolves display name from _id — used in review summary and AI description
+  getCategoryNameById(categoryId: string): string {
+    return this.catalogCache?.categories.find(c => c._id === categoryId)?.name ?? '';
+  }
+
+  getSubtypeNameById(categoryId: string, subtypeId: string): string {
+    const category = this.catalogCache?.categories.find(c => c._id === categoryId);
+    return category?.subtypes.find(s => s._id === subtypeId)?.name ?? '';
   }
 
   /** Maps selected feature `_id`s to backend `has*` / `is*` booleans. */

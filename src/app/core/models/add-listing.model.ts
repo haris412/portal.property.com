@@ -8,8 +8,8 @@ export interface CreateListingPayload extends ListingAmenityBooleans {
   purpose: string;
   listingTitle: string;
   propertyDescription: string;
-  propertyType: string;
-  subtype: string;
+  propertyTypeId: string;   // category _id from /api/property-catalog
+  subtypeId: string;        // subtype  _id from /api/property-catalog
 
   // Pricing
   price: number | null;

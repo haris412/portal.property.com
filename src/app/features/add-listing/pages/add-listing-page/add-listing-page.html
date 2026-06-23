@@ -39,7 +39,7 @@
         @switch (activeStepKey()) {
         @case ('basic-info') {
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
-          <app-basic-information-section [form]="basicInfoForm" />
+          <app-basic-information-section (formReady)="onBasicInfoFormReady($event)" />
         </div>
         }
         @case ('pricing') {
@@ -130,7 +130,7 @@
           </button>
           <button class="add-listing-page__nav-button add-listing-page__nav-button--primary"
                   type="button"
-                  [disabled]="isLastStep()"
+                  [disabled]="isLastStep() || !currentStepCanContinue()"
                   (click)="goToNextStep()">
             Continue
           </button>

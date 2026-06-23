@@ -10,6 +10,7 @@ export interface PropertyCatalogCategory {
   _id: string;
   name: string;
   slug: string;
+  coarseType: string;  // backend provides this — no regex needed on frontend
   subtypes: PropertyCatalogSubtype[];
 }
 
