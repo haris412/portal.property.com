@@ -114,20 +114,6 @@ interface ReviewSummarySection {
   items: readonly ReviewSummaryItem[];
 }
 
-/** Digits-only length 10–15 after stripping formatting (mobile / WhatsApp style). */
-function contactPhoneFormatValidator(control: AbstractControl): ValidationErrors | null {
-  const raw = (control.value ?? '').toString().trim();
-  if (!raw) {
-    return null;
-  }
-  const digits = raw.replace(/\D/g, '');
-  if (digits.length < 10 || digits.length > 15) {
-    return { phoneFormat: true };
-  }
-  return null;
-}
-
-
 function mediaRequirementValidator(control: AbstractControl): ValidationErrors | null {
   const images = (control.get('images')?.value as File[] | null) ?? [];
   const video = (control.get('videoFiles')?.value as File[] | null) ?? [];
@@ -203,9 +189,9 @@ export class AddListingPageComponent {
   // forms created inside their step components — parent receives via (formReady) output
   basicInfoForm!: FormGroup;
   pricingForm!: FormGroup;
+  contactForm!: FormGroup;
   readonly amenitiesForm: FormGroup;
   readonly mediaForm: FormGroup;
-  readonly contactForm: FormGroup;
   readonly descriptionForm: FormGroup;
   readonly locationForm: FormGroup;
   readonly isSubmitting = signal(false);
@@ -296,7 +282,7 @@ export class AddListingPageComponent {
       { label: 'Add pricing and details', complete: this.pricingForm?.valid ?? false },
       { label: 'Set property location', complete: this.locationForm.valid && this.hasValidCoordinates() },
       { label: 'Add media', complete: hasMedia },
-      { label: 'Add contact information', complete: this.contactForm.valid },
+      { label: 'Add contact information', complete: this.contactForm?.valid ?? false },
       { label: 'Write description', complete: this.descriptionForm.valid },
     ];
   });
@@ -319,7 +305,7 @@ export class AddListingPageComponent {
       pricing: this.pricingForm?.valid ?? false,
       location: this.locationForm.valid && this.hasValidCoordinates(),
       'features-media': hasFeaturesOrMedia,
-      'contact-description': this.contactForm.valid && this.descriptionForm.valid,
+      'contact-description': (this.contactForm?.valid ?? false) && this.descriptionForm.valid,
       'review-publish': this.canSubmitListing(),
     };
 
@@ -341,9 +327,10 @@ export class AddListingPageComponent {
   readonly currentStepCanContinue = computed(() => {
     this.listingFormsTick();
     switch (this.activeStepKey()) {
-      case 'basic-info': return this.basicInfoForm?.valid ?? false;
-      case 'pricing':    return this.pricingForm?.valid   ?? false;
-      default:           return true;
+      case 'basic-info':          return this.basicInfoForm?.valid ?? false;
+      case 'pricing':             return this.pricingForm?.valid   ?? false;
+      case 'contact-description': return this.contactForm?.valid   ?? false;
+      default:                    return true;
     }
   });
 
@@ -553,12 +540,7 @@ export class AddListingPageComponent {
       videoFiles: [[] as File[]],
     }, { validators: mediaRequirementValidator });
 
-    this.contactForm = this.fb.group({
-      contactName: ['', Validators.required],
-      contactEmail: ['', [Validators.required, Validators.email]],
-      contactPhoneNumber: ['', [Validators.required, contactPhoneFormatValidator]],
-      contactLocation: [''],
-    });
+    // contactForm owned by ContactInformationStepComponent — received via onContactFormReady()
 
     this.locationForm = this.fb.group({
       locationQuery:     [''],
@@ -578,6 +560,7 @@ export class AddListingPageComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.aiListingFormsTick.update((n: number) => n + 1));
 
+    // contactForm wired in onContactFormReady() after child emits it
     merge(
       this.locationForm.valueChanges,
       this.locationForm.statusChanges,
@@ -585,8 +568,6 @@ export class AddListingPageComponent {
       this.amenitiesForm.statusChanges,
       this.mediaForm.valueChanges,
       this.mediaForm.statusChanges,
-      this.contactForm.valueChanges,
-      this.contactForm.statusChanges,
       this.descriptionForm.valueChanges,
       this.descriptionForm.statusChanges
     )
@@ -757,6 +738,13 @@ export class AddListingPageComponent {
     console.log('[AddListing] pricingForm received');
     this.pricingForm = form;
     this.wireFormToTicks(form, true);
+  }
+
+  // called by (formReady) from ContactInformationStepComponent
+  onContactFormReady(form: FormGroup): void {
+    console.log('[AddListing] contactForm received');
+    this.contactForm = form;
+    this.wireFormToTicks(form, false);
   }
 
   // wires a step form into listingFormsTick (and optionally aiListingFormsTick)
@@ -1041,12 +1029,12 @@ export class AddListingPageComponent {
       { emitEvent: false }
     );
 
-    this.contactForm.patchValue(
+    this.contactForm?.patchValue(
       {
-        contactName: doc.contactName ?? '',
-        contactEmail: doc.contactEmail ?? '',
+        contactName:        doc.contactName        ?? '',
+        contactEmail:       doc.contactEmail       ?? '',
         contactPhoneNumber,
-        contactLocation: doc.contactLocation ?? '',
+        contactLocation:    doc.contactLocation    ?? '',
       },
       { emitEvent: false }
     );
@@ -1085,10 +1073,10 @@ export class AddListingPageComponent {
     this.amenitiesForm.patchValue({ selectedFeatureIds }, { emitEvent: true });
     // Media: existing uploads are URLs; current media form expects Files, so we don't prefill file inputs.
     this.refreshListingFormValidity();
-    this.basicInfoForm.markAsUntouched();
+    this.basicInfoForm?.markAsUntouched();
     this.descriptionForm.markAsUntouched();
-    this.pricingForm.markAsUntouched();
-    this.contactForm.markAsUntouched();
+    this.pricingForm?.markAsUntouched();
+    this.contactForm?.markAsUntouched();
     this.locationForm.markAsUntouched();
   }
 

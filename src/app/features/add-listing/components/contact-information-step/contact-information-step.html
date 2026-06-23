@@ -3,9 +3,11 @@
                   icon="contact_phone"
                   variant="dashboard">
   <div class="contact-information-step" [formGroup]="form">
-    <app-info-banner icon="call" [text]="contactBanner()" />
+
+    <app-info-banner icon="call" [text]="'addListing.contact.banner' | translate" />
 
     <div class="contact-information-step__grid">
+
       <div>
         <label class="field-label">{{ 'addListing.contact.name.label' | translate }}</label>
         <mat-form-field appearance="outline" class="w-100">
@@ -13,10 +15,10 @@
                  type="text"
                  formControlName="contactName"
                  [placeholder]="'addListing.contact.name.placeholder' | translate"
-                 (blur)="markContactTouched('contactName')" />
+                 (blur)="form.controls.contactName.markAsTouched()" />
           <mat-error>
-            @if (form.get('contactName')?.hasError('server')) {
-              {{ form.get('contactName')?.getError('server') }}
+            @if (form.controls.contactName.hasError('server')) {
+              {{ form.controls.contactName.getError('server') }}
             } @else {
               {{ 'addListing.contact.name.required' | translate }}
             }
@@ -32,38 +34,28 @@
                  formControlName="contactEmail"
                  [placeholder]="'addListing.contact.email.placeholder' | translate"
                  autocomplete="email"
-                 (blur)="markContactTouched('contactEmail')" />
+                 (blur)="form.controls.contactEmail.markAsTouched()" />
           <mat-error>
-            @if (form.get('contactEmail')?.hasError('server')) {
-              {{ form.get('contactEmail')?.getError('server') }}
-            } @else if (form.get('contactEmail')?.hasError('required')) {
+            @if (form.controls.contactEmail.hasError('server')) {
+              {{ form.controls.contactEmail.getError('server') }}
+            } @else if (form.controls.contactEmail.hasError('required')) {
               {{ 'addListing.contact.email.required' | translate }}
-            } @else if (form.get('contactEmail')?.hasError('email')) {
+            } @else if (form.controls.contactEmail.hasError('email')) {
               {{ 'addListing.contact.email.invalid' | translate }}
             }
           </mat-error>
         </mat-form-field>
       </div>
 
+      <!-- Phone — library handles country code + format validation -->
       <div>
-        <label class="field-label">{{ 'addListing.contact.phone.label' | translate }}</label>
-        <mat-form-field appearance="outline" class="w-100">
-          <input matInput
-                 type="tel"
-                 formControlName="contactPhoneNumber"
-                 [placeholder]="'addListing.contact.phone.placeholder' | translate"
-                 autocomplete="tel"
-                 (blur)="markContactTouched('contactPhoneNumber')" />
-          <mat-error>
-            @if (form.get('contactPhoneNumber')?.hasError('server')) {
-              {{ form.get('contactPhoneNumber')?.getError('server') }}
-            } @else if (form.get('contactPhoneNumber')?.hasError('required')) {
-              {{ 'addListing.contact.phone.required' | translate }}
-            } @else if (form.get('contactPhoneNumber')?.hasError('phoneFormat')) {
-              {{ 'addListing.contact.phone.invalid' | translate }}
-            }
-          </mat-error>
-        </mat-form-field>
+        <ngx-material-intl-tel-input
+          [preferredCountries]="['pk', 'sa', 'us']"
+          [enablePlaceholder]="true"
+          [enableSearch]="true"
+          [mainLabel]="'addListing.contact.phone.label' | translate"
+          [fieldControlName]="'contactPhoneNumber'"
+        />
       </div>
 
       <div>
@@ -75,6 +67,7 @@
                  [placeholder]="'addListing.contact.location.placeholder' | translate" />
         </mat-form-field>
       </div>
+
     </div>
   </div>
 </app-section-card>
