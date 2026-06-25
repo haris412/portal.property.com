@@ -1,25 +1,60 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
-  Input,
+  EventEmitter,
   OnInit,
+  Output,
+  computed,
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Subject, catchError, debounceTime, distinctUntilChanged, finalize, merge, of, switchMap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { startWith, catchError, debounceTime, distinctUntilChanged, finalize, merge, of, switchMap, take, tap } from 'rxjs';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { LocationMapPickerComponent } from '../location-map-picker/location-map-picker';
 import { GooglePlacesService } from '../../../../core/services/google-places.service';
 import type { LocationHierarchyItem, PlaceSuggestion } from '../../../../core/models/google-places.models';
+import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
+
+function coerceCoordinate(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function parseLatLngFromMapLink(mapLink: string): { lat: number; lng: number } | null {
+  const text = mapLink.trim();
+  if (!text) return null;
+  const patterns = [
+    /[?&]q=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i,
+    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /[?&]ll=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i,
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/i,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
+  }
+  return null;
+}
+
+type SearchState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; message: string };
 
 @Component({
   selector: 'app-property-location-step',
@@ -38,138 +73,216 @@ import type { LocationHierarchyItem, PlaceSuggestion } from '../../../../core/mo
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PropertyLocationStepComponent implements OnInit {
-  @Input({ required: true }) form!: FormGroup;
-
+  private readonly fb           = inject(FormBuilder);
   private readonly googlePlaces = inject(GooglePlacesService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly translate = inject(TranslateService);
+  private readonly destroyRef   = inject(DestroyRef);
 
-  readonly locationBanner = toSignal(
-    this.translate.stream('addListing.location.banner'),
-    { initialValue: '' }
-  );
+  readonly canContinue    = signal(false);
+  readonly hasCoordinates = signal(false);
+  readonly form           = this.buildForm();
 
-  readonly suggestions = signal<PlaceSuggestion[]>([]);
-  readonly searchLoading = signal(false);
-  readonly searchError = signal<string | null>(null);
+  readonly suggestions    = signal<PlaceSuggestion[]>([]);
+  readonly searchState    = signal<SearchState>({ status: 'idle' });
+  readonly searchErrorMsg = computed(() => { const s = this.searchState(); return s.status === 'error' ? s.message : null; });
 
-  private readonly searchQuery$ = new Subject<string>();
+  readonly selectedHierarchy = signal<LocationHierarchyItem[]>([]);
+
   private sessionToken = crypto.randomUUID();
 
   readonly displaySuggestion = (value: PlaceSuggestion | string | null | undefined): string => {
     if (!value) return '';
-    if (typeof value === 'string') return value;
-    return value.mainText;
+    return typeof value === 'string' ? value : value.mainText;
   };
 
-  readonly selectedHierarchy = signal<LocationHierarchyItem[]>([]);
+  @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   ngOnInit(): void {
-    this.destroyRef.onDestroy(() => this.searchQuery$.complete());
+    this.formReady.emit(this.form);
+    this.wireSearch();
+  }
 
-    const queryCtrl = this.form.get('locationQuery');
-    const hierarchyCtrl = this.form.get('locationHierarchy');
-    const fullAddressCtrl = this.form.get('fullAddress');
-
-    // Keep OnPush in sync and mirror locationHierarchy into the signal.
-    const streams = [queryCtrl, hierarchyCtrl, fullAddressCtrl]
-      .filter(Boolean)
-      .map(c => merge(c!.valueChanges, c!.statusChanges));
-    if (streams.length) {
-      merge(...streams)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => {
-          this.selectedHierarchy.set(
-            (hierarchyCtrl?.value as LocationHierarchyItem[]) ?? []
-          );
-          this.cdr.markForCheck();
-        });
-    }
-
-    // switchMap cancels in-flight requests when the user types a new query.
-    this.searchQuery$
-      .pipe(
-        switchMap(input => {
-          if (!input) return of([] as PlaceSuggestion[]);
-          this.searchLoading.set(true);
-          return this.googlePlaces.searchPlaces(input, this.sessionToken).pipe(
-            catchError(() => {
-              this.searchError.set('Could not load suggestions. Please try again.');
-              return of([] as PlaceSuggestion[]);
-            })
-          );
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(results => {
-        this.searchLoading.set(false);
-        this.suggestions.set(results);
-        this.cdr.markForCheck();
-      });
-
-    if (!queryCtrl) return;
-
-    queryCtrl.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-      .subscribe(value => {
-        const trimmed = (value ?? '').toString().trim();
-        // Any new keystroke invalidates the previously selected hierarchy.
-        hierarchyCtrl?.setValue([], { emitEvent: false });
-        this.searchError.set(null);
-        this.searchQuery$.next(trimmed);
-      });
+  markLocationControlTouched(name: 'locationQuery' | 'fullAddress'): void {
+    this.form.controls[name].markAsTouched();
+    this.form.controls.locationHierarchy.markAsTouched();
   }
 
   onPlaceSelected(event: MatAutocompleteSelectedEvent): void {
     const suggestion = event.option.value as PlaceSuggestion;
-
-    // Reset control to a plain string immediately so the form stays typed correctly.
-    this.form.get('locationQuery')?.setValue(suggestion.mainText, { emitEvent: false });
-
-    this.searchLoading.set(true);
-    this.searchError.set(null);
+    this.form.controls.locationQuery.setValue(suggestion.mainText, { emitEvent: false });
+    this.searchState.set({ status: 'loading' });
 
     this.googlePlaces
       .getPlaceDetails(suggestion.placeId, this.sessionToken)
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => {
-          this.searchLoading.set(false);
-          this.cdr.markForCheck();
-        })
+        finalize(() => this.searchState.set({ status: 'idle' })),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: details => {
           if (!details) {
-            this.searchError.set('Could not load place details. Please try again.');
+            this.searchState.set({ status: 'error', message: 'Could not load place details. Please try again.' });
             return;
           }
-
-          const hierarchy = this.googlePlaces.buildLocationHierarchy(
-            suggestion.placeId,
-            details.addressComponents
-          );
-          const mapLink = `https://maps.google.com/?q=${details.latitude},${details.longitude}`;
-
           this.form.patchValue({
-            locationHierarchy: hierarchy,
-            latitude: details.latitude,
-            longitude: details.longitude,
-            fullAddress: details.formattedAddress,
-            mapLink,
+            locationHierarchy: this.googlePlaces.buildLocationHierarchy(suggestion.placeId, details.addressComponents),
+            latitude:          details.latitude,
+            longitude:         details.longitude,
+            fullAddress:       details.formattedAddress,
+            mapLink:           `https://maps.google.com/?q=${details.latitude},${details.longitude}`,
           });
-
           this.suggestions.set([]);
-          // New session token for the next search — Google billing requirement.
           this.sessionToken = crypto.randomUUID();
         },
       });
   }
 
-  markLocationControlTouched(name: 'locationQuery' | 'fullAddress'): void {
-    this.form.get(name)?.markAsTouched();
-    this.form.get('locationHierarchy')?.markAsTouched();
-    this.cdr.markForCheck();
+  patchFromProperty(doc: PropertyDetailDocument): void {
+    const hierarchy            = this.buildLocationHierarchyFromProperty(doc);
+    const { latitude, longitude, mapLink } = this.resolveCoordinates(doc);
+    const locationQueryDisplay = hierarchy.length
+      ? hierarchy[hierarchy.length - 1].name
+      : (doc.neighborhood ?? doc.city ?? '').toString().trim();
+
+    this.form.patchValue(
+      {
+        locationQuery:     locationQueryDisplay,
+        locationHierarchy: hierarchy,
+        fullAddress:       doc.fullAddress ?? '',
+        mapLink,
+        zipCode:           (doc as any).zipCode ?? '',
+        latitude,
+        longitude,
+      },
+      { emitEvent: latitude != null && longitude != null }
+    );
+
+    if (latitude == null || longitude == null) {
+      this.geocodeMissingCoordinates(locationQueryDisplay, doc.fullAddress ?? '');
+    }
+  }
+
+  geocodeMissingCoordinates(locationQuery: string, fullAddress: string): void {
+    const searchText = (fullAddress || locationQuery).trim();
+    if (!searchText) return;
+
+    const sessionToken = crypto.randomUUID();
+
+    this.googlePlaces.searchPlaces(searchText, sessionToken)
+      .pipe(
+        take(1),
+        switchMap(suggestions => {
+          const first = suggestions[0];
+          if (!first?.placeId) return of(null);
+          return this.googlePlaces.getPlaceDetails(first.placeId, sessionToken);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(details => {
+        if (!details) return;
+
+        const currentLat = coerceCoordinate(this.form.controls.latitude.value);
+        const currentLng = coerceCoordinate(this.form.controls.longitude.value);
+        if (currentLat != null && currentLng != null) return;
+
+        const existingMapLink = this.form.controls.mapLink.value?.trim();
+        this.form.patchValue({
+          latitude:    details.latitude,
+          longitude:   details.longitude,
+          mapLink:     existingMapLink || `https://maps.google.com/?q=${details.latitude},${details.longitude}`,
+          fullAddress: this.form.controls.fullAddress.value?.trim() || details.formattedAddress,
+        }, { emitEvent: true });
+      });
+  }
+
+  private buildForm() {
+    const form = this.fb.nonNullable.group({
+      locationQuery:     [''],
+      locationHierarchy: [[] as LocationHierarchyItem[]],
+      fullAddress:       ['', Validators.required],
+      mapLink:           [''],
+      zipCode:           [''],
+      latitude:          [null as number | null],
+      longitude:         [null as number | null],
+    });
+
+    merge(
+      form.statusChanges.pipe(startWith(form.status)),
+      form.controls.latitude.valueChanges,
+      form.controls.longitude.valueChanges
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        const lat = coerceCoordinate(form.controls.latitude.value);
+        const lng = coerceCoordinate(form.controls.longitude.value);
+        this.hasCoordinates.set(lat != null && lng != null);
+        this.canContinue.set(form.status === 'VALID' && this.hasCoordinates());
+      });
+
+    form.controls.locationHierarchy.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(hierarchy => this.selectedHierarchy.set(hierarchy ?? []));
+
+    return form;
+  }
+
+  private wireSearch(): void {
+    this.form.controls.locationQuery.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap(() => {
+          this.searchState.set({ status: 'idle' });
+          this.form.controls.locationHierarchy.setValue([], { emitEvent: false });
+        }),
+        switchMap(value => {
+          const input = (value ?? '').toString().trim();
+          if (!input) return of([] as PlaceSuggestion[]);
+
+          this.searchState.set({ status: 'loading' });
+
+          return this.googlePlaces.searchPlaces(input, this.sessionToken).pipe(
+            catchError(() => {
+              this.searchState.set({ status: 'error', message: 'Could not load suggestions. Please try again.' });
+              return of([] as PlaceSuggestion[]);
+            }),
+            finalize(() => this.searchState.set({ status: 'idle' }))
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(results => this.suggestions.set(results));
+  }
+
+  private buildLocationHierarchyFromProperty(doc: PropertyDetailDocument): LocationHierarchyItem[] {
+    if (Array.isArray(doc.location) && doc.location.length > 0) {
+      return doc.location.map(item => ({ id: item.id, level: item.level, name: item.name }));
+    }
+    const hierarchy: LocationHierarchyItem[] = [];
+    const city         = (doc.city        ?? '').toString().trim();
+    const neighborhood = (doc.neighborhood ?? '').toString().trim();
+    if (city)         hierarchy.push({ level: 2, name: city });
+    if (neighborhood) hierarchy.push({ level: 4, name: neighborhood });
+    if (!hierarchy.length) {
+      const fallback = (doc.fullAddress ?? '').toString().trim();
+      if (fallback) hierarchy.push({ level: 4, name: fallback.length > 120 ? `${fallback.slice(0, 117)}...` : fallback });
+    }
+    return hierarchy;
+  }
+
+  private resolveCoordinates(doc: PropertyDetailDocument): { latitude: number | null; longitude: number | null; mapLink: string } {
+    const mapLink   = (doc.mapLink ?? '').toString().trim();
+    const latitude  = coerceCoordinate(doc.latitude);
+    const longitude = coerceCoordinate(doc.longitude);
+
+    if (latitude != null && longitude != null) {
+      return { latitude, longitude, mapLink: mapLink || `https://maps.google.com/?q=${latitude},${longitude}` };
+    }
+
+    const fromLink = parseLatLngFromMapLink(mapLink);
+    if (fromLink) {
+      return { latitude: fromLink.lat, longitude: fromLink.lng, mapLink: mapLink || `https://maps.google.com/?q=${fromLink.lat},${fromLink.lng}` };
+    }
+
+    return { latitude, longitude, mapLink };
   }
 }

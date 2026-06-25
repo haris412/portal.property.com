@@ -49,7 +49,7 @@
         }
         @case ('location') {
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
-          <app-property-location-step [form]="locationForm" />
+          <app-property-location-step (formReady)="onLocationFormReady($event)" />
         </div>
         }
         @case ('contact-description') {

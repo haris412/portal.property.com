@@ -7,6 +7,10 @@ export interface PropertyDetailDocument {
   /** Owner ref; may be populated when the API uses populate('userId'). */
   userId?: string | { _id?: string; firstName?: string; lastName?: string; email?: string } | null;
   purpose?: string | null;
+  // new ID-based fields (set after our payload change)
+  propertyTypeId?: string | null;
+  subtypeId?:      string | null;
+  // legacy name-based fields (old stored listings)
   propertyType?: string | null;
   subtype?: string | null;
   propertySubtype?: string | null;
