@@ -4,14 +4,14 @@
   icon="tune"
   variant="dashboard"
 >
-  @if (featuresError()) {
+  @if (featuresState() === 'error') {
     <div class="features-amenities__state">
       <app-info-banner icon="error_outline" [text]="'addListing.features.error' | translate" />
       <button type="button" mat-stroked-button class="features-amenities__retry" (click)="retryLoadFeatures()">
         {{ 'addListing.retry' | translate }}
       </button>
     </div>
-  } @else if (featuresLoading()) {
+  } @else if (featuresState() === 'loading') {
     <div class="features-amenities__loading" role="status">
       {{ 'addListing.features.loading' | translate }}
     </div>

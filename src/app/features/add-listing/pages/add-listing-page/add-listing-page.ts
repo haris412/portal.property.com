@@ -159,9 +159,9 @@ export class AddListingPageComponent {
   contactForm!:   FormGroup;
   locationForm!:  FormGroup;
   descriptionForm!: FormGroup;
-  // These two remain parent-owned (no dedicated step component yet).
-  readonly amenitiesForm: FormGroup;
-  readonly mediaForm:     FormGroup;
+  amenitiesForm!:   FormGroup;
+  // mediaForm remains parent-owned (no dedicated step component yet).
+  readonly mediaForm: FormGroup;
 
   // ── 4. Wizard / stepper ────────────────────────────────────────────────────
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
@@ -228,7 +228,7 @@ export class AddListingPageComponent {
       { label: 'Set property location',    complete: (this.locationForm?.valid ?? false) && (this.locationStep?.hasCoordinates() ?? false) },
       { label: 'Add media',                complete: hasMedia },
       { label: 'Add contact information',  complete: this.contactForm?.valid   ?? false },
-      { label: 'Write description',        complete: this.descriptionForm.valid },
+      { label: 'Write description',        complete: this.descriptionForm?.valid ?? false },
     ];
   });
 
@@ -238,7 +238,7 @@ export class AddListingPageComponent {
 
   readonly progressPanelSteps = computed<readonly ListingProgressStep[]>(() => {
     this.listingFormsTick();
-    const amenities = this.amenitiesForm.getRawValue();
+    const amenities = this.amenitiesForm?.getRawValue() ?? { selectedFeatureIds: [] };
     const media     = this.mediaForm.getRawValue();
     const hasFeaturesOrMedia = Boolean(
       (amenities.selectedFeatureIds ?? []).length ||
@@ -247,11 +247,11 @@ export class AddListingPageComponent {
     );
 
     const readinessByStep: Record<AddListingStepKey, boolean> = {
-      'basic-info':          this.basicInfoForm?.valid ?? false,
-      pricing:               this.pricingForm?.valid   ?? false,
-      location:              (this.locationForm?.valid ?? false) && (this.locationStep?.hasCoordinates() ?? false),
+      'basic-info':          this.basicInfoForm?.valid  ?? false,
+      pricing:               this.pricingForm?.valid    ?? false,
+      location:              (this.locationForm?.valid  ?? false) && (this.locationStep?.hasCoordinates() ?? false),
       'features-media':      hasFeaturesOrMedia,
-      'contact-description': (this.contactForm?.valid ?? false) && this.descriptionForm.valid,
+      'contact-description': (this.contactForm?.valid   ?? false) && (this.descriptionForm?.valid ?? false),
       'review-publish':      this.canSubmitListing(),
     };
 
@@ -280,13 +280,13 @@ export class AddListingPageComponent {
 
   readonly reviewSummarySections = computed<readonly ReviewSummarySection[]>(() => {
     this.listingFormsTick();
-    const basic       = this.basicInfoForm.getRawValue();
-    const pricing     = this.pricingForm.getRawValue();
-    const location    = this.locationForm.getRawValue();
-    const amenities   = this.amenitiesForm.getRawValue();
+    const basic       = this.basicInfoForm?.getRawValue()  ?? {};
+    const pricing     = this.pricingForm?.getRawValue()    ?? {};
+    const location    = this.locationForm?.getRawValue()   ?? {};
+    const amenities   = this.amenitiesForm?.getRawValue()  ?? { selectedFeatureIds: [] };
     const media       = this.mediaForm.getRawValue();
-    const contact     = this.contactForm.getRawValue();
-    const description = this.descriptionForm.getRawValue();
+    const contact     = this.contactForm?.getRawValue()    ?? {};
+    const description = this.descriptionForm?.getRawValue() ?? {};
 
     const selectedFeatureIds  = (amenities.selectedFeatureIds ?? []) as string[];
     const images              = (media.images      ?? []) as File[];
@@ -415,10 +415,6 @@ export class AddListingPageComponent {
     // basicInfoForm, pricingForm, contactForm, locationForm are created by their step components.
     // They arrive via onXxxFormReady() and are wired into ticks there.
 
-    this.amenitiesForm = this.fb.group({
-      selectedFeatureIds: [[] as string[]],
-    });
-
     this.mediaForm = this.fb.group(
       { images: [[] as File[]], videoFiles: [[] as File[]] },
       { validators: mediaRequirementValidator }
@@ -426,21 +422,9 @@ export class AddListingPageComponent {
 
     // Wire remaining parent-owned forms into tick signals.
     // Step-owned forms are wired in their onXxxFormReady() handlers.
-    merge(
-      this.amenitiesForm.valueChanges,
-      this.amenitiesForm.statusChanges,
-      this.mediaForm.valueChanges,
-      this.mediaForm.statusChanges,
-    )
+    merge(this.mediaForm.valueChanges, this.mediaForm.statusChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.listingFormsTick.update(n => n + 1));
-
-    merge(this.amenitiesForm.valueChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.aiListingFormsTick.update(n => n + 1));
-
-    // Prefetch features cache so amenities section loads instantly.
-    this.addListingService.getPropertyFeatures().subscribe({ error: () => void 0 });
 
     // Edit mode: detect :id in route and load property.
     const id = (this.route.snapshot.paramMap.get('id') ?? '').trim();
@@ -475,6 +459,12 @@ export class AddListingPageComponent {
     console.log('[AddListing] descriptionForm received');
     this.descriptionForm = form;
     this.wireFormToTicks(form, false);
+  }
+
+  onAmenitiesFormReady(form: FormGroup): void {
+    console.log('[AddListing] amenitiesForm received');
+    this.amenitiesForm = form;
+    this.wireFormToTicks(form, true);
   }
 
   onLocationFormReady(form: FormGroup): void {

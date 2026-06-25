@@ -2,13 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  Input,
+  EventEmitter,
   OnInit,
+  Output,
   inject,
   signal
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { SelectableChipGridComponent } from '../../../../shared/ui/selectable-chip-grid/selectable-chip-grid';
@@ -32,16 +33,18 @@ import { TranslateModule } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FeaturesAmenitiesSectionComponent implements OnInit {
+  private readonly fb                = inject(FormBuilder);
   private readonly addListingService = inject(AddListingService);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly destroyRef        = inject(DestroyRef);
 
-  @Input({ required: true }) form!: FormGroup;
+  @Output() readonly formReady = new EventEmitter<FormGroup>();
 
-  readonly chipItems = signal<readonly SelectableChipItem[]>([]);
-  readonly featuresLoading = signal(true);
-  readonly featuresError = signal(false);
+  readonly form      = this.fb.nonNullable.group({ selectedFeatureIds: [[] as string[]] });
+  readonly chipItems     = signal<readonly SelectableChipItem[]>([]);
+  readonly featuresState = signal<'loading' | 'error' | 'loaded'>('loading');
 
   ngOnInit(): void {
+    this.formReady.emit(this.form);
     this.loadFeatures();
 
     this.form
@@ -52,8 +55,7 @@ export class FeaturesAmenitiesSectionComponent implements OnInit {
 
   retryLoadFeatures(): void {
     this.addListingService.invalidatePropertyFeaturesCache();
-    this.featuresError.set(false);
-    this.featuresLoading.set(true);
+    this.featuresState.set('loading');
     this.loadFeatures();
   }
 
@@ -82,13 +84,11 @@ export class FeaturesAmenitiesSectionComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (features) => {
-          this.featuresLoading.set(false);
-          this.featuresError.set(false);
+          this.featuresState.set('loaded');
           this.setChipsFromFeatures(features);
         },
         error: () => {
-          this.featuresLoading.set(false);
-          this.featuresError.set(true);
+          this.featuresState.set('error');
           this.chipItems.set([]);
         }
       });

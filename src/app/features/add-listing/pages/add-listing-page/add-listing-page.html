@@ -29,7 +29,7 @@
            [attr.aria-label]="activeStepLabel()">
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'features-media'">
-          <app-features-amenities-section [form]="amenitiesForm" />
+          <app-features-amenities-section (formReady)="onAmenitiesFormReady($event)" />
           <app-property-media-section [form]="mediaForm"
                                       [existingImages]="existingPropertyImages()"
                                       [existingVideoUrl]="loadedProperty()?.videoTourUrl ?? null"
