@@ -55,10 +55,8 @@
         @case ('contact-description') {
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
           <app-contact-information-step (formReady)="onContactFormReady($event)" />
-          <app-property-description-step [form]="descriptionForm"
-                                         [aiDescriptionEnabled]="aiDescriptionContextReady()"
-                                         [aiDescriptionLoading]="isGeneratingDescription()"
-                                         (generateDescription)="onGenerateDescription()" />
+          <app-property-description-step (formReady)="onDescriptionFormReady($event)"
+                                         [aiRequestBody]="aiRequestBody()" />
         </div>
         }
         @case ('review-publish') {

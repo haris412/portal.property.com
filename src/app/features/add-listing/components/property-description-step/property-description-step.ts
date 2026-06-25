@@ -1,17 +1,18 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
-  computed,
   DestroyRef,
+  EventEmitter,
+  OnInit,
+  Output,
+  computed,
   inject,
   input,
-  OnInit,
-  output,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { merge } from 'rxjs';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
@@ -19,6 +20,9 @@ import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-bann
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
 import { ActionChipData } from '../../../../core/interfaces/ui.models';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AddListingService, GenerateListingDescriptionRequest } from '../../../../core/services/add-listing.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
 
 @Component({
   selector: 'app-property-description-step',
@@ -36,14 +40,18 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PropertyDescriptionStepComponent implements OnInit {
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly translate = inject(TranslateService);
+  private readonly fb            = inject(FormBuilder);
+  private readonly destroyRef    = inject(DestroyRef);
+  private readonly translate     = inject(TranslateService);
+  private readonly addListing    = inject(AddListingService);
+  private readonly notifications = inject(NotificationService);
 
-  readonly form = input.required<FormGroup>();
-  readonly aiDescriptionEnabled = input(false);
-  readonly aiDescriptionLoading = input(false);
-  readonly generateDescription = output<void>();
+  readonly aiRequestBody = input<GenerateListingDescriptionRequest | null>(null);
+
+  @Output() readonly formReady = new EventEmitter<FormGroup>();
+
+  readonly form                    = this.buildForm();
+  readonly isGeneratingDescription = signal(false);
 
   readonly descriptionBanner = toSignal(
     this.translate.stream('addListing.description.banner'),
@@ -51,28 +59,45 @@ export class PropertyDescriptionStepComponent implements OnInit {
   );
 
   readonly descriptionActions = computed<readonly ActionChipData[]>(() => {
-    const enabled = this.aiDescriptionEnabled();
-    const loading = this.aiDescriptionLoading();
+    const enabled = this.aiRequestBody() != null;
+    const loading = this.isGeneratingDescription();
     return [
       {
-        id: 'generate-description',
-        label: loading ? 'Generating description…' : 'Ask AI to generate description',
+        id:       'generate-description',
+        label:    loading ? 'Generating description…' : 'Ask AI to generate description',
         disabled: !enabled || loading,
       },
     ];
   });
 
   ngOnInit(): void {
-    const desc = this.form().get('propertyDescription');
-    if (!desc) return;
-    merge(desc.valueChanges, desc.statusChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.cdr.markForCheck());
+    this.formReady.emit(this.form);
   }
 
   onDescriptionAction(id: string): void {
-    if (id === 'generate-description') {
-      this.generateDescription.emit();
-    }
+    if (id !== 'generate-description') return;
+    const body = this.aiRequestBody();
+    if (!body || this.isGeneratingDescription()) return;
+
+    this.isGeneratingDescription.set(true);
+    this.addListing.generateListingDescription(body)
+      .pipe(
+        finalize(() => this.isGeneratingDescription.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: text => {
+          if (!text) { this.notifications.warning('No description text was returned.'); return; }
+          this.form.patchValue({ propertyDescription: text });
+          this.notifications.success('Description added — review and edit if needed.');
+        },
+        error: (err: unknown) => this.notifications.error(apiErrorSummary(err) || 'Could not generate description.'),
+      });
+  }
+
+  private buildForm(): FormGroup {
+    return this.fb.nonNullable.group({
+      propertyDescription: ['', [Validators.required, Validators.minLength(20)]],
+    });
   }
 }

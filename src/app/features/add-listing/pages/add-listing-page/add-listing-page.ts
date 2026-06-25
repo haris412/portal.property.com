@@ -14,7 +14,6 @@ import {
   FormGroup,
   ReactiveFormsModule,
   ValidationErrors,
-  Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, merge } from 'rxjs';
@@ -159,10 +158,10 @@ export class AddListingPageComponent {
   pricingForm!:   FormGroup;
   contactForm!:   FormGroup;
   locationForm!:  FormGroup;
-  // These three remain parent-owned (no dedicated step component yet).
-  readonly amenitiesForm:   FormGroup;
-  readonly mediaForm:       FormGroup;
-  readonly descriptionForm: FormGroup;
+  descriptionForm!: FormGroup;
+  // These two remain parent-owned (no dedicated step component yet).
+  readonly amenitiesForm: FormGroup;
+  readonly mediaForm:     FormGroup;
 
   // ── 4. Wizard / stepper ────────────────────────────────────────────────────
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
@@ -356,10 +355,53 @@ export class AddListingPageComponent {
   });
 
   // ── 7. AI description ──────────────────────────────────────────────────────
-  readonly isGeneratingDescription = signal(false);
-  readonly aiDescriptionContextReady = computed(() => {
+  // null = context not ready (button disabled); object = ready (button enabled + carries payload)
+  readonly aiRequestBody = computed<GenerateListingDescriptionRequest | null>(() => {
     this.aiListingFormsTick();
-    return this.evalAiDescriptionContextReady();
+    if (!this.basicInfoForm?.valid || !this.pricingForm?.valid || !(this.locationForm?.valid ?? false)) return null;
+    const ids = (this.amenitiesForm.get('selectedFeatureIds')?.value ?? []) as string[];
+    if (!Array.isArray(ids) || !ids.length) return null;
+
+    const basic     = this.basicInfoForm.getRawValue();
+    const pricing   = this.pricingForm.getRawValue();
+    const amenities = this.amenitiesForm.getRawValue();
+    const contact   = this.contactForm.getRawValue();
+    const location  = this.locationForm.getRawValue();
+
+    const purpose      = basic.purpose === 'sale' ? ('For Sale' as const) : ('For Rent' as const);
+    const coarseType   = this.addListingService.getCoarseTypeById(basic.propertyTypeId);
+    const categoryName = this.addListingService.getCategoryNameById(basic.propertyTypeId);
+    const subtypeName  = this.addListingService.getSubtypeNameById(basic.propertyTypeId, basic.subtypeId);
+    const subtype      = (subtypeName || categoryName).trim();
+    const amenityBooleans   = this.addListingService.buildAmenityBooleanPayload(amenities.selectedFeatureIds ?? []);
+    const locationHierarchy = (location.locationHierarchy ?? []) as LocationHierarchyItem[];
+    const cityName = locationHierarchy.find(i => i.level === 2)?.name ?? '';
+    const areaName = (locationHierarchy.find(i => i.level === 4) ?? locationHierarchy.find(i => i.level === 3))?.name ?? '';
+
+    return {
+      title:            (basic.listingTitle ?? '').trim(),
+      purpose,
+      propertyType:     coarseType,
+      subtype,
+      price:            pricing.price,
+      areaSize:         pricing.areaSize,
+      areaUnit:         pricing.areaUnit,
+      numBedrooms:      pricing.numBedrooms,
+      numBathrooms:     pricing.numBathrooms,
+      numParkingSpaces: pricing.numParkingSpaces,
+      numFloors:        pricing.numFloors,
+      ...amenityBooleans,
+      city:               cityName,
+      neighborhood:       areaName,
+      fullAddress:        location.fullAddress,
+      mapLink:            location.mapLink,
+      latitude:           location.latitude,
+      longitude:          location.longitude,
+      contactName:        contact.contactName,
+      contactEmail:       contact.contactEmail,
+      contactPhoneNumber: contact.contactPhoneNumber,
+      contactLocation:    contact.contactLocation,
+    };
   });
 
   // ── 8. Edit mode state ─────────────────────────────────────────────────────
@@ -372,10 +414,6 @@ export class AddListingPageComponent {
   constructor(private readonly fb: FormBuilder) {
     // basicInfoForm, pricingForm, contactForm, locationForm are created by their step components.
     // They arrive via onXxxFormReady() and are wired into ticks there.
-
-    this.descriptionForm = this.fb.group({
-      propertyDescription: ['', [Validators.required, Validators.minLength(20)]],
-    });
 
     this.amenitiesForm = this.fb.group({
       selectedFeatureIds: [[] as string[]],
@@ -393,8 +431,6 @@ export class AddListingPageComponent {
       this.amenitiesForm.statusChanges,
       this.mediaForm.valueChanges,
       this.mediaForm.statusChanges,
-      this.descriptionForm.valueChanges,
-      this.descriptionForm.statusChanges,
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.listingFormsTick.update(n => n + 1));
@@ -432,6 +468,12 @@ export class AddListingPageComponent {
   onContactFormReady(form: FormGroup): void {
     console.log('[AddListing] contactForm received');
     this.contactForm = form;
+    this.wireFormToTicks(form, false);
+  }
+
+  onDescriptionFormReady(form: FormGroup): void {
+    console.log('[AddListing] descriptionForm received');
+    this.descriptionForm = form;
     this.wireFormToTicks(form, false);
   }
 
@@ -601,76 +643,6 @@ export class AddListingPageComponent {
       ],
       this.destroyRef
     );
-  }
-
-  // ── 13. AI description ─────────────────────────────────────────────────────
-
-  onGenerateDescription(): void {
-    if (!this.aiDescriptionContextReady() || this.isGeneratingDescription()) return;
-    const body = this.buildAiDescriptionRequestBody();
-    if (!body) return;
-
-    this.isGeneratingDescription.set(true);
-    this.addListingService.generateListingDescription(body)
-      .pipe(finalize(() => this.isGeneratingDescription.set(false)))
-      .subscribe({
-        next: text => {
-          if (!text) { this.notifications.warning('No description text was returned.'); return; }
-          this.descriptionForm.patchValue({ propertyDescription: text });
-          this.notifications.success('Description added — review and edit if needed.');
-        },
-        error: (err: unknown) => this.notifications.error(apiErrorSummary(err) || 'Could not generate description.'),
-      });
-  }
-
-  private evalAiDescriptionContextReady(): boolean {
-    if (!this.basicInfoForm?.valid || !this.pricingForm?.valid || !(this.locationForm?.valid ?? false)) return false;
-    const ids = (this.amenitiesForm.get('selectedFeatureIds')?.value ?? []) as string[];
-    return Array.isArray(ids) && ids.length > 0;
-  }
-
-  private buildAiDescriptionRequestBody(): GenerateListingDescriptionRequest | null {
-    if (!this.evalAiDescriptionContextReady()) return null;
-    const basic     = this.basicInfoForm.getRawValue();
-    const pricing   = this.pricingForm.getRawValue();
-    const amenities = this.amenitiesForm.getRawValue();
-    const contact   = this.contactForm.getRawValue();
-    const location  = this.locationForm.getRawValue();
-
-    const purpose      = basic.purpose === 'sale' ? ('For Sale' as const) : ('For Rent' as const);
-    const coarseType   = this.addListingService.getCoarseTypeById(basic.propertyTypeId);
-    const categoryName = this.addListingService.getCategoryNameById(basic.propertyTypeId);
-    const subtypeName  = this.addListingService.getSubtypeNameById(basic.propertyTypeId, basic.subtypeId);
-    const subtype      = (subtypeName || categoryName).trim();
-    const amenityBooleans  = this.addListingService.buildAmenityBooleanPayload(amenities.selectedFeatureIds ?? []);
-    const locationHierarchy = (location.locationHierarchy ?? []) as LocationHierarchyItem[];
-    const cityName  = locationHierarchy.find(i => i.level === 2)?.name ?? '';
-    const areaName  = (locationHierarchy.find(i => i.level === 4) ?? locationHierarchy.find(i => i.level === 3))?.name ?? '';
-
-    return {
-      title: (basic.listingTitle ?? '').trim(),
-      purpose,
-      propertyType: coarseType,
-      subtype,
-      price:            pricing.price,
-      areaSize:         pricing.areaSize,
-      areaUnit:         pricing.areaUnit,
-      numBedrooms:      pricing.numBedrooms,
-      numBathrooms:     pricing.numBathrooms,
-      numParkingSpaces: pricing.numParkingSpaces,
-      numFloors:        pricing.numFloors,
-      ...amenityBooleans,
-      city:          cityName,
-      neighborhood:  areaName,
-      fullAddress:   location.fullAddress,
-      mapLink:       location.mapLink,
-      latitude:      location.latitude,
-      longitude:     location.longitude,
-      contactName:        contact.contactName,
-      contactEmail:       contact.contactEmail,
-      contactPhoneNumber: contact.contactPhoneNumber,
-      contactLocation:    contact.contactLocation,
-    };
   }
 
   // ── 14. Edit mode ──────────────────────────────────────────────────────────
