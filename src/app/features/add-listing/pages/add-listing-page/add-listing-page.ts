@@ -8,13 +8,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-} from '@angular/forms';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, merge } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -53,7 +47,7 @@ import type { PropertyCatalogData } from '../../../../core/models/property-catal
 import type { PropertyFeature } from '../../../../core/models/property-features.model';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ADD_LISTING_HEADER_ACTIONS } from '../../constants/add-listing.constants';
-import { MediaUploadService, ListingImagePayload } from '../../../../core/services/media-upload.service';
+import type { ListingImagePayload } from '../../../../core/services/media-upload.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { SubscriptionSessionStorageService } from '../../../../core/services/subscription-session-storage.service';
 import {
@@ -97,13 +91,6 @@ interface AddListingRequirement  { label: string; complete: boolean; }
 interface ReviewSummaryItem      { label: string; value: string; }
 interface ReviewSummarySection   { title: string; icon: string; items: readonly ReviewSummaryItem[]; }
 
-// mediaRequirementValidator stays here — mediaForm is one of the remaining parent-owned forms
-function mediaRequirementValidator(control: AbstractControl): ValidationErrors | null {
-  const images = (control.get('images')?.value as File[] | null) ?? [];
-  const video  = (control.get('videoFiles')?.value as File[] | null) ?? [];
-  return images.length >= 3 || video.length > 0 ? null : { mediaRequired: true };
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 @Component({
@@ -136,7 +123,6 @@ export class AddListingPageComponent {
   // ── 1. Dependencies ────────────────────────────────────────────────────────
   private readonly addListingService   = inject(AddListingService);
   private readonly notifications       = inject(NotificationService);
-  private readonly mediaUploadService  = inject(MediaUploadService);
   private readonly auth                = inject(AuthService);
   private readonly subscriptionStorage = inject(SubscriptionSessionStorageService);
   private readonly subscriptionsApi    = inject(SubscriptionsApiService);
@@ -151,6 +137,9 @@ export class AddListingPageComponent {
   @ViewChild(PropertyLocationStepComponent)
   private readonly locationStep?: PropertyLocationStepComponent;
 
+  @ViewChild(PropertyMediaSectionComponent)
+  private readonly mediaStep?: PropertyMediaSectionComponent;
+
   // ── 3. Forms ───────────────────────────────────────────────────────────────
   // basicInfoForm, pricingForm, contactForm, locationForm are owned by step children.
   // Parent receives them via (formReady) output and wires them into tick signals.
@@ -159,9 +148,8 @@ export class AddListingPageComponent {
   contactForm!:   FormGroup;
   locationForm!:  FormGroup;
   descriptionForm!: FormGroup;
-  amenitiesForm!:   FormGroup;
-  // mediaForm remains parent-owned (no dedicated step component yet).
-  readonly mediaForm: FormGroup;
+  amenitiesForm!: FormGroup;
+  mediaForm!:     FormGroup;
 
   // ── 4. Wizard / stepper ────────────────────────────────────────────────────
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
@@ -203,6 +191,7 @@ export class AddListingPageComponent {
       case 'basic-info':          return this.basicInfoForm?.valid ?? false;
       case 'pricing':             return this.pricingForm?.valid   ?? false;
       case 'location':            return (this.locationForm?.valid ?? false) && (this.locationStep?.hasCoordinates() ?? false);
+      case 'features-media':      return this.mediaForm?.valid      ?? false;
       case 'contact-description': return this.contactForm?.valid   ?? false;
       default:                    return true;
     }
@@ -411,20 +400,8 @@ export class AddListingPageComponent {
   readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
 
   // ── 9. Constructor ─────────────────────────────────────────────────────────
-  constructor(private readonly fb: FormBuilder) {
-    // basicInfoForm, pricingForm, contactForm, locationForm are created by their step components.
-    // They arrive via onXxxFormReady() and are wired into ticks there.
+  constructor() {
 
-    this.mediaForm = this.fb.group(
-      { images: [[] as File[]], videoFiles: [[] as File[]] },
-      { validators: mediaRequirementValidator }
-    );
-
-    // Wire remaining parent-owned forms into tick signals.
-    // Step-owned forms are wired in their onXxxFormReady() handlers.
-    merge(this.mediaForm.valueChanges, this.mediaForm.statusChanges)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.listingFormsTick.update(n => n + 1));
 
     // Edit mode: detect :id in route and load property.
     const id = (this.route.snapshot.paramMap.get('id') ?? '').trim();
@@ -465,6 +442,12 @@ export class AddListingPageComponent {
     console.log('[AddListing] amenitiesForm received');
     this.amenitiesForm = form;
     this.wireFormToTicks(form, true);
+  }
+
+  onMediaFormReady(form: FormGroup): void {
+    console.log('[AddListing] mediaForm received');
+    this.mediaForm = form;
+    this.wireFormToTicks(form, false);
   }
 
   onLocationFormReady(form: FormGroup): void {
@@ -537,7 +520,7 @@ export class AddListingPageComponent {
     try {
       if (publishWithFeatured) await this.consumeFeaturedListingQuota();
 
-      const uploadedMedia = await this.uploadSelectedMedia();
+      const uploadedMedia = await this.mediaStep!.upload(false);
       const payload       = this.buildPayload(uploadedMedia);
 
       if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) {
@@ -589,7 +572,7 @@ export class AddListingPageComponent {
       if (this.isBecomingFeatured())      await this.consumeFeaturedListingQuota();
       else if (this.isRemovingFeatured()) await this.restoreFeaturedListingQuota();
 
-      const uploadedMedia = await this.uploadSelectedMediaForEdit();
+      const uploadedMedia = await this.mediaStep!.upload(true);
       const payload       = this.buildPayload(uploadedMedia);
       await firstValueFrom(this.addListingService.updateProperty(id, payload));
       this.notifications.success('Property updated successfully');
@@ -817,56 +800,6 @@ export class AddListingPageComponent {
       form?.updateValueAndValidity({ emitEvent: true });
     }
     this.listingFormsTick.update(n => n + 1);
-  }
-
-  // ── 16. Media upload ───────────────────────────────────────────────────────
-
-  private async uploadSelectedMedia(): Promise<UploadedMediaPayload> {
-    const media      = this.mediaForm.value;
-    const images     = (media.images     ?? []) as File[];
-    const videoFiles = (media.videoFiles ?? []) as File[];
-
-    if (!images.length && !videoFiles.length) return { images: [], videoTourUrl: null };
-
-    this.notifications.info('Uploading media...');
-    try {
-      const uploadedImages = images.length ? await this.mediaUploadService.uploadImages(images) : [];
-      const videoTourUrl   = videoFiles[0]  ? await this.mediaUploadService.uploadVideo(videoFiles[0]) : null;
-      this.notifications.success('Media uploaded successfully');
-      return { images: uploadedImages, videoTourUrl };
-    } catch (error: unknown) {
-      const details = apiErrorSummary(error) || 'Media upload failed';
-      this.notifications.error(details);
-      throw new Error(details);
-    }
-  }
-
-  private async uploadSelectedMediaForEdit(): Promise<UploadedMediaPayload> {
-    const existingVideo  = ((this.loadedProperty()?.videoTourUrl ?? null) || null) as string | null;
-    const keptImages     = this.existingPropertyImages();
-    const media          = this.mediaForm.value;
-    const newImageFiles  = (media.images     ?? []) as File[];
-    const videoFiles     = (media.videoFiles ?? []) as File[];
-    let uploadedNewImages: ListingImagePayload[] = [];
-    let videoTourUrl = existingVideo;
-
-    if (newImageFiles.length || videoFiles.length) {
-      this.notifications.info('Uploading media...');
-      try {
-        uploadedNewImages = newImageFiles.length ? await this.mediaUploadService.uploadImages(newImageFiles) : [];
-        if (videoFiles[0]) videoTourUrl = await this.mediaUploadService.uploadVideo(videoFiles[0]);
-        this.notifications.success('Media uploaded successfully');
-      } catch (error: unknown) {
-        const details = apiErrorSummary(error) || 'Media upload failed';
-        this.notifications.error(details);
-        throw new Error(details);
-      }
-    }
-
-    const mergedImages = [...keptImages, ...uploadedNewImages].map((img, i) => ({
-      ...img, orderIndex: i, isThumbnail: i === 0,
-    }));
-    return { images: mergedImages, videoTourUrl };
   }
 
   // ── 17. Featured listing quota ─────────────────────────────────────────────

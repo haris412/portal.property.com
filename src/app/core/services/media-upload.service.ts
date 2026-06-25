@@ -46,7 +46,7 @@ export class MediaUploadService {
 
   constructor(private readonly http: HttpClient) {}
 
-  async uploadImages(files: File[], propertyId?: string): Promise<ListingImagePayload[]> {
+  async uploadImages(files: File[], propertyId?: string): Promise<string[]> {
     const images: ImageUploadRequest[] = files.map(file => ({
       fileName: file.name,
       fileType: file.type || 'image/jpeg',
@@ -59,15 +59,18 @@ export class MediaUploadService {
       this.http.post<BatchImageUploadUrlResponse>(`${this.apiBase}/property-images-urls`, body)
     );
 
-    return Promise.all(
+    const results = await Promise.allSettled(
       presignedItems.map((item, index) =>
-        this.putToS3(item.uploadUrl, files[index]).then(() => ({
-          url: item.fileUrl,
-          orderIndex: index,
-          isThumbnail: index === 0,
-        }))
+        this.putToS3(item.uploadUrl, files[index]).then(() => item.fileUrl)
       )
     );
+
+    const urls = results
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map(r => r.value);
+
+    if (!urls.length) throw new Error('All image uploads failed.');
+    return urls;
   }
 
   async uploadVideo(file: File, propertyId?: string): Promise<string> {

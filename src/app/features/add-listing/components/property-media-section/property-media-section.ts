@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnDestroy, Output, signal } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnDestroy, OnInit, Output, signal } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -8,6 +8,14 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { ConfirmationDialogService } from '../../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { UploadDropzoneComponent } from '../../../../shared/ui/upload-dropzone/upload-dropzone';
+import type { UploadedMediaPayload } from '../../mappers/listing-payload.mapper';
+import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
+
+function mediaRequirementValidator(control: AbstractControl): ValidationErrors | null {
+  const images = (control.get('images')?.value as File[] | null) ?? [];
+  const video  = (control.get('videoFiles')?.value as File[] | null) ?? [];
+  return images.length >= 3 || video.length > 0 ? null : { mediaRequired: true };
+}
 
 interface NewImagePreview {
   name: string;
@@ -22,19 +30,31 @@ interface NewImagePreview {
   styleUrl: './property-media-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PropertyMediaSectionComponent implements OnDestroy {
+export class PropertyMediaSectionComponent implements OnInit, OnDestroy {
+  private readonly fb                 = inject(FormBuilder);
   private readonly mediaUploadService = inject(MediaUploadService);
-  private readonly notifications = inject(NotificationService);
+  private readonly notifications      = inject(NotificationService);
   private readonly confirmationDialog = inject(ConfirmationDialogService);
 
-  @Input({ required: true }) form!: FormGroup;
-  @Input() existingImages: ListingImagePayload[] = [];
+  @Input() existingImages:  ListingImagePayload[] = [];
   @Input() existingVideoUrl: string | null = null;
+  @Input() propertyId:       string | null = null;
+
+  @Output() readonly formReady            = new EventEmitter<FormGroup>();
   @Output() readonly existingImageRemoved = new EventEmitter<number>();
+
+  readonly form = this.fb.nonNullable.group(
+    { images: [[] as File[]], videoFiles: [[] as File[]] },
+    { validators: mediaRequirementValidator }
+  );
 
   readonly newImagePreviews = signal<NewImagePreview[]>([]);
   readonly selectedVideoName = signal<string | null>(null);
   readonly deletingImageUrls = signal(new Set<string>());
+
+  ngOnInit(): void {
+    this.formReady.emit(this.form);
+  }
 
   ngOnDestroy(): void {
     for (const preview of this.newImagePreviews()) {
@@ -101,6 +121,56 @@ export class PropertyMediaSectionComponent implements OnDestroy {
     if (!target) return;
     URL.revokeObjectURL(target.url);
     this.syncNewImages(previews.filter((_, i) => i !== index));
+  }
+
+  async upload(isEdit: boolean): Promise<UploadedMediaPayload> {
+    const images     = (this.form.value.images     ?? []) as File[];
+    const videoFiles = (this.form.value.videoFiles ?? []) as File[];
+    const pid        = this.propertyId ?? undefined;
+
+    if (!isEdit) {
+      if (!images.length && !videoFiles.length) return { images: [], videoTourUrl: null };
+      this.notifications.info('Uploading media...');
+      try {
+        const urls         = images.length ? await this.mediaUploadService.uploadImages(images, pid) : [];
+        const videoTourUrl = videoFiles[0]  ? await this.mediaUploadService.uploadVideo(videoFiles[0], pid) : null;
+        if (urls.length < images.length) this.notifications.warning(`${images.length - urls.length} image(s) failed to upload.`);
+        else this.notifications.success('Media uploaded successfully');
+        const uploadedImages = this.toPayload(urls);
+        return { images: uploadedImages, videoTourUrl };
+      } catch (error: unknown) {
+        const details = apiErrorSummary(error) || 'Media upload failed';
+        this.notifications.error(details);
+        throw new Error(details);
+      }
+    }
+
+    let uploadedNewImages: ListingImagePayload[] = [];
+    let videoTourUrl = (this.existingVideoUrl || null) as string | null;
+
+    if (images.length || videoFiles.length) {
+      this.notifications.info('Uploading media...');
+      try {
+        const urls = images.length ? await this.mediaUploadService.uploadImages(images, pid) : [];
+        if (videoFiles[0]) videoTourUrl = await this.mediaUploadService.uploadVideo(videoFiles[0], pid);
+        if (urls.length < images.length) this.notifications.warning(`${images.length - urls.length} image(s) failed to upload.`);
+        else this.notifications.success('Media uploaded successfully');
+        uploadedNewImages = this.toPayload(urls);
+      } catch (error: unknown) {
+        const details = apiErrorSummary(error) || 'Media upload failed';
+        this.notifications.error(details);
+        throw new Error(details);
+      }
+    }
+
+    const mergedImages = [...this.existingImages, ...uploadedNewImages].map((img, i) => ({
+      ...img, orderIndex: i, isThumbnail: i === 0,
+    }));
+    return { images: mergedImages, videoTourUrl };
+  }
+
+  private toPayload(urls: string[]): ListingImagePayload[] {
+    return urls.map((url, i) => ({ url, orderIndex: i, isThumbnail: i === 0 }));
   }
 
   private syncNewImages(previews: NewImagePreview[]): void {
