@@ -37,30 +37,30 @@
                                       (existingImageRemoved)="onExistingImageRemoved($event)" />
         </div>
 
-        @switch (activeStepKey()) {
-        @case ('basic-info') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'basic-info'">
           <app-basic-information-section (formReady)="onBasicInfoFormReady($event)" />
         </div>
-        }
-        @case ('pricing') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
+
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'pricing'">
           <app-pricing-details-section (formReady)="onPricingFormReady($event)" />
         </div>
-        }
-        @case ('location') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
-          <app-property-location-step (formReady)="onLocationFormReady($event)" />
+
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'location'">
+          <app-property-location-step (formReady)="onLocationFormReady($event)"
+                                      [isActive]="activeStepKey() === 'location'" />
         </div>
-        }
-        @case ('contact-description') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
+
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'contact-description'">
           <app-contact-information-step (formReady)="onContactFormReady($event)" />
           <app-property-description-step (formReady)="onDescriptionFormReady($event)"
                                          [aiRequestBody]="aiRequestBody()" />
         </div>
-        }
-        @case ('review-publish') {
+
+        @if (activeStepKey() === 'review-publish') {
         <app-section-card title="Review & Publish"
                           description="Confirm the listing details below, then save a draft or publish when everything is ready."
                           variant="dashboard"
@@ -117,7 +117,6 @@
             </button>
           </div>
         </app-section-card>
-        }
         }
 
         <div class="add-listing-page__navigation">

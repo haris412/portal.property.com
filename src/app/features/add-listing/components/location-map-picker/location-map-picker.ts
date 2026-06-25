@@ -6,7 +6,9 @@ import {
   ElementRef,
   Input,
   ViewChild,
+  effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
@@ -44,6 +46,7 @@ export class LocationMapPickerComponent implements AfterViewInit {
   @Input({ required: true }) form!: FormGroup;
   @Input() heightPx = 220;
 
+  readonly isActive = input(false);
   readonly locating = signal(false);
   readonly geoError = signal<string | null>(null);
 
@@ -51,6 +54,12 @@ export class LocationMapPickerComponent implements AfterViewInit {
 
   private map?: L.Map;
   private marker?: L.Marker;
+
+  constructor() {
+    effect(() => {
+      if (this.isActive()) requestAnimationFrame(() => this.map?.invalidateSize());
+    });
+  }
 
   ngAfterViewInit(): void {
     // this.configureLeafletIcons();

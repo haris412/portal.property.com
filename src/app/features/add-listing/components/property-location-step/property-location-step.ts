@@ -7,6 +7,7 @@ import {
   Output,
   computed,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -77,6 +78,7 @@ export class PropertyLocationStepComponent implements OnInit {
   private readonly googlePlaces = inject(GooglePlacesService);
   private readonly destroyRef   = inject(DestroyRef);
 
+  readonly isActive       = input(false);
   readonly canContinue    = signal(false);
   readonly hasCoordinates = signal(false);
   readonly form           = this.buildForm();
