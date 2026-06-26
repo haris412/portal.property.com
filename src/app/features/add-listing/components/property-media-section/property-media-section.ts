@@ -123,27 +123,31 @@ export class PropertyMediaSectionComponent implements OnInit, OnDestroy {
     this.syncNewImages(previews.filter((_, i) => i !== index));
   }
 
-  async upload(isEdit: boolean): Promise<UploadedMediaPayload> {
+  async uploadForCreate(): Promise<UploadedMediaPayload> {
     const images     = (this.form.value.images     ?? []) as File[];
     const videoFiles = (this.form.value.videoFiles ?? []) as File[];
     const pid        = this.propertyId ?? undefined;
 
-    if (!isEdit) {
-      if (!images.length && !videoFiles.length) return { images: [], videoTourUrl: null };
-      this.notifications.info('Uploading media...');
-      try {
-        const urls         = images.length ? await this.mediaUploadService.uploadImages(images, pid) : [];
-        const videoTourUrl = videoFiles[0]  ? await this.mediaUploadService.uploadVideo(videoFiles[0], pid) : null;
-        if (urls.length < images.length) this.notifications.warning(`${images.length - urls.length} image(s) failed to upload.`);
-        else this.notifications.success('Media uploaded successfully');
-        const uploadedImages = this.toPayload(urls);
-        return { images: uploadedImages, videoTourUrl };
-      } catch (error: unknown) {
-        const details = apiErrorSummary(error) || 'Media upload failed';
-        this.notifications.error(details);
-        throw new Error(details);
-      }
+    if (!images.length && !videoFiles.length) return { images: [], videoTourUrl: null };
+
+    this.notifications.info('Uploading media...');
+    try {
+      const urls         = images.length ? await this.mediaUploadService.uploadImages(images, pid) : [];
+      const videoTourUrl = videoFiles[0]  ? await this.mediaUploadService.uploadVideo(videoFiles[0], pid) : null;
+      if (urls.length < images.length) this.notifications.warning(`${images.length - urls.length} image(s) failed to upload.`);
+      else this.notifications.success('Media uploaded successfully');
+      return { images: this.toPayload(urls), videoTourUrl };
+    } catch (error: unknown) {
+      const details = apiErrorSummary(error) || 'Media upload failed';
+      this.notifications.error(details);
+      throw new Error(details);
     }
+  }
+
+  async uploadForEdit(): Promise<UploadedMediaPayload> {
+    const images     = (this.form.value.images     ?? []) as File[];
+    const videoFiles = (this.form.value.videoFiles ?? []) as File[];
+    const pid        = this.propertyId ?? undefined;
 
     let uploadedNewImages: ListingImagePayload[] = [];
     let videoTourUrl = (this.existingVideoUrl || null) as string | null;

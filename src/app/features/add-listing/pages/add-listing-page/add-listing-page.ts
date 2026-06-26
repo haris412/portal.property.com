@@ -56,7 +56,7 @@ import {
 } from '../../../../core/services/subscriptions-api.service';
 import type { Subscription } from '../../../../core/interfaces/subscription.models';
 import { applyServerFieldErrors } from '../../../../core/http/apply-server-field-errors';
-import { apiErrorSummary, parseHttpApiError } from '../../../../core/http/parse-http-api-error';
+import { parseHttpApiError } from '../../../../core/http/parse-http-api-error';
 import {
   ADD_LISTING_BASIC_INFO_API_MAP,
   ADD_LISTING_CONTACT_API_MAP,
@@ -205,10 +205,10 @@ export class AddListingPageComponent {
 
   readonly publishRequirements = computed<readonly AddListingRequirement[]>(() => {
     this.listingFormsTick();
-    const media = this.mediaForm.value;
+    const media = this.mediaForm?.value ?? {};
     const hasMedia =
-      this.existingPropertyImages().length + (media.images ?? []).length >= 3 ||
-      Boolean((media.videoFiles ?? []).length) ||
+      this.existingPropertyImages().length + ((media.images ?? []) as File[]).length >= 3 ||
+      Boolean(((media.videoFiles ?? []) as File[]).length) ||
       Boolean(this.loadedProperty()?.videoTourUrl);
 
     return [
@@ -228,7 +228,7 @@ export class AddListingPageComponent {
   readonly progressPanelSteps = computed<readonly ListingProgressStep[]>(() => {
     this.listingFormsTick();
     const amenities = this.amenitiesForm?.getRawValue() ?? { selectedFeatureIds: [] };
-    const media     = this.mediaForm.getRawValue();
+    const media     = this.mediaForm?.getRawValue()    ?? { images: [], videoFiles: [] };
     const hasFeaturesOrMedia = Boolean(
       (amenities.selectedFeatureIds ?? []).length ||
       (media.images ?? []).length >= 3 ||
@@ -499,71 +499,79 @@ export class AddListingPageComponent {
   // ── 12. Submit actions ─────────────────────────────────────────────────────
 
   async onHeaderAction(actionId: string): Promise<void> {
-    if (this.editingId()) {
-      if (actionId === 'update-property') await this.onUpdateProperty();
+    if (actionId === 'update-property')                          await this.onUpdateProperty();
+    else if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) await this.onSaveDraft();
+    else if (actionId === ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING) await this.onPublishListing();
+  }
+
+  async onReviewPrimaryAction(): Promise<void> {
+    await (this.editingId() ? this.onUpdateProperty() : this.onPublishListing());
+  }
+
+  async onReviewSaveDraft(): Promise<void> {
+    await this.onSaveDraft();
+  }
+
+  onFeaturedToggle(checked: boolean): void {
+    if (!checked)                                       { this.isFeatured.set(false); return; }
+    if (this.wasFeaturedWhenLoaded())                   { this.isFeatured.set(true);  return; }
+    if (!this.assertFeaturedListingQuotaAvailable())    { this.isFeatured.set(false); return; }
+    this.isFeatured.set(true);
+  }
+
+  private async onPublishListing(): Promise<void> {
+    if (this.isSubmitting()) return;
+    if (!this.allCreateFormsValid()) {
+      this.markAllListingFormsTouched();
+      this.notifyMissingRequiredFields();
       return;
     }
+    if (this.isBecomingFeatured() && !this.assertFeaturedListingQuotaAvailable()) return;
 
-    if (actionId !== ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT && actionId !== ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING) return;
+    this.isSubmitting.set(true);
+    try {
+      if (this.isBecomingFeatured()) await this.consumeFeaturedListingQuota();
+      const payload = this.buildPayload(await this.mediaStep!.uploadForCreate());
+      await firstValueFrom(this.addListingService.createListing(payload));
+      this.notifications.success('Property added successfully');
+      await this.router.navigate(['/properties']);
+    } catch (error: unknown) {
+      this.handleAddListingSubmitError(error, ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING);
+    } finally {
+      this.isSubmitting.set(false);
+    }
+  }
+
+  private async onSaveDraft(): Promise<void> {
     if (this.isSubmitting()) return;
-
     if (!this.allCreateFormsValid()) {
       this.markAllListingFormsTouched();
       this.notifyMissingRequiredFields();
       return;
     }
 
-    const publishWithFeatured = actionId === ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING && this.isBecomingFeatured();
-    if (publishWithFeatured && !this.assertFeaturedListingQuotaAvailable()) return;
-
     this.isSubmitting.set(true);
     try {
-      if (publishWithFeatured) await this.consumeFeaturedListingQuota();
-
-      const uploadedMedia = await this.mediaStep!.upload(false);
-      const payload       = this.buildPayload(uploadedMedia);
-
-      if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) {
-        await firstValueFrom(this.addListingService.saveDraft(payload));
-        this.notifications.success('Draft saved successfully');
-      } else {
-        await firstValueFrom(this.addListingService.createListing(payload));
-        this.notifications.success('Property added successfully');
-      }
+      const payload = this.buildPayload(await this.mediaStep!.uploadForCreate());
+      await firstValueFrom(this.addListingService.saveDraft(payload));
+      this.notifications.success('Draft saved successfully');
       await this.router.navigate(['/properties']);
     } catch (error: unknown) {
-      this.handleAddListingSubmitError(error, actionId);
+      this.handleAddListingSubmitError(error, ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT);
     } finally {
       this.isSubmitting.set(false);
     }
   }
 
-  async onReviewPrimaryAction(): Promise<void> {
-    await this.onHeaderAction(this.editingId() ? 'update-property' : ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING);
-  }
-
-  async onReviewSaveDraft(): Promise<void> {
-    await this.onHeaderAction(ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT);
-  }
-
-  onFeaturedToggle(checked: boolean): void {
-    if (!checked) { this.isFeatured.set(false); return; }
-    if (this.wasFeaturedWhenLoaded()) { this.isFeatured.set(true); return; }
-    if (!this.assertFeaturedListingQuotaAvailable()) { this.isFeatured.set(false); return; }
-    this.isFeatured.set(true);
-  }
-
   private async onUpdateProperty(): Promise<void> {
     const id = this.editingId();
     if (!id || this.isSubmitting()) return;
-
     if (!this.allEditFormsValid()) {
       this.markAllListingFormsTouched();
       this.notifyMissingRequiredFields();
       return;
     }
-
-    const totalImages = this.existingPropertyImages().length + ((this.mediaForm.value.images ?? []) as File[]).length;
+    const totalImages = this.existingPropertyImages().length + ((this.mediaForm?.value.images ?? []) as File[]).length;
     if (totalImages < 3) { this.notifications.warning('At least 3 photos are required.'); return; }
     if (this.isBecomingFeatured() && !this.assertFeaturedListingQuotaAvailable()) return;
 
@@ -571,21 +579,17 @@ export class AddListingPageComponent {
     try {
       if (this.isBecomingFeatured())      await this.consumeFeaturedListingQuota();
       else if (this.isRemovingFeatured()) await this.restoreFeaturedListingQuota();
-
-      const uploadedMedia = await this.mediaStep!.upload(true);
-      const payload       = this.buildPayload(uploadedMedia);
+      const payload = this.buildPayload(await this.mediaStep!.uploadForEdit());
       await firstValueFrom(this.addListingService.updateProperty(id, payload));
       this.notifications.success('Property updated successfully');
       await this.router.navigate(['/properties']);
     } catch (error: unknown) {
-      const summary = apiErrorSummary(error);
-      if (summary)                  this.notifications.error(summary);
-      else if (error instanceof Error) this.notifications.error(error.message);
-      else                          this.handleAddListingSubmitError(error, 'update-property');
+      this.handleAddListingSubmitError(error, 'update-property');
     } finally {
       this.isSubmitting.set(false);
     }
   }
+
 
   private buildPayload(uploadedMedia: UploadedMediaPayload): CreateListingPayload {
     const forms: ListingFormSnapshot = {

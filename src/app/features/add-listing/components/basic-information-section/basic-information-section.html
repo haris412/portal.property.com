@@ -6,11 +6,11 @@
 
     <div class="col-12">
       <label class="field-label">{{ 'addListing.basicInfo.purpose.label' | translate }}</label>
-      <app-segmented-option-group
+       <app-segmented-option-group
         [items]="purposeOptions"
         [selectedValue]="form.controls.purpose.value"
         (changed)="onPurposeChange($event)"
-      />
+      /> 
       @if (form.controls.purpose.hasError('server')) {
         <div class="field-validation-msg" role="alert">{{ form.controls.purpose.getError('server') }}</div>
       } @else if (form.controls.purpose.invalid && form.controls.purpose.touched) {
