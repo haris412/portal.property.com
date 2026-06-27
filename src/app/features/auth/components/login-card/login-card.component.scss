@@ -26,7 +26,7 @@
 
 .form-label-auth {
   display: inline-block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   color: var(--font-main);
   font-size: var(--font-size-body-sm);
   font-weight: 700;
@@ -39,6 +39,27 @@
 
 .mat-icon {
   color: var(--font-secondary);
+}
+
+:host ::ng-deep {
+  .auth-card .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  .auth-card .mat-mdc-text-field-wrapper {
+    min-height: 48px;
+  }
+
+  .auth-card .mat-mdc-form-field-infix {
+    min-height: 48px;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .auth-card .mat-mdc-checkbox label {
+    color: var(--font-main);
+    font-size: var(--font-size-body-sm);
+  }
 }
 
 @media (max-width: 575.98px) {
