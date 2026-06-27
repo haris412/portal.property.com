@@ -19,7 +19,7 @@ import { SectionCardComponent } from '../../../../shared/ui/section-card/section
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { SegmentedOptionGroupComponent } from '../../../../shared/ui/segmented-option-group/segmented-option-group';
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
-import { OptionItem, ActionChipData } from '../../../../core/models/ui.models';
+import { OptionItem, ActionChipData } from '../../../../core/interfaces/ui.models';
 import {
   PropertyCatalogCategory,
   PropertyCatalogSubtype

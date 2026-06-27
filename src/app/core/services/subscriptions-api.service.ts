@@ -9,8 +9,8 @@ import type {
   SubscriptionUpdateDTO,
   SubscriptionType,
   SuccessResponseModel,
-} from '../models/subscription.models';
-import { SUBSCRIPTION_TYPE_VALUES } from '../models/subscription.models';
+} from '../interfaces/subscription.models';
+import { SUBSCRIPTION_TYPE_VALUES } from '../interfaces/subscription.models';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);

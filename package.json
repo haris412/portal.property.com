@@ -31,6 +31,7 @@
     "leaflet": "^1.9.4",
     "mediasoup-client": "^3.19.0",
     "ngx-echarts": "^21.0.0",
+    "ngx-material-intl-tel-input": "^21.1.0",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4.8.3",
     "tslib": "^2.3.0"

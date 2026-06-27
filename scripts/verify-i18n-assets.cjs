@@ -15,5 +15,3 @@ for (const file of required) {
     process.exit(1);
   }
 }
-
-console.log('i18n: en.json and ur.json are present in build output.');

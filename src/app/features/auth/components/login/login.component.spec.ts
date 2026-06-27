@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
-import { LoginCardComponent } from './login-card.component';
+import { LoginCardComponent } from './login.component';
 import { FeatureCardComponent } from '../../../../shared/ui/feature-card/feature-card.component';
 import { SocialButtonComponent } from '../../../../shared/ui/social-button/social-button.component';
 

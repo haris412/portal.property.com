@@ -41,49 +41,17 @@
         </div>
 
         <div class="col-12">
-          <label class="form-label-auth" for="signup-phone">{{ 'public.signUp.mobile' | translate }}</label>
-          <div class="phone-row d-flex gap-2 align-items-flex-start">
-            <mat-form-field appearance="outline" class="phone-country">
-              <mat-label>{{ 'public.signUp.phoneCode' | translate }}</mat-label>
-              <input
-                id="signup-phone-country"
-                matInput
-                formControlName="phoneCountryCode"
-                [matAutocomplete]="phoneCountryAuto"
-                [placeholder]="'public.signUp.phoneCode' | translate"
-                aria-label="Country code"
-              />
-              <mat-autocomplete
-                #phoneCountryAuto="matAutocomplete"
-                [displayWith]="displayPhoneCountry"
-                panelClass="auth-dropdown-panel"
-              >
-                @for (c of filteredPhoneCountries(); track c.isoCode) {
-                  <mat-option [value]="c.isoCode" class="auth-dropdown-option">
-                    <span class="auth-option-flag">{{ c.flag }}</span>
-                    <span class="auth-option-text">+{{ c.phonecode }} {{ c.isoCode }}</span>
-                  </mat-option>
-                }
-              </mat-autocomplete>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="phone-number flex-grow-1">
-              <input
-                id="signup-phone"
-                matInput
-                formControlName="phone"
-                placeholder="phone-number"
-                autocomplete="tel-national"
-                inputmode="numeric"
-              />
-            </mat-form-field>
-          </div>
-          <app-form-field-error
-            [control]="form.controls.phone"
-            [label]="'public.signUp.mobile' | translate"
+          <!-- <label class="form-label-auth" for="signup-phone">{{ 'public.signUp.mobile' | translate }}</label> -->
+          <ngx-material-intl-tel-input
+            [preferredCountries]="['sa', 'us']"
+            [enablePlaceholder]="true"
+            [enableSearch]="true"
+            [mainLabel] = "'Mobile number'"
+            [fieldControlName]="'phoneNumber'"
           />
         </div>
 
-        <div class="col-12">
+        <!-- <div class="col-12">
           <label class="form-label-auth" for="signup-location">{{ 'public.signUp.location' | translate }}</label>
           <mat-form-field appearance="outline" class="w-100">
             <mat-label>{{ 'public.signUp.location' | translate }}</mat-label>
@@ -100,7 +68,7 @@
               [displayWith]="displayLocationCountry"
               panelClass="auth-dropdown-panel"
             >
-              @for (c of filteredLocationCountries(); track c.isoCode) {
+              @for (c of countryList; track c.isoCode) {
                 <mat-option [value]="c" class="auth-dropdown-option">
                   <span class="auth-option-text">{{ c.name }}</span>
                 </mat-option>
@@ -111,7 +79,7 @@
             [control]="form.controls.locationCountryCode"
             [label]="'public.signUp.location' | translate"
           />
-        </div>
+        </div> -->
 
         @if (!lockUserType()) {
           <div class="col-12">
@@ -212,7 +180,7 @@
             type="submit"
             mat-raised-button
             class="auth-primary-btn w-100"
-            [disabled]="!canSubmit()"
+            [disabled]="!this.form.valid"
           >
             {{ loading() ? ('public.signUp.ctaLoading' | translate) : ('public.signUp.cta' | translate) }}
           </button>

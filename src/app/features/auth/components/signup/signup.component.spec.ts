@@ -1,7 +1,7 @@
 /// <reference types="jasmine" />
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SignupCardComponent } from './signup-card.component';
+import { SignupCardComponent } from './signup.component';
 
 describe('SignupCardComponent', () => {
   let component: SignupCardComponent;

@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
-import type { Subscription } from '../models/subscription.models';
+import type { Subscription } from '../interfaces/subscription.models';
 
 const STORAGE_KEY = 'subscriptionPlan';
 /** Legacy key from an earlier sessionStorage implementation. */

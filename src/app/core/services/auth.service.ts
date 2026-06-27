@@ -1,4 +1,4 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -17,6 +17,8 @@ import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/fo
 import { environment } from '../../../environments/environment';
 import { hasPrimaryAgencyAdminRole } from '../models/role.models';
 import { SubscriptionSessionStorageService } from './subscription-session-storage.service';
+import { IUser } from '../interfaces/user.interface';
+import { IAccountSignUp } from '../interfaces/account.interface';
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -49,17 +51,6 @@ interface StoredSession {
 export interface LoginPayload {
   email: string;
   password: string;
-}
-
-export interface RegisterPayload {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  roleName: string;
-  phoneNumber: string;
-  location?: string;
-  agencyName?: string;
 }
 
 interface AuthApiResponse {
@@ -179,12 +170,13 @@ export function fromApiUser(raw: Record<string, unknown>): User {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly http       = inject(HttpClient);
-  private readonly router     = inject(Router);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly subscriptionSession = inject(SubscriptionSessionStorageService);
-
-  private accessToken:     string | null = null;
+  readonly userData = signal<IUser | null>(null);
+  readonly activeSegment  = signal<'signup' | 'login'>('login');
+  private accessToken: string | null = null;
   private redirectMessage: string | null = null;
 
   private readonly userSubject = new BehaviorSubject<User | null>(null);
@@ -194,38 +186,54 @@ export class AuthService {
     return isPlatformBrowser(this.platformId) ? localStorage : null;
   }
 
-  /** Roles list is fetched once and cached for the lifetime of the app. */
-  private readonly roles$ = this.http
-    .get<{ success?: boolean; data?: { roles?: string[] } }>(`${environment.apiUrl}/api/auth/roles`)
-    .pipe(
-      map((res) => res.data?.roles ?? []),
-      catchError(() => of([] as string[])),
-      shareReplay(1),
-    );
-
   constructor() {
     if (this.storage?.getItem(REFRESH_KEY)) this.loadStoredSession();
   }
 
+  getRoles(){
+    return this.http
+        .get<{ success?: boolean; data?: { roles?: string[] } }>(`${environment.apiUrl}/api/auth/roles`)
+        .pipe(
+          map((res) => {
+            return res.data?.roles ?? []
+          }),
+          catchError(() => of([] as string[])),
+          shareReplay(1),
+        );
+  }
   // ── Getters ────────────────────────────────────────────────────────────────
 
-  getCurrentUser(): User | null  { 
-    return this.userSubject.getValue(); 
+  getCurrentUser(): User | null {
+    return this.userSubject.getValue();
   }
-  getUserId():      string | null { return this.getCurrentUser()?._id ?? null; }
-  isLoggedIn():     boolean       { return !!this.accessToken; }
-  getAccessToken(): string | null { return this.accessToken; }
-  peekRefreshToken(): string | null { return this.storage?.getItem(REFRESH_KEY) ?? null; }
-  hasRole(role: string): boolean  { return this.getCurrentUser()?.roles?.includes(role) ?? false; }
+  getUserId(): string | null {
+    return this.getCurrentUser()?._id ?? null;
+  }
+  isLoggedIn(): boolean {
+    return !!this.accessToken;
+  }
+  getAccessToken(): string | null {
+    return this.accessToken;
+  }
+  peekRefreshToken(): string | null {
+    return this.storage?.getItem(REFRESH_KEY) ?? null;
+  }
+  hasRole(role: string): boolean {
+    return this.getCurrentUser()?.roles?.includes(role) ?? false;
+  }
 
   /** Primary Agency Admin — can manage agency agents (agencyId required for API calls). */
   canManageAgencyAgents(): boolean {
     return hasPrimaryAgencyAdminRole(this.getCurrentUser()?.roles);
   }
 
-  getRoles(): Observable<string[]> { return this.roles$; }
+  // getRoles(): Observable<string[]> {
+  //   return this.roles$;
+  // }
 
-  setRedirectMessage(message: string): void { this.redirectMessage = message; }
+  setRedirectMessage(message: string): void {
+    this.redirectMessage = message;
+  }
   getAndClearRedirectMessage(): string | null {
     const msg = this.redirectMessage;
     this.redirectMessage = null;
@@ -237,40 +245,50 @@ export class AuthService {
   login(payload: LoginPayload): Observable<{ user: User }> {
     const fallback = 'Login failed. Please try again.';
     return this.http
-      .post<{ success?: boolean; data?: AuthApiResponse; message?: string } & AuthApiResponse>(
-        `${environment.apiUrl}/api/auth/login`, payload,
-      )
+      .post<
+        { success?: boolean; data?: AuthApiResponse; message?: string } & AuthApiResponse
+      >(`${environment.apiUrl}/api/auth/login`, payload)
       .pipe(
         switchMap((res) => {
-          if (res.success === false) return throwError(() => ({ message: res.message ?? fallback }));
+          if (res.success === false)
+            return throwError(() => ({ message: res.message ?? fallback }));
           const data = (res.data ?? res) as AuthApiResponse;
           this.storeAuthData(data);
           return of({ user: fromApiUser(data.user) });
         }),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) })),
+        ),
       );
   }
 
-  register(payload: RegisterPayload): Observable<{ user: User; message?: string }> {
+  register(payload: IAccountSignUp): Observable<{ user: User; message?: string }> {
     const fallback = 'Registration failed. Please try again.';
     return this.http
-      .post<{ success?: boolean; message?: string; data?: AuthApiResponse } & AuthApiResponse>(
-        `${environment.apiUrl}/api/auth/register`, payload,
-      )
+      .post<
+        { success?: boolean; message?: string; data?: AuthApiResponse } & AuthApiResponse
+      >(`${environment.apiUrl}/api/auth/register`, payload)
       .pipe(
         switchMap((res) => {
-          if (res.success === false) return throwError(() => ({ message: res.message ?? fallback }));
+          if (res.success === false)
+            return throwError(() => ({ message: res.message ?? fallback }));
           const user = fromApiUser(((res.data ?? res).user ?? {}) as Record<string, unknown>);
           return of({ user, message: res.message });
         }),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) })),
+        ),
       );
   }
 
   logout(): void {
     if (this.accessToken) {
       this.http
-        .post(`${environment.apiUrl}/api/auth/logout`, {}, { headers: { Authorization: `Bearer ${this.accessToken}` } })
+        .post(
+          `${environment.apiUrl}/api/auth/logout`,
+          {},
+          { headers: { Authorization: `Bearer ${this.accessToken}` } },
+        )
         .subscribe({ error: () => {} });
     }
     this.clearSession();
@@ -279,17 +297,23 @@ export class AuthService {
 
   refreshAccessToken(): Observable<string> {
     const refresh = this.storage?.getItem(REFRESH_KEY);
-    if (!refresh) { this.clearAndRedirect(); return of(''); }
+    if (!refresh) {
+      this.clearAndRedirect();
+      return of('');
+    }
 
     return this.http
-      .post<{ data?: { accessToken?: string }; accessToken?: string }>(
-        `${environment.apiUrl}/api/auth/refresh-token`,
-        { refreshToken: refresh },
-      )
+      .post<{
+        data?: { accessToken?: string };
+        accessToken?: string;
+      }>(`${environment.apiUrl}/api/auth/refresh-token`, { refreshToken: refresh })
       .pipe(
         map((res) => res.data?.accessToken ?? res.accessToken ?? ''),
-        tap((at) => at ? (this.accessToken = at) : this.clearAndRedirect()),
-        catchError(() => { this.clearAndRedirect(); return of(''); }),
+        tap((at) => (at ? (this.accessToken = at) : this.clearAndRedirect())),
+        catchError(() => {
+          this.clearAndRedirect();
+          return of('');
+        }),
       );
   }
 
@@ -299,8 +323,6 @@ export class AuthService {
       this.refreshAccessToken().subscribe({ next: () => resolve(), error: () => resolve() });
     });
   }
-
-  
 
   checkTokenValidityAndExpiry(data: any): Observable<any> {
     return this.http.post<any>(`${environment.apiUrl}/api/auth/verify-token`, data);
@@ -324,12 +346,15 @@ export class AuthService {
       )
       .pipe(
         switchMap((res) => {
-          if (res.success === false) return throwError(() => ({ message: res.message ?? fallback }));
+          if (res.success === false)
+            return throwError(() => ({ message: res.message ?? fallback }));
           const token = res.data?.resetToken ?? res.resetToken;
           if (!token) return throwError(() => ({ message: fallback }));
           return of({ resetToken: token });
         }),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) })),
+        ),
       );
   }
 
@@ -364,13 +389,16 @@ export class AuthService {
   // ── Email verification ─────────────────────────────────────────────────────
 
   verifyEmail(token: string, email?: string | null): Observable<{ success: boolean }> {
-    const fallback = 'This link is invalid or has expired. Please request a new verification email.';
-    const body     = email?.trim() ? { token, email: email.trim() } : { token };
+    const fallback =
+      'This link is invalid or has expired. Please request a new verification email.';
+    const body = email?.trim() ? { token, email: email.trim() } : { token };
     return this.http
       .post<SimpleApiResponse>(`${environment.apiUrl}/api/auth/verify-email`, body)
       .pipe(
         map((res) => ({ success: res.success ?? true })),
-        catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) })),
+        ),
       );
   }
 
@@ -378,10 +406,10 @@ export class AuthService {
 
   checkAgencyNameAvailable(name: string): Observable<boolean> {
     return this.http
-      .get<{ success?: boolean; data?: { available?: boolean } }>(
-        `${environment.apiUrl}/api/auth/check-agency-name`,
-        { params: { name: name.trim() } },
-      )
+      .get<{
+        success?: boolean;
+        data?: { available?: boolean };
+      }>(`${environment.apiUrl}/api/auth/check-agency-name`, { params: { name: name.trim() } })
       .pipe(
         map((res) => res.data?.available ?? true),
         catchError(() => of(true)),
@@ -392,9 +420,10 @@ export class AuthService {
 
   fetchUserProfile(id: string): Observable<void> {
     return this.http
-      .get<{ success?: boolean; data?: { user?: Record<string, unknown> } }>(
-        `${environment.apiUrl}/api/users/${encodeURIComponent(id)}`,
-      )
+      .get<{
+        success?: boolean;
+        data?: { user?: Record<string, unknown> };
+      }>(`${environment.apiUrl}/api/users/${encodeURIComponent(id)}`)
       .pipe(
         map((res) => {
           if (!res.data?.user) {
@@ -429,7 +458,9 @@ export class AuthService {
           ? throwError(() => ({ message: res.message ?? fallback }))
           : of(undefined),
       ),
-      catchError((err: unknown) => throwError(() => ({ message: this.getAuthMessage(err, fallback) }))),
+      catchError((err: unknown) =>
+        throwError(() => ({ message: this.getAuthMessage(err, fallback) })),
+      ),
     );
   }
 
@@ -441,15 +472,17 @@ export class AuthService {
       const s = JSON.parse(raw) as StoredSession;
       if (!s._id) return;
       this.userSubject.next({
-        _id:       s._id,
-        email:     '',
-        roles:     s.roles ?? [],
+        _id: s._id,
+        email: '',
+        roles: s.roles ?? [],
         firstName: s.firstName,
-        lastName:  s.lastName,
-        name:      [s.firstName, s.lastName].filter(Boolean).join(' ') || undefined,
-        agencyId:  s.agencyId,
+        lastName: s.lastName,
+        name: [s.firstName, s.lastName].filter(Boolean).join(' ') || undefined,
+        agencyId: s.agencyId,
       });
-    } catch { /* ignore corrupt data */ }
+    } catch {
+      /* ignore corrupt data */
+    }
   }
 
   private storeAuthData(data: AuthApiResponse): void {
@@ -510,7 +543,10 @@ export class AuthService {
   private getAuthMessage(err: unknown, fallback: string): string {
     if (err == null || typeof err !== 'object') return fallback;
     if (err instanceof Error) return err.message || fallback;
-    const e = err as { error?: { message?: string; errors?: Array<{ msg?: string }> }; message?: string };
+    const e = err as {
+      error?: { message?: string; errors?: Array<{ msg?: string }> };
+      message?: string;
+    };
     return e.error?.message ?? e.error?.errors?.[0]?.msg ?? e.message ?? fallback;
   }
 }
