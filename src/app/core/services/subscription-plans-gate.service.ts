@@ -107,14 +107,14 @@ export class SubscriptionPlansGateService {
       return of(undefined);
     }
 
-    return this.openPlansDialog(roleName, false);
+    return this.openPlansDialog(roleName, true);
   }
 
   private openPlansDialog(roleName: string, disableClose: boolean): Observable<void> {
     const data: SubscriptionPlansDialogData = { roleName, canClose: !disableClose };
     return this.dialog
       .open(SubscriptionPlansDialogComponent, {
-        width: 'min(1500px, 96vw)',
+        width: 'min(1200px, 96vw)',
         height: '94vh',
         maxWidth: '96vw',
         maxHeight: '94vh',
