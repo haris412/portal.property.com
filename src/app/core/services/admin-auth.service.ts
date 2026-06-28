@@ -19,7 +19,7 @@ export const ADMIN_USER_KEY = 'adminUser';
 /** Short-lived token between admin login step 1 (password) and step 2 (OTP). */
 export const ADMIN_CHALLENGE_TOKEN_KEY = 'adminChallengeToken';
 
-const adminAuthApiBase = `${environment.apiUrl}/api/auth`;
+const adminAuthApiBase = `/auth`;
 
 interface AuthApiResponse {
   user: Record<string, unknown>;
@@ -83,6 +83,7 @@ export class AdminAuthService {
 
   /** Used by the auth interceptor to route refresh failures to the correct session. */
   peekRefreshToken(): string | null {
+    console.log(this.storage);
     return this.storage?.getItem(ADMIN_REFRESH_KEY) ?? null;
   }
 
@@ -236,7 +237,7 @@ export class AdminAuthService {
     if (token) {
       this.http
         .post(
-          `${environment.apiUrl}/api/auth/logout`,
+          `/auth/logout`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         )
@@ -260,7 +261,7 @@ export class AdminAuthService {
 
     return this.http
       .post<{ data?: { accessToken?: string }; accessToken?: string }>(
-        `${environment.apiUrl}/api/auth/refresh-token`,
+        `/auth/refresh-token`,
         { refreshToken: refresh }
       )
       .pipe(

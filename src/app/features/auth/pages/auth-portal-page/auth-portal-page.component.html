@@ -47,39 +47,41 @@
                 </div>
               }
 
-              <header class="auth-page-intro">
-                <h1 class="auth-page-title">
-                  {{
-                    auth.activeSegment() === 'signup'
-                      ? ('public.signUp.heading' | translate)
-                      : ('public.signIn.heading' | translate)
-                  }}
-                </h1>
-                <p class="auth-page-copy">
-                  {{
-                    auth.activeSegment() === 'signup'
-                      ? ('public.signUp.description' | translate)
-                      : ('public.signIn.description' | translate)
-                  }}
-                </p>
-              </header>
+              <div class="auth-panel">
+                <div class="auth-tabs-wrap">
+                  <app-segmented-tabs
+                    [active]="auth.activeSegment()"
+                    [tabs]="authTabs"
+                    density="compact"
+                    ariaLabel="Authentication mode"
+                    (changed)="onTabChanged($event)"
+                  />
+                </div>
 
-              <div class="auth-tabs-wrap">
-                <app-segmented-tabs
-                  [active]="auth.activeSegment()"
-                  [tabs]="authTabs"
-                  density="compact"
-                  ariaLabel="Authentication mode"
-                  (changed)="onTabChanged($event)"
-                />
-              </div>
+                <header class="auth-page-intro">
+                  <h1 class="auth-page-title">
+                    {{
+                      auth.activeSegment() === 'signup'
+                        ? ('public.signUp.heading' | translate)
+                        : ('public.signIn.heading' | translate)
+                    }}
+                  </h1>
+                  <p class="auth-page-copy">
+                    {{
+                      auth.activeSegment() === 'signup'
+                        ? ('public.signUp.description' | translate)
+                        : ('public.signIn.description' | translate)
+                    }}
+                  </p>
+                </header>
 
-              <div class="auth-card-host">
-                @if (auth.activeSegment() === 'signup') {
-                  <app-signup  [showIntro]="false" />
-                } @else {
-                  <app-login [showIntro]="false" />
-                }
+                <div class="auth-card-host">
+                  @if (auth.activeSegment() === 'signup') {
+                    <app-signup  [showIntro]="false" />
+                  } @else {
+                    <app-login [showIntro]="false" />
+                  }
+                </div>
               </div>
             }
           </div>

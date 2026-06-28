@@ -65,6 +65,7 @@ export class SubscriptionPlansDialogComponent {
   loadError: string | null = null;
   cards: PlanCardViewModel[] = [];
   submittingCardId: PlanCardViewModel['id'] | null = null;
+  selectedCardId: PlanCardViewModel['id'] | null = null;
 
   constructor() {
     this.loadPlans();
@@ -78,7 +79,17 @@ export class SubscriptionPlansDialogComponent {
     this.dialogRef.close();
   }
 
+  canShowClose(): boolean {
+    return this.data.canClose === true || this.selectedCardId !== null || this.cards.some((card) => card.isCurrentPlan);
+  }
+
   subscribePlan(card: PlanCardViewModel): void {
+    if (this.selectedCardId !== card.id) {
+      this.selectedCardId = card.id;
+      this.cdr.markForCheck();
+      return;
+    }
+
     const user = this.auth.getCurrentUser();
     if (!user?._id?.trim()) {
       this.notifications.error('You must be signed in to subscribe.');
@@ -135,6 +146,7 @@ export class SubscriptionPlansDialogComponent {
             ? this.subscriptionSession.getForUser(user._id, user.agencyId ?? null)
             : null;
         this.cards = buildPlanCards(raw, active);
+        this.selectedCardId = this.cards.find((card) => card.isCurrentPlan)?.id ?? null;
         this.loading = false;
         this.cdr.markForCheck();
       },

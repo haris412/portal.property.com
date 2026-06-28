@@ -42,7 +42,7 @@ export interface ListingImagePayload {
 
 @Injectable({ providedIn: 'root' })
 export class MediaUploadService {
-  private readonly apiBase = `${environment.apiUrl}/api/uploads`;
+  private readonly apiBase = `/uploads`;
 
   constructor(private readonly http: HttpClient) {}
 

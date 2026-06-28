@@ -123,7 +123,7 @@ function normalizeUserRow(raw: unknown): UserListItem | null {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/api/users`;
+  private readonly baseUrl = `/users`;
 
   listUsers(query: ListUsersQuery): Observable<ListUsersResult> {
     let params = new HttpParams();

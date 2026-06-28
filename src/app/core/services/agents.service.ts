@@ -85,7 +85,7 @@ function normalizeAgentsList(body: unknown): AgentsListResult {
 @Injectable({ providedIn: 'root' })
 export class AgentsService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/api/agents`;
+  private readonly baseUrl = `/agents`;
 
   getAgentsByAgency(agencyId: string): Observable<AgentsListResult> {
     const params = new HttpParams().set('agencyId', agencyId.trim());

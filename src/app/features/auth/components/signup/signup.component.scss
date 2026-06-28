@@ -25,15 +25,15 @@
 
   .form-label-auth {
     display: inline-block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     color: var(--font-main);
     font-size: var(--font-size-body-sm);
     font-weight: 700;
   }
 
   .user-type-pill {
-    min-height: 42px;
-    padding: 0.625rem 1rem;
+    min-height: 40px;
+    padding: 0.5rem 1.5rem;
     border: 1px solid var(--border-soft);
     border-radius: var(--radius-md);
     background: var(--tertiary);
@@ -67,6 +67,10 @@
     margin-top: -8px;
     margin-bottom: 8px;
   }
+
+  form > .row {
+    --bs-gutter-y: 0.7rem;
+  }
 }
 
 .mat-icon {
@@ -75,8 +79,33 @@
 
 @media (min-width: 991.98px) {
   .section-card.auth-card {
-    max-height: 500px;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+:host ::ng-deep {
+  .auth-card .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  .auth-card .mat-mdc-text-field-wrapper {
+    min-height: 44px;
+  }
+
+  .auth-card .mat-mdc-form-field-infix {
+    min-height: 44px;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .auth-card .mat-mdc-checkbox label {
+    color: var(--font-main);
+    font-size: var(--font-size-body-sm);
+  }
+
+  .auth-card ngx-material-intl-tel-input .mat-mdc-form-field-subscript-wrapper {
+    display: none;
   }
 }
 

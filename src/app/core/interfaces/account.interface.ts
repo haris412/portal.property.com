@@ -35,7 +35,7 @@ export interface IAccountSignUp {
   name:string;
   agencyName?:string;
   agree:boolean;
-  roleName:string;
+  role:string;
 }
 
 // export interface IInvitationTokenVerification {

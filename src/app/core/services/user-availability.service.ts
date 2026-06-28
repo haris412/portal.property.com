@@ -78,7 +78,7 @@ export function mergeWeekWithDefaults(
 @Injectable({ providedIn: 'root' })
 export class UserAvailabilityService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/users`;
+  private readonly base = `/users`;
 
   private url(userId: string | null): string {
     return userId

@@ -3,6 +3,7 @@
     <button
       type="button"
       class="subscription-plans-dialog__close"
+      [class.subscription-plans-dialog__close--visible]="canShowClose()"
       aria-label="Close subscription plans"
       (click)="closeDialog()"
     >
@@ -30,7 +31,15 @@
             [class.subscription-plans-dialog__card--emphasis]="card.emphasis"
             [class.subscription-plans-dialog__card--recommended]="card.emphasis && !card.isCurrentPlan"
             [class.subscription-plans-dialog__card--current]="card.isCurrentPlan"
+            [class.subscription-plans-dialog__card--selected]="selectedCardId === card.id && !card.isCurrentPlan"
           >
+            @if (card.emphasis && !card.isCurrentPlan) {
+              <div class="subscription-plans-dialog__recommended-ribbon" aria-label="Recommended plan">
+                <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">star</mat-icon>
+                <span>Recommended</span>
+              </div>
+            }
+
             <header class="subscription-plans-dialog__card-head">
               <div class="subscription-plans-dialog__card-kicker">
                 <span class="subscription-plans-dialog__plan-icon" aria-hidden="true">
@@ -41,10 +50,10 @@
                     <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">verified</mat-icon>
                     <span>Current plan</span>
                   </span>
-                } @else if (card.emphasis) {
-                  <span class="subscription-plans-dialog__badge subscription-plans-dialog__badge--recommended" aria-label="Recommended plan">
-                    <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">star</mat-icon>
-                    <span>Recommended</span>
+                } @else if (selectedCardId === card.id) {
+                  <span class="subscription-plans-dialog__badge subscription-plans-dialog__badge--selected" aria-label="Selected plan">
+                    <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">check_circle</mat-icon>
+                    <span>Selected</span>
                   </span>
                 }
               </div>
@@ -61,9 +70,13 @@
                 <small>/ {{ card.billingLabel }}</small>
               </p>
               @if (card.isCurrentPlan) {
-                <p class="subscription-plans-dialog__current-badge">Your current plan</p>
                 <p class="subscription-plans-dialog__quota-hint">
                   Active quotas: {{ card.numberOfFeatureListing }} featured listings,
+                  {{ card.numberOfAgentVisibility }} agent visibility
+                </p>
+              } @else {
+                <p class="subscription-plans-dialog__quota-hint">
+                  Includes {{ card.numberOfFeatureListing }} featured listings,
                   {{ card.numberOfAgentVisibility }} agent visibility
                 </p>
               }
@@ -97,10 +110,12 @@
                 >
                   @if (card.isCurrentPlan) {
                     Current plan
+                  } @else if (selectedCardId === card.id && submittingCardId !== card.id) {
+                    Confirm subscription
                   } @else if (submittingCardId === card.id) {
                     Saving...
                   } @else {
-                    Subscribe now
+                    Select plan
                   }
                 </button>
               } @else {
@@ -113,10 +128,12 @@
                 >
                   @if (card.isCurrentPlan) {
                     Current plan
+                  } @else if (selectedCardId === card.id && submittingCardId !== card.id) {
+                    Confirm subscription
                   } @else if (submittingCardId === card.id) {
                     Saving...
                   } @else {
-                    Subscribe now
+                    Select plan
                   }
                 </button>
               }

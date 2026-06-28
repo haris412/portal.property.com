@@ -106,6 +106,7 @@ import {
             this.scheduleRedirect();
           },
           error: (err: unknown) => {
+            debugger;
             this.state = 'error';
             const fallback =
               'This link is invalid or has expired. Please request a new verification email.';

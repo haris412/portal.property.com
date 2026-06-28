@@ -21,7 +21,7 @@
     }
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-      <div class="row m-0">
+      <div class="row g-3">
 
         <div class="col-12">
           <label class="form-label-auth" for="signup-email">{{ 'public.signUp.email' | translate }}</label>
@@ -93,10 +93,10 @@
                 @for (option of userTypes(); track option.value) {
                   <button
                     type="button"
-                    class="user-type-pill col-2"
-                    [class.user-type-pill--active]="form.controls.roleName.value === option.value"
-                    (click)="form.controls.roleName.setValue(option.value)"
-                    [attr.aria-pressed]="form.controls.roleName.value === option.value"
+                    class="user-type-pill col-auto"
+                    [class.user-type-pill--active]="form.controls.role.value === option.value"
+                    (click)="form.controls.role.setValue(option.value)"
+                    [attr.aria-pressed]="form.controls.role.value === option.value"
                   >
                     {{ option.label }}
                   </button>
@@ -139,7 +139,7 @@
           </div>
         }
 
-        <div class="col-12 col-md-6">
+        <div class="col-12">
           <label class="form-label-auth" for="signup-password">{{ 'public.signUp.password' | translate }}</label>
           <mat-form-field appearance="outline">
             <input
@@ -186,15 +186,15 @@
           </button>
         </div>
 
-        <div class="col-12 my-3">
+        <div class="col-12">
           <div class="visually-divider">{{ 'public.signUp.orContinueWith' | translate }}</div>
         </div>
 
-        <div class="col-12 mb-3">
+        <div class="col-12 col-sm-6">
           <app-social-button label="Google" icon="google" />
         </div>
 
-        <div class="col-12">
+        <div class="col-12 col-sm-6">
           <app-social-button label="Microsoft" icon="microsoft" />
         </div>
       </div>

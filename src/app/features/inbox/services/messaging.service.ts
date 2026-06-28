@@ -164,13 +164,13 @@ export class MessagingService implements OnDestroy {
     return this.http.post<{
       conversation: Conversation;
       message: Message | null;
-    }>(`${environment.apiUrl}/conversations`, dto);
+    }>(`/conversations`, dto);
   }
 
   // Load all conversations for inbox
   getConversations(): Observable<Conversation[]> {
     return this.http.get<Conversation[]>(
-      `${environment.apiUrl}/conversations`
+      `/conversations`
     );
   }
 
@@ -181,7 +181,7 @@ export class MessagingService implements OnDestroy {
     before?: string,
     limit: number = 30
   ): Observable<{ messages: Message[]; hasMore: boolean }> {
-    let url = `${environment.apiUrl}/conversations/${conversationId}/messages?limit=${limit}`;
+    let url = `/conversations/${conversationId}/messages?limit=${limit}`;
     if (before) url += `&before=${before}`;
 
     return this.http.get<{ messages: Message[]; hasMore: boolean }>(url);

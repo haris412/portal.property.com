@@ -47,10 +47,10 @@ const PROPERTIES_LIST_MAX_LIMIT = 50;
 
 @Injectable({ providedIn: 'root' })
 export class AddListingService {
-  private readonly baseUrl = `${environment.apiUrl}/api/properties`;
-  private readonly catalogUrl = `${environment.apiUrl}/api/property-catalog`;
-  private readonly featuresUrl = `${environment.apiUrl}/api/property-features`;
-  private readonly aiBaseUrl = `${environment.apiUrl}/api/ai`;
+  private readonly baseUrl = `/properties`;
+  private readonly catalogUrl = `/property-catalog`;
+  private readonly featuresUrl = `/property-features`;
+  private readonly aiBaseUrl = `/ai`;
 
   /** In-memory cache for the session (set after first successful fetch). */
   private catalogCache: PropertyCatalogData | null = null;

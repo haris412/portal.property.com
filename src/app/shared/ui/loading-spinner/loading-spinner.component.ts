@@ -1,17 +1,19 @@
-import { Component, Input } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { LoadingService } from '../../../core/http/loading.service';
 
 @Component({
   selector: 'app-loading-spinner',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="spinner-overlay" [class.fullscreen]="fullscreen" *ngIf="show">
+  @if (loading$ | async) {
+    <div class="spinner-overlay" [class.fullscreen]="fullscreen">
       <div class="spinner-container">
         <div class="spinner" [style.width.px]="size" [style.height.px]="size"></div>
-        <p class="spinner-text" *ngIf="message">{{ message }}</p>
       </div>
     </div>
+}
   `,
   styles: [`
     .spinner-overlay {
@@ -49,8 +51,10 @@ import { CommonModule } from '@angular/common';
   `],
 })
 export class LoadingSpinnerComponent {
-  @Input() show = true;
   @Input() fullscreen = false;
   @Input() size = 40;
-  @Input() message = '';
+
+  private loadingService = inject<LoadingService>(LoadingService);
+
+  loading$ = this.loadingService.loading$;
 }
