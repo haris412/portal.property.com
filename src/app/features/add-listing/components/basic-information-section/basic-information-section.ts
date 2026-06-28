@@ -9,9 +9,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { startWith } from 'rxjs';
+import { map, startWith } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -21,9 +21,10 @@ import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-bann
 import { SegmentedOptionGroupComponent } from '../../../../shared/ui/segmented-option-group/segmented-option-group';
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
 import { OptionItem, ActionChipData } from '../../../../core/interfaces/ui.models';
-import { PropertyCatalogCategory } from '../../../../core/models/property-catalog.model';
+import { PropertyCatalogCategory, PropertyCatalogData } from '../../../../core/models/property-catalog.model';
 import { AddListingService } from '../../../../core/services/add-listing.service';
 import { TranslateModule } from '@ngx-translate/core';
+import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 
 type ListingPurpose = 'sale' | 'rent';
 
@@ -50,9 +51,8 @@ export class BasicInformationSectionComponent implements OnInit {
   private readonly addListingService = inject(AddListingService);
   private readonly destroyRef        = inject(DestroyRef);
 
-  // declared before buildForm() — buildForm() subscribes to statusChanges immediately on creation
-  readonly canContinue = signal(false);
-  readonly form        = this.buildForm();
+  readonly form    = this.buildForm();
+  readonly isValid = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
 
   // catalog
   readonly catalogStatus = signal<'loading' | 'ready' | 'error'>('loading');
@@ -85,13 +85,41 @@ export class BasicInformationSectionComponent implements OnInit {
     this.loadCatalog();
   }
 
-  // parent calls this after patching form with emitEvent:false in edit mode
-  // emitEvent:false skips propertyTypeId.valueChanges so we sync manually
+  // Called by parent (edit mode) after the catalog loads for the first time, and internally
+  // after patchFromProperty. emitEvent:false on the patch skips propertyTypeId.valueChanges,
+  // so this syncs selectedCategoryId and the subtype validator manually.
   refreshCategory(): void {
     const id = this.form.controls.propertyTypeId.value;
     console.log('[BasicInfo] refreshCategory — id:', id || 'none');
     this.selectedCategoryId.set(id);
     this.toggleSubtypeValidator(id);
+  }
+
+  // Patches the form from an existing property document (edit mode).
+  // Resolves legacy field aliases and catalog look-ups before patching so
+  // the caller only has to pass the raw doc + catalog.
+  patchFromProperty(doc: PropertyDetailDocument, catalog: PropertyCatalogData): void {
+    let propertyTypeId = (doc.propertyTypeId ?? '').toString();
+    let subtypeId      = (doc.subtypeId      ?? '').toString();
+
+    if (!propertyTypeId) {
+      const subtypeName  = (doc.subtype ?? doc.propertySubtypeName ?? doc.propertySubtype ?? '').toString();
+      const categoryName = this.resolveCategoryName(catalog, {
+        subtype:              subtypeName,
+        propertyType:         (doc.propertyType         ?? '').toString(),
+        propertyCategoryName: (doc.propertyCategoryName ?? '').toString(),
+      });
+      const category = catalog.categories.find(c => c.name === categoryName);
+      propertyTypeId  = category?._id ?? '';
+      subtypeId       = category?.subtypes.find(s => s.name === subtypeName)?._id ?? '';
+    }
+
+    const purpose      = (doc.purpose ?? '').toString().toLowerCase().includes('sale') ? 'sale' : 'rent';
+    const listingTitle = (doc.listingTitle ?? doc.title ?? '').toString();
+
+    // emitEvent:false prevents propertyTypeId.valueChanges from clearing subtypeId mid-patch.
+    this.form.patchValue({ purpose, listingTitle, propertyTypeId, subtypeId }, { emitEvent: false });
+    this.refreshCategory();
   }
 
   // —— template events ——
@@ -129,11 +157,6 @@ export class BasicInformationSectionComponent implements OnInit {
       listingTitle:   ['', [Validators.required, Validators.maxLength(120)]],
     });
 
-    // gate the Continue button — valid only when all required fields are filled
-    form.statusChanges
-      .pipe(startWith(form.status), takeUntilDestroyed(this.destroyRef))
-      .subscribe(status => this.canContinue.set(status === 'VALID'));
-
     // user changed category → reset subtype, sync signal so availableSubtypes recomputes
     form.controls.propertyTypeId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -164,6 +187,33 @@ export class BasicInformationSectionComponent implements OnInit {
           this.catalogStatus.set('error');
         },
       });
+  }
+
+  // Resolves a catalog category name from various stored field aliases (backward compatibility).
+  private resolveCategoryName(
+    catalog: PropertyCatalogData,
+    input: { subtype: string; propertyType: string; propertyCategoryName: string }
+  ): string {
+    const direct = (input.propertyCategoryName ?? '').trim();
+    if (direct) return direct;
+
+    const subtype = (input.subtype ?? '').trim().toLowerCase();
+    if (subtype) {
+      const found = (catalog.categories ?? []).find(c =>
+        (c.subtypes ?? []).some(st => st.name.trim().toLowerCase() === subtype)
+      );
+      if (found) return found.name;
+    }
+
+    const coarse = (input.propertyType ?? '').trim().toLowerCase();
+    if (coarse) {
+      const cats = catalog.categories ?? [];
+      return cats.find(c => c.name.trim().toLowerCase() === coarse)?.name
+          || cats.find(c => c.name.trim().toLowerCase().includes(coarse))?.name
+          || '';
+    }
+
+    return '';
   }
 
   // only toggles subtypeId required validator based on whether the category has subtypes

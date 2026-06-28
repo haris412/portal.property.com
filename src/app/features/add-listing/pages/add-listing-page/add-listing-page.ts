@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -10,7 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, merge } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { PageHeaderComponent, PageHeaderAction } from '../../../../shared/ui/page-header/page-header';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
@@ -68,12 +69,6 @@ import { firstValueFrom } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import {
-  FEATURE_SLUG_TO_AMENITY_KEY,
-  normalizeFeatureSlug,
-} from '../../../../core/constants/listing-payload.constants';
-
-// ─── File-level constants & types ────────────────────────────────────────────
 
 const FEATURED_LISTING_QUOTA_MESSAGE =
   'You are out of featured listing quota. Upgrade your plan or remove another featured property.';
@@ -90,8 +85,6 @@ interface AddListingWizardStep   { key: AddListingStepKey; label: string; descri
 interface AddListingRequirement  { label: string; complete: boolean; }
 interface ReviewSummaryItem      { label: string; value: string; }
 interface ReviewSummarySection   { title: string; icon: string; items: readonly ReviewSummaryItem[]; }
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-add-listing-page',
@@ -118,9 +111,8 @@ interface ReviewSummarySection   { title: string; icon: string; items: readonly 
   styleUrl: './add-listing-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddListingPageComponent {
+export class AddListingPageComponent implements AfterViewInit {
 
-  // ── 1. Dependencies ────────────────────────────────────────────────────────
   private readonly addListingService   = inject(AddListingService);
   private readonly notifications       = inject(NotificationService);
   private readonly auth                = inject(AuthService);
@@ -130,28 +122,22 @@ export class AddListingPageComponent {
   private readonly router              = inject(Router);
   private readonly route               = inject(ActivatedRoute);
 
-  // ── 2. Step children — call their public methods (refreshCategory, patchFromProperty, etc.) ──
-  @ViewChild(BasicInformationSectionComponent)
-  private readonly basicStep?: BasicInformationSectionComponent;
+  @ViewChild(BasicInformationSectionComponent)  private readonly basicStep?:       BasicInformationSectionComponent;
+  @ViewChild(PricingDetailsSectionComponent)    private readonly pricingStep?:     PricingDetailsSectionComponent;
+  @ViewChild(PropertyLocationStepComponent)     private readonly locationStep?:    PropertyLocationStepComponent;
+  @ViewChild(FeaturesAmenitiesSectionComponent) private readonly amenitiesStep?:   FeaturesAmenitiesSectionComponent;
+  @ViewChild(PropertyMediaSectionComponent)     private readonly mediaStep?:       PropertyMediaSectionComponent;
+  @ViewChild(ContactInformationStepComponent)   private readonly contactStep?:     ContactInformationStepComponent;
+  @ViewChild(PropertyDescriptionStepComponent)  private readonly descriptionStep?: PropertyDescriptionStepComponent;
 
-  @ViewChild(PropertyLocationStepComponent)
-  private readonly locationStep?: PropertyLocationStepComponent;
-
-  @ViewChild(PropertyMediaSectionComponent)
-  private readonly mediaStep?: PropertyMediaSectionComponent;
-
-  // ── 3. Forms ───────────────────────────────────────────────────────────────
-  // basicInfoForm, pricingForm, contactForm, locationForm are owned by step children.
-  // Parent receives them via (formReady) output and wires them into tick signals.
-  basicInfoForm!: FormGroup;
-  pricingForm!:   FormGroup;
-  contactForm!:   FormGroup;
-  locationForm!:  FormGroup;
+  basicInfoForm!:   FormGroup;
+  pricingForm!:     FormGroup;
+  contactForm!:     FormGroup;
+  locationForm!:    FormGroup;
   descriptionForm!: FormGroup;
-  amenitiesForm!: FormGroup;
-  mediaForm!:     FormGroup;
+  amenitiesForm!:   FormGroup;
+  mediaForm!:       FormGroup;
 
-  // ── 4. Wizard / stepper ────────────────────────────────────────────────────
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
 
   private readonly stepOrder: readonly AddListingStepKey[] = [
@@ -168,43 +154,55 @@ export class AddListingPageComponent {
   ] as const;
 
   readonly listingSteps = computed<readonly WizardStepperItem[]>(() => {
-    const activeIndex = this.stepOrder.indexOf(this.activeStepKey());
+    const activeKey   = this.activeStepKey();
+    const activeIndex = this.stepOrder.indexOf(activeKey);
+    const validByKey  = { ...this.stepValidityMap(), 'review-publish': this.canSubmitListing() };
+
     return this.stepDefinitions.map((step, index): WizardStepperItem => ({
       ...step,
-      state: index < activeIndex ? 'completed' : index === activeIndex ? 'active' : 'pending',
+      state: index === activeIndex  ? 'active'
+           : validByKey[step.key]   ? 'completed'
+           :                          'pending',
     }));
   });
 
-  readonly activeStepIndex     = computed(() => this.stepOrder.indexOf(this.activeStepKey()));
-  readonly isFirstStep         = computed(() => this.activeStepIndex() <= 0);
-  readonly isLastStep          = computed(() => this.activeStepIndex() >= this.stepOrder.length - 1);
-  readonly progressPercent     = computed(() => Math.round(((this.activeStepIndex() + 1) / this.stepOrder.length) * 100));
-  readonly progressDegrees     = computed(() => `${Math.round((this.progressPercent() / 100) * 360)}deg`);
-  readonly activeStepLabel     = computed(() => this.stepDefinitions.find(s => s.key === this.activeStepKey())?.label ?? '');
+  readonly activeStepIndex      = computed(() => this.stepOrder.indexOf(this.activeStepKey()));
+  readonly isFirstStep          = computed(() => this.activeStepIndex() <= 0);
+  readonly isLastStep           = computed(() => this.activeStepIndex() >= this.stepOrder.length - 1);
+  readonly progressPercent      = computed(() => Math.round(((this.activeStepIndex() + 1) / this.stepOrder.length) * 100));
+  readonly progressDegrees      = computed(() => `${Math.round((this.progressPercent() / 100) * 360)}deg`);
+  readonly activeStepLabel      = computed(() => this.stepDefinitions.find(s => s.key === this.activeStepKey())?.label ?? '');
   readonly activeStepCountLabel = computed(() => `${this.activeStepIndex() + 1} of ${this.stepOrder.length}`);
-  readonly progressTrayOpen    = signal(false);
+  readonly progressTrayOpen     = signal(false);
 
-  // Continue button gate — each migrated step adds its own case
   readonly currentStepCanContinue = computed(() => {
     this.listingFormsTick();
-    switch (this.activeStepKey()) {
-      case 'basic-info':          return this.basicInfoForm?.valid ?? false;
-      case 'pricing':             return this.pricingForm?.valid   ?? false;
-      case 'location':            return (this.locationForm?.valid ?? false) && (this.locationStep?.hasCoordinates() ?? false);
-      case 'features-media':      return this.mediaForm?.valid      ?? false;
-      case 'contact-description': return this.contactForm?.valid   ?? false;
-      default:                    return true;
-    }
+    const key = this.activeStepKey();
+    return key === 'review-publish' || (this.stepValidityMap()[key] ?? false);
   });
 
-  // ── 5. Progress & requirements ─────────────────────────────────────────────
-  // Tick signals bridge reactive forms (non-signal) into computed signals.
-  // Every form that changes calls listingFormsTick.update() via wireFormToTicks().
-  private readonly listingFormsTick   = signal(0);
-  private readonly aiListingFormsTick = signal(0); // subset: basic + pricing + location + amenities
+  ngAfterViewInit(): void {
+    this.listingFormsTick.update(n => n + 1);
+  }
+
+  private readonly listingFormsTick = signal(0);
+
+  private readonly stepValidityMap = computed(() => {
+    this.listingFormsTick();
+    return {
+      'basic-info':          this.basicStep?.isValid()        ?? false,
+      'pricing':             this.pricingStep?.isValid()      ?? false,
+      'location':            this.locationStep?.isValid() ?? false,
+      // mediaStep.isValid() only sees new File objects; existing server images also satisfy the requirement.
+      'features-media': (this.mediaStep?.isValid() ?? false)
+                     || this.existingPropertyImages().length >= 3
+                     || Boolean(this.loadedProperty()?.videoTourUrl),
+      'contact-description': (this.contactStep?.isValid() ?? false) && (this.descriptionStep?.isValid() ?? false),
+    };
+  });
 
   readonly publishRequirements = computed<readonly AddListingRequirement[]>(() => {
-    this.listingFormsTick();
+    const v     = this.stepValidityMap();
     const media = this.mediaForm?.value ?? {};
     const hasMedia =
       this.existingPropertyImages().length + ((media.images ?? []) as File[]).length >= 3 ||
@@ -212,12 +210,12 @@ export class AddListingPageComponent {
       Boolean(this.loadedProperty()?.videoTourUrl);
 
     return [
-      { label: 'Add basic information',    complete: this.basicInfoForm?.valid ?? false },
-      { label: 'Add pricing and details',  complete: this.pricingForm?.valid   ?? false },
-      { label: 'Set property location',    complete: (this.locationForm?.valid ?? false) && (this.locationStep?.hasCoordinates() ?? false) },
-      { label: 'Add media',                complete: hasMedia },
-      { label: 'Add contact information',  complete: this.contactForm?.valid   ?? false },
-      { label: 'Write description',        complete: this.descriptionForm?.valid ?? false },
+      { label: 'Add basic information',   complete: v['basic-info'] },
+      { label: 'Add pricing and details', complete: v['pricing']    },
+      { label: 'Set property location',   complete: v['location']   },
+      { label: 'Add media',               complete: hasMedia        },
+      { label: 'Add contact information', complete: this.contactStep?.isValid()     ?? false },
+      { label: 'Write description',       complete: this.descriptionStep?.isValid() ?? false },
     ];
   });
 
@@ -226,9 +224,9 @@ export class AddListingPageComponent {
   );
 
   readonly progressPanelSteps = computed<readonly ListingProgressStep[]>(() => {
-    this.listingFormsTick();
-    const amenities = this.amenitiesForm?.getRawValue() ?? { selectedFeatureIds: [] };
-    const media     = this.mediaForm?.getRawValue()    ?? { images: [], videoFiles: [] };
+    const snapshot  = this.formSnapshot();
+    const amenities = snapshot.amenities;
+    const media     = snapshot.media;
     const hasFeaturesOrMedia = Boolean(
       (amenities.selectedFeatureIds ?? []).length ||
       (media.images ?? []).length >= 3 ||
@@ -236,12 +234,9 @@ export class AddListingPageComponent {
     );
 
     const readinessByStep: Record<AddListingStepKey, boolean> = {
-      'basic-info':          this.basicInfoForm?.valid  ?? false,
-      pricing:               this.pricingForm?.valid    ?? false,
-      location:              (this.locationForm?.valid  ?? false) && (this.locationStep?.hasCoordinates() ?? false),
-      'features-media':      hasFeaturesOrMedia,
-      'contact-description': (this.contactForm?.valid   ?? false) && (this.descriptionForm?.valid ?? false),
-      'review-publish':      this.canSubmitListing(),
+      ...this.stepValidityMap(),
+      'features-media': hasFeaturesOrMedia,
+      'review-publish': this.canSubmitListing(),
     };
 
     return this.listingSteps().map(step => ({
@@ -259,7 +254,6 @@ export class AddListingPageComponent {
     this.publishRequirements().filter(r => r.label !== 'Add media').every(r => r.complete)
   );
 
-  // ── 6. Submit & review ─────────────────────────────────────────────────────
   readonly isSubmitting             = signal(false);
   readonly isFeatured               = signal(false);
   private readonly wasFeaturedWhenLoaded = signal(false);
@@ -267,67 +261,78 @@ export class AddListingPageComponent {
 
   readonly reviewPrimaryActionLabel = computed(() => this.editingId() ? 'Save changes' : 'Publish Listing');
 
-  readonly reviewSummarySections = computed<readonly ReviewSummarySection[]>(() => {
+  private readonly formSnapshot = computed(() => {
     this.listingFormsTick();
-    const basic       = this.basicInfoForm?.getRawValue()  ?? {};
-    const pricing     = this.pricingForm?.getRawValue()    ?? {};
-    const location    = this.locationForm?.getRawValue()   ?? {};
-    const amenities   = this.amenitiesForm?.getRawValue()  ?? { selectedFeatureIds: [] };
-    const media       = this.mediaForm.getRawValue();
-    const contact     = this.contactForm?.getRawValue()    ?? {};
-    const description = this.descriptionForm?.getRawValue() ?? {};
+    return {
+      basic:       this.basicInfoForm?.getRawValue()   ?? {},
+      pricing:     this.pricingForm?.getRawValue()     ?? {},
+      location:    this.locationForm?.getRawValue()    ?? {},
+      amenities:   this.amenitiesForm?.getRawValue()   ?? { selectedFeatureIds: [] },
+      media:       this.mediaForm?.getRawValue()       ?? { images: [], videoFiles: [] },
+      contact:     this.contactForm?.getRawValue()     ?? {},
+      description: this.descriptionForm?.getRawValue() ?? {},
+    };
+  });
 
-    const selectedFeatureIds  = (amenities.selectedFeatureIds ?? []) as string[];
-    const images              = (media.images      ?? []) as File[];
-    const videoFiles          = (media.videoFiles   ?? []) as File[];
-    const areaLabel           = [this.formatReviewValue(pricing.areaSize, ''), this.formatReviewValue(pricing.areaUnit, '')].filter(Boolean).join(' ');
-    const coordinatesSelected = location.latitude != null && location.longitude != null;
+  readonly reviewSummarySections = computed<readonly ReviewSummarySection[]>(() => {
+    const { basic, pricing, location, amenities, media, contact, description } = this.formSnapshot();
+
+    const propertyTypeName  = this.addListingService.getSubtypeNameById(basic.propertyTypeId, basic.subtypeId)
+                           || this.addListingService.getCategoryNameById(basic.propertyTypeId);
+    const categoryName      = this.addListingService.getCategoryNameById(basic.propertyTypeId);
+    const areaLabel         = [this.formatReviewValue(pricing.areaSize, ''), this.formatReviewValue(pricing.areaUnit, '')].filter(Boolean).join(' ') || 'Not provided';
+    const locationLabel     = this.formatLocationHierarchyForReview(location.locationHierarchy);
+    const coordinatesSet    = location.latitude != null && location.longitude != null;
+    const amenityCount      = ((amenities.selectedFeatureIds ?? []) as string[]).length;
+    const photoCount        = ((media.images    ?? []) as File[]).length;
+    const videoName         = ((media.videoFiles ?? []) as File[])[0]?.name ?? 'Not selected';
+    const descriptionValue  = this.formatDescriptionValue(description.propertyDescription);
 
     return [
       {
         title: 'Listing basics', icon: 'home_work',
         items: [
-          { label: 'Purpose',        value: basic.purpose === 'sale' ? 'For Sale' : 'For Rent' },
-          { label: 'Listing title',  value: this.formatReviewValue(basic.listingTitle) },
-          { label: 'Property type',  value: this.formatReviewValue(this.addListingService.getSubtypeNameById(basic.propertyTypeId, basic.subtypeId) || this.addListingService.getCategoryNameById(basic.propertyTypeId)) },
-          { label: 'Category',       value: this.formatReviewValue(this.addListingService.getCategoryNameById(basic.propertyTypeId)) },
+          { label: 'Purpose',        value: basic.purpose === 'sale' ? 'For Sale' : 'For Rent'  },
+          { label: 'Listing title',  value: this.formatReviewValue(basic.listingTitle)           },
+          { label: 'Property type',  value: this.formatReviewValue(propertyTypeName)             },
+          { label: 'Category',       value: this.formatReviewValue(categoryName)                 },
         ],
       },
       {
         title: 'Pricing and details', icon: 'payments',
         items: [
-          { label: 'Price',           value: this.formatCurrencyValue(pricing.price) },
-          { label: 'Area size',       value: areaLabel || 'Not provided' },
-          { label: 'Bedrooms',        value: this.formatReviewValue(pricing.numBedrooms) },
-          { label: 'Bathrooms',       value: this.formatReviewValue(pricing.numBathrooms) },
-          { label: 'Parking spaces',  value: this.formatReviewValue(pricing.numParkingSpaces) },
-          { label: 'Floors',          value: this.formatReviewValue(pricing.numFloors) },
+          { label: 'Price',          value: this.formatCurrencyValue(pricing.price)              },
+          { label: 'Area size',      value: areaLabel                                            },
+          { label: 'Bedrooms',       value: this.formatReviewValue(pricing.numBedrooms)          },
+          { label: 'Bathrooms',      value: this.formatReviewValue(pricing.numBathrooms)         },
+          { label: 'Parking spaces', value: this.formatReviewValue(pricing.numParkingSpaces)     },
+          { label: 'Floors',         value: this.formatReviewValue(pricing.numFloors)            },
         ],
       },
       {
         title: 'Location', icon: 'location_on',
         items: [
-          { label: 'Location',     value: this.formatLocationHierarchyForReview(location.locationHierarchy) },
-          { label: 'Full address', value: this.formatReviewValue(location.fullAddress) },
-          { label: 'Map pin',      value: coordinatesSelected ? 'Selected' : 'Not set' },
+          { label: 'Location',     value: locationLabel                                          },
+          { label: 'Full address', value: this.formatReviewValue(location.fullAddress)           },
+          { label: 'Map pin',      value: coordinatesSet ? 'Selected' : 'Not set'               },
         ],
       },
       {
         title: 'Features and media', icon: 'perm_media',
         items: [
-          { label: 'Amenities',   value: selectedFeatureIds.length ? `${selectedFeatureIds.length} selected` : 'None selected' },
-          { label: 'Photos',      value: images.length     ? `${images.length} selected`     : 'None selected' },
-          { label: 'Video tour',  value: videoFiles[0]?.name ?? 'Not selected' },
+          { label: 'Amenities',  value: amenityCount ? `${amenityCount} selected` : 'None selected' },
+          { label: 'Photos',     value: photoCount   ? `${photoCount} selected`   : 'None selected' },
+          { label: 'Video tour', value: videoName                                                    },
         ],
       },
       {
         title: 'Contact and description', icon: 'contact_phone',
         items: [
-          { label: 'Contact name',     value: this.formatReviewValue(contact.contactName) },
-          { label: 'Email',            value: this.formatReviewValue(contact.contactEmail) },
+          { label: 'Contact name',     value: this.formatReviewValue(contact.contactName)        },
+          { label: 'Email',            value: this.formatReviewValue(contact.contactEmail)       },
           { label: 'Phone',            value: this.formatReviewValue(contact.contactPhoneNumber) },
-          { label: 'Contact location', value: this.formatReviewValue(contact.contactLocation) },
-          { label: 'Description',      value: this.formatDescriptionValue(description.propertyDescription) },
+          { label: 'Contact location', value: this.formatReviewValue(contact.contactLocation)    },
+          { label: 'Description',      value: descriptionValue                                   },
         ],
       },
     ];
@@ -343,29 +348,24 @@ export class AddListingPageComponent {
     ] as const;
   });
 
-  // ── 7. AI description ──────────────────────────────────────────────────────
-  // null = context not ready (button disabled); object = ready (button enabled + carries payload)
   readonly aiRequestBody = computed<GenerateListingDescriptionRequest | null>(() => {
-    this.aiListingFormsTick();
-    if (!this.basicInfoForm?.valid || !this.pricingForm?.valid || !(this.locationForm?.valid ?? false)) return null;
-    const ids = (this.amenitiesForm.get('selectedFeatureIds')?.value ?? []) as string[];
-    if (!Array.isArray(ids) || !ids.length) return null;
+    if (!(this.basicStep?.isValid()        ?? false)) return null;
+    if (!(this.pricingStep?.isValid()      ?? false)) return null;
+    if (!(this.locationStep?.isValid() ?? false)) return null;
 
-    const basic     = this.basicInfoForm.getRawValue();
-    const pricing   = this.pricingForm.getRawValue();
-    const amenities = this.amenitiesForm.getRawValue();
-    const contact   = this.contactForm.getRawValue();
-    const location  = this.locationForm.getRawValue();
+    const { basic, pricing, amenities, contact, location } = this.formSnapshot();
+    const ids = (amenities.selectedFeatureIds ?? []) as string[];
+    if (!ids.length) return null;
 
-    const purpose      = basic.purpose === 'sale' ? ('For Sale' as const) : ('For Rent' as const);
-    const coarseType   = this.addListingService.getCoarseTypeById(basic.propertyTypeId);
-    const categoryName = this.addListingService.getCategoryNameById(basic.propertyTypeId);
-    const subtypeName  = this.addListingService.getSubtypeNameById(basic.propertyTypeId, basic.subtypeId);
-    const subtype      = (subtypeName || categoryName).trim();
+    const purpose           = basic.purpose === 'sale' ? ('For Sale' as const) : ('For Rent' as const);
+    const coarseType        = this.addListingService.getCoarseTypeById(basic.propertyTypeId);
+    const categoryName      = this.addListingService.getCategoryNameById(basic.propertyTypeId);
+    const subtypeName       = this.addListingService.getSubtypeNameById(basic.propertyTypeId, basic.subtypeId);
+    const subtype           = (subtypeName || categoryName).trim();
     const amenityBooleans   = this.addListingService.buildAmenityBooleanPayload(amenities.selectedFeatureIds ?? []);
     const locationHierarchy = (location.locationHierarchy ?? []) as LocationHierarchyItem[];
-    const cityName = locationHierarchy.find(i => i.level === 2)?.name ?? '';
-    const areaName = (locationHierarchy.find(i => i.level === 4) ?? locationHierarchy.find(i => i.level === 3))?.name ?? '';
+    const cityName          = locationHierarchy.find(i => i.level === 2)?.name ?? '';
+    const areaName          = (locationHierarchy.find(i => i.level === 4) ?? locationHierarchy.find(i => i.level === 3))?.name ?? '';
 
     return {
       title:            (basic.listingTitle ?? '').trim(),
@@ -393,17 +393,12 @@ export class AddListingPageComponent {
     };
   });
 
-  // ── 8. Edit mode state ─────────────────────────────────────────────────────
   readonly editingId      = signal<string | null>(null);
   readonly editLoading    = signal(false);
   readonly editLoadError  = signal<string | null>(null);
   readonly loadedProperty = signal<PropertyDetailDocument | null>(null);
 
-  // ── 9. Constructor ─────────────────────────────────────────────────────────
   constructor() {
-
-
-    // Edit mode: detect :id in route and load property.
     const id = (this.route.snapshot.paramMap.get('id') ?? '').trim();
     if (id) {
       this.editingId.set(id);
@@ -411,66 +406,38 @@ export class AddListingPageComponent {
     }
   }
 
-  // ── 10. Form ready handlers — each step calls (formReady) when it initialises ──
-  // Parent stores the reference and wires it into reactive tick signals.
-
-  onBasicInfoFormReady(form: FormGroup): void {
-    console.log('[AddListing] basicInfoForm received');
-    this.basicInfoForm = form;
-    this.wireFormToTicks(form, true);
+  onFormReady(key: 'basicInfo' | 'pricing' | 'contact' | 'description' | 'amenities' | 'media' | 'location', form: FormGroup): void {
+    const assign: Record<typeof key, (f: FormGroup) => void> = {
+      basicInfo:   f => this.basicInfoForm   = f,
+      pricing:     f => this.pricingForm     = f,
+      contact:     f => this.contactForm     = f,
+      description: f => this.descriptionForm = f,
+      amenities:   f => this.amenitiesForm   = f,
+      media:       f => this.mediaForm       = f,
+      location:    f => this.locationForm    = f,
+    };
+    assign[key](form);
+    this.wireFormToTicks(form);
   }
 
-  onPricingFormReady(form: FormGroup): void {
-    console.log('[AddListing] pricingForm received');
-    this.pricingForm = form;
-    this.wireFormToTicks(form, true);
-  }
-
-  onContactFormReady(form: FormGroup): void {
-    console.log('[AddListing] contactForm received');
-    this.contactForm = form;
-    this.wireFormToTicks(form, false);
-  }
-
-  onDescriptionFormReady(form: FormGroup): void {
-    console.log('[AddListing] descriptionForm received');
-    this.descriptionForm = form;
-    this.wireFormToTicks(form, false);
-  }
-
-  onAmenitiesFormReady(form: FormGroup): void {
-    console.log('[AddListing] amenitiesForm received');
-    this.amenitiesForm = form;
-    this.wireFormToTicks(form, true);
-  }
-
-  onMediaFormReady(form: FormGroup): void {
-    console.log('[AddListing] mediaForm received');
-    this.mediaForm = form;
-    this.wireFormToTicks(form, false);
-  }
-
-  onLocationFormReady(form: FormGroup): void {
-    console.log('[AddListing] locationForm received');
-    this.locationForm = form;
-    this.wireFormToTicks(form, true);
-  }
-
-  // Wires a newly received form into tick signals so all computed signals re-evaluate on change.
-  private wireFormToTicks(form: FormGroup, includeAi: boolean): void {
-    merge(form.valueChanges, form.statusChanges)
+  private wireFormToTicks(form: FormGroup): void {
+    form.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.listingFormsTick.update(n => n + 1);
-        if (includeAi) this.aiListingFormsTick.update(n => n + 1);
-      });
-    this.listingFormsTick.update(n => n + 1); // initial tick
+      .subscribe(() => this.listingFormsTick.update(n => n + 1));
+    this.listingFormsTick.update(n => n + 1);
   }
-
-  // ── 11. Wizard navigation ──────────────────────────────────────────────────
 
   onWizardStepSelected(stepKey: string): void {
-    if (this.isAddListingStepKey(stepKey)) this.activeStepKey.set(stepKey);
+    if (!this.isAddListingStepKey(stepKey)) return;
+    const targetIndex = this.stepOrder.indexOf(stepKey);
+    if (targetIndex <= this.activeStepIndex()) {
+      this.activeStepKey.set(stepKey);
+      return;
+    }
+    const v = this.stepValidityMap();
+    if (this.stepOrder.slice(0, targetIndex).every(key => v[key as keyof typeof v] ?? true)) {
+      this.activeStepKey.set(stepKey);
+    }
   }
 
   goToNextStep(): void {
@@ -496,11 +463,9 @@ export class AddListingPageComponent {
 
   scrollToTop(): void { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-  // ── 12. Submit actions ─────────────────────────────────────────────────────
-
   async onHeaderAction(actionId: string): Promise<void> {
-    if (actionId === 'update-property')                          await this.onUpdateProperty();
-    else if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT) await this.onSaveDraft();
+    if (actionId === 'update-property')                               await this.onUpdateProperty();
+    else if (actionId === ADD_LISTING_HEADER_ACTIONS.SAVE_DRAFT)      await this.onSaveDraft();
     else if (actionId === ADD_LISTING_HEADER_ACTIONS.PUBLISH_LISTING) await this.onPublishListing();
   }
 
@@ -513,15 +478,15 @@ export class AddListingPageComponent {
   }
 
   onFeaturedToggle(checked: boolean): void {
-    if (!checked)                                       { this.isFeatured.set(false); return; }
-    if (this.wasFeaturedWhenLoaded())                   { this.isFeatured.set(true);  return; }
-    if (!this.assertFeaturedListingQuotaAvailable())    { this.isFeatured.set(false); return; }
+    if (!checked)                                    { this.isFeatured.set(false); return; }
+    if (this.wasFeaturedWhenLoaded())                { this.isFeatured.set(true);  return; }
+    if (!this.assertFeaturedListingQuotaAvailable()) { this.isFeatured.set(false); return; }
     this.isFeatured.set(true);
   }
 
   private async onPublishListing(): Promise<void> {
     if (this.isSubmitting()) return;
-    if (!this.allCreateFormsValid()) {
+    if (!this.allFormsValid(true)) {
       this.markAllListingFormsTouched();
       this.notifyMissingRequiredFields();
       return;
@@ -544,7 +509,7 @@ export class AddListingPageComponent {
 
   private async onSaveDraft(): Promise<void> {
     if (this.isSubmitting()) return;
-    if (!this.allCreateFormsValid()) {
+    if (!this.allFormsValid(true)) {
       this.markAllListingFormsTouched();
       this.notifyMissingRequiredFields();
       return;
@@ -566,7 +531,7 @@ export class AddListingPageComponent {
   private async onUpdateProperty(): Promise<void> {
     const id = this.editingId();
     if (!id || this.isSubmitting()) return;
-    if (!this.allEditFormsValid()) {
+    if (!this.allFormsValid()) {
       this.markAllListingFormsTouched();
       this.notifyMissingRequiredFields();
       return;
@@ -590,17 +555,16 @@ export class AddListingPageComponent {
     }
   }
 
-
   private buildPayload(uploadedMedia: UploadedMediaPayload): CreateListingPayload {
     const forms: ListingFormSnapshot = {
-      basic:       this.basicInfoForm.value,
-      description: this.descriptionForm.value,
-      pricing:     this.pricingForm.value,
-      contact:     this.contactForm.value,
-      location:    this.locationForm.value,
+      basic:       this.basicInfoForm.getRawValue(),
+      description: this.descriptionForm.getRawValue(),
+      pricing:     this.pricingForm.getRawValue(),
+      contact:     this.contactForm.getRawValue(),
+      location:    this.locationForm.getRawValue(),
     };
     const amenityBooleans = this.addListingService.buildAmenityBooleanPayload(
-      this.amenitiesForm.value.selectedFeatureIds ?? []
+      this.amenitiesForm.getRawValue().selectedFeatureIds ?? []
     );
     return buildListingPayload(forms, uploadedMedia, amenityBooleans, this.isFeatured());
   }
@@ -612,17 +576,15 @@ export class AddListingPageComponent {
     applyServerFieldErrors(
       parsed.fieldErrors,
       [
-        { form: this.basicInfoForm,   map: ADD_LISTING_BASIC_INFO_API_MAP   },
-        { form: this.descriptionForm, map: ADD_LISTING_DESCRIPTION_API_MAP  },
-        { form: this.pricingForm,     map: ADD_LISTING_PRICING_API_MAP      },
-        { form: this.locationForm,    map: ADD_LISTING_LOCATION_API_MAP     },
-        { form: this.contactForm,     map: ADD_LISTING_CONTACT_API_MAP      },
+        { form: this.basicInfoForm,   map: ADD_LISTING_BASIC_INFO_API_MAP  },
+        { form: this.descriptionForm, map: ADD_LISTING_DESCRIPTION_API_MAP },
+        { form: this.pricingForm,     map: ADD_LISTING_PRICING_API_MAP     },
+        { form: this.locationForm,    map: ADD_LISTING_LOCATION_API_MAP    },
+        { form: this.contactForm,     map: ADD_LISTING_CONTACT_API_MAP     },
       ],
       this.destroyRef
     );
   }
-
-  // ── 14. Edit mode ──────────────────────────────────────────────────────────
 
   private loadPropertyForEdit(id: string): void {
     this.editLoading.set(true);
@@ -648,135 +610,37 @@ export class AddListingPageComponent {
     catalog:  PropertyCatalogData,
     features: PropertyFeature[]
   ): void {
-    const listingTitle        = (doc.listingTitle ?? doc.title ?? '').toString();
-    const propertyDescription = (doc.propertyDescription ?? doc.description ?? '').toString();
-    const contactPhoneNumber  = (doc.contactPhoneNumber ?? doc.contactPhone ?? doc.phone ?? '').toString();
-
-    // new listings: backend returns IDs directly
-    // old listings: backend returns names — resolve to IDs via catalog
-    let propertyTypeId = (doc.propertyTypeId ?? '').toString();
-    let subtypeId      = (doc.subtypeId      ?? '').toString();
-
-    if (!propertyTypeId) {
-      // legacy fallback — convert stored names to IDs using catalog
-      const subtypeName  = (doc.subtype ?? doc.propertySubtypeName ?? doc.propertySubtype ?? '').toString();
-      const categoryName = this.resolveCategoryNameFromCatalog(catalog, {
-        subtype:              subtypeName,
-        propertyType:         (doc.propertyType         ?? '').toString(),
-        propertyCategoryName: (doc.propertyCategoryName ?? '').toString(),
-      });
-      const category = catalog.categories.find(c => c.name === categoryName);
-      propertyTypeId  = category?._id ?? '';
-      subtypeId       = category?.subtypes.find(s => s.name === subtypeName)?._id ?? '';
-      console.log('[AddListing] legacy patch — category:', categoryName, '→', propertyTypeId, '| subtype:', subtypeName, '→', subtypeId);
-    } else {
-      console.log('[AddListing] edit patch — propertyTypeId:', propertyTypeId, '| subtypeId:', subtypeId);
-    }
-
-    const purpose = (doc.purpose ?? '').toString().toLowerCase().includes('sale') ? 'sale' : 'rent';
-
-    // emitEvent:false — prevents child's propertyTypeId.valueChanges from clearing subtypeId mid-patch
-    this.basicInfoForm?.patchValue({ purpose, listingTitle, propertyTypeId, subtypeId }, { emitEvent: false });
-    this.basicStep?.refreshCategory(); // child re-applies subtype list after patch
-
-    this.descriptionForm.patchValue({ propertyDescription }, { emitEvent: false });
-
-    this.pricingForm?.patchValue({
-      price: doc.price ?? 0, areaSize: doc.areaSize ?? 0, areaUnit: doc.areaUnit ?? 'sqft',
-      numBedrooms: doc.numBedrooms ?? 0, numBathrooms: doc.numBathrooms ?? 0,
-      numParkingSpaces: doc.numParkingSpaces ?? 0, numFloors: doc.numFloors ?? 0,
-    }, { emitEvent: false });
-
-    this.contactForm?.patchValue({
-      contactName: doc.contactName ?? '', contactEmail: doc.contactEmail ?? '',
-      contactPhoneNumber, contactLocation: doc.contactLocation ?? '',
-    }, { emitEvent: false });
-
-    // location step owns all location logic — hierarchy, coordinates, geocode fallback
+    this.basicStep?.patchFromProperty(doc, catalog);
+    this.pricingStep?.patchFromProperty(doc);
+    this.contactStep?.patchFromProperty(doc);
+    this.descriptionStep?.patchFromProperty(doc);
+    this.amenitiesStep?.patchFromProperty(doc, features);
     this.locationStep?.patchFromProperty(doc);
 
     this.wasFeaturedWhenLoaded.set(doc.isFeatured === true);
     this.isFeatured.set(doc.isFeatured === true);
     this.existingPropertyImages.set((doc.images ?? []) as ListingImagePayload[]);
 
-    const selectedFeatureIds = this.resolveSelectedFeatureIdsFromAmenityFlags(doc, features);
-    this.amenitiesForm.patchValue({ selectedFeatureIds }, { emitEvent: true });
-
     this.refreshListingFormValidity();
-    this.basicInfoForm?.markAsUntouched();
-    this.descriptionForm.markAsUntouched();
-    this.pricingForm?.markAsUntouched();
-    this.contactForm?.markAsUntouched();
-    this.locationForm?.markAsUntouched();
+    [this.basicInfoForm, this.pricingForm, this.contactForm, this.descriptionForm, this.locationForm]
+      .forEach(form => form?.markAsUntouched());
   }
 
-  // Resolves the catalog category name from various stored field aliases (backward compatibility).
-  private resolveCategoryNameFromCatalog(
-    catalog: PropertyCatalogData,
-    input: { subtype: string; propertyType: string; propertyCategoryName: string }
-  ): string {
-    const direct = (input.propertyCategoryName ?? '').trim();
-    if (direct) return direct;
-
-    const subtype = (input.subtype ?? '').trim().toLowerCase();
-    if (subtype) {
-      const found = (catalog.categories ?? []).find(c => (c.subtypes ?? []).some(st => st.name.trim().toLowerCase() === subtype));
-      if (found) return found.name;
-    }
-
-    const coarse = (input.propertyType ?? '').trim().toLowerCase();
-    if (coarse) {
-      const cats = catalog.categories ?? [];
-      return cats.find(c => c.name.trim().toLowerCase() === coarse)?.name
-          || cats.find(c => c.name.trim().toLowerCase().includes(coarse))?.name
-          || '';
-    }
-
-    return '';
-  }
-
-  // Maps stored amenity boolean flags back to feature _ids for the chip UI.
-  private resolveSelectedFeatureIdsFromAmenityFlags(doc: PropertyDetailDocument, features: PropertyFeature[]): string[] {
-    return (features ?? [])
-      .filter(f => {
-        const key = FEATURE_SLUG_TO_AMENITY_KEY[normalizeFeatureSlug(f.slug)];
-        return key && (doc as any)?.[key] === true;
-      })
-      .map(f => f._id);
-  }
-
-  // ── 15. Validation helpers ─────────────────────────────────────────────────
-
-  private allCreateFormsValid(): boolean {
+  private allFormsValid(includeMedia = false): boolean {
     return (
-      this.basicInfoForm.valid &&
-      this.pricingForm.valid &&
-      this.mediaForm.valid &&
-      this.contactForm.valid &&
+      this.basicInfoForm.valid   &&
+      this.pricingForm.valid     &&
+      this.contactForm.valid     &&
       this.descriptionForm.valid &&
-      this.locationForm.valid &&
-      (this.locationStep?.hasCoordinates() ?? false)
-    );
-  }
-
-  private allEditFormsValid(): boolean {
-    return (
-      this.basicInfoForm.valid &&
-      this.pricingForm.valid &&
-      this.contactForm.valid &&
-      this.descriptionForm.valid &&
-      this.locationForm.valid &&
-      (this.locationStep?.hasCoordinates() ?? false)
+      this.locationForm.valid    &&
+      (this.locationStep?.hasCoordinates() ?? false) &&
+      (!includeMedia || this.mediaForm.valid)
     );
   }
 
   private markAllListingFormsTouched(): void {
-    this.basicInfoForm.markAllAsTouched();
-    this.pricingForm.markAllAsTouched();
-    this.mediaForm.markAllAsTouched();
-    this.contactForm.markAllAsTouched();
-    this.descriptionForm.markAllAsTouched();
-    this.locationForm.markAllAsTouched();
+    [this.basicInfoForm, this.pricingForm, this.mediaForm, this.contactForm, this.descriptionForm, this.locationForm]
+      .forEach(form => form?.markAllAsTouched());
   }
 
   private notifyMissingRequiredFields(): void {
@@ -790,12 +654,12 @@ export class AddListingPageComponent {
 
   private collectInvalidFormSectionLabels(): string[] {
     const invalid: string[] = [];
-    if (this.basicInfoForm.invalid)                                          invalid.push('Basic information');
-    if (this.pricingForm.invalid)                                            invalid.push('Pricing');
-    if (this.locationForm.invalid || !(this.locationStep?.hasCoordinates() ?? false)) invalid.push('Location (map pin)');
-    if (this.contactForm.invalid)                                            invalid.push('Contact');
-    if (this.descriptionForm.invalid)                                        invalid.push('Description');
-    if (!this.editingId() && this.mediaForm.invalid)                         invalid.push('Media');
+    if (this.basicInfoForm.invalid)                                                    invalid.push('Basic information');
+    if (this.pricingForm.invalid)                                                      invalid.push('Pricing');
+    if (this.locationForm.invalid || !(this.locationStep?.hasCoordinates() ?? false))  invalid.push('Location (map pin)');
+    if (this.contactForm.invalid)                                                      invalid.push('Contact');
+    if (this.descriptionForm.invalid)                                                  invalid.push('Description');
+    if (!this.editingId() && this.mediaForm.invalid)                                   invalid.push('Media');
     return invalid;
   }
 
@@ -805,8 +669,6 @@ export class AddListingPageComponent {
     }
     this.listingFormsTick.update(n => n + 1);
   }
-
-  // ── 17. Featured listing quota ─────────────────────────────────────────────
 
   private getStoredSubscription(): Subscription | null {
     const user = this.auth.getCurrentUser();
@@ -847,8 +709,6 @@ export class AddListingPageComponent {
     this.wasFeaturedWhenLoaded.set(false);
   }
 
-  // ── 18. Review formatting ──────────────────────────────────────────────────
-
   private formatReviewValue(value: unknown, fallback = 'Not provided'): string {
     if (value == null) return fallback;
     if (typeof value === 'number') return Number.isFinite(value) ? value.toLocaleString('en-US') : fallback;
@@ -873,8 +733,6 @@ export class AddListingPageComponent {
     const text = this.formatReviewValue(value, '');
     return text ? `${text.length.toLocaleString('en-US')} characters` : 'Not provided';
   }
-
-  // ── helpers ────────────────────────────────────────────────────────────────
 
   private isAddListingStepKey(stepKey: string): stepKey is AddListingStepKey {
     return this.stepOrder.some(k => k === stepKey);

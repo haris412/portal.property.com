@@ -8,7 +8,8 @@ import {
   inject,
   signal
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
@@ -18,6 +19,11 @@ import { SelectableChipItem } from '../../../../core/interfaces/ui.models';
 import { PropertyFeature } from '../../../../core/models/property-features.model';
 import { AddListingService } from '../../../../core/services/add-listing.service';
 import { TranslateModule } from '@ngx-translate/core';
+import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
+import {
+  FEATURE_SLUG_TO_AMENITY_KEY,
+  normalizeFeatureSlug,
+} from '../../../../core/constants/listing-payload.constants';
 
 @Component({
   selector: 'app-features-amenities-section',
@@ -40,7 +46,8 @@ export class FeaturesAmenitiesSectionComponent implements OnInit {
   @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   readonly form      = this.fb.nonNullable.group({ selectedFeatureIds: [[] as string[]] });
-  readonly chipItems     = signal<readonly SelectableChipItem[]>([]);
+  readonly isValid   = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
+  readonly chipItems = signal<readonly SelectableChipItem[]>([]);
   readonly featuresState = signal<'loading' | 'error' | 'loaded'>('loading');
 
   ngOnInit(): void {
@@ -51,6 +58,11 @@ export class FeaturesAmenitiesSectionComponent implements OnInit {
       .get('selectedFeatureIds')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.syncChipsFromFormValue());
+  }
+
+  patchFromProperty(doc: PropertyDetailDocument, features: PropertyFeature[]): void {
+    const selectedFeatureIds = this.resolveSelectedFeatureIds(doc, features);
+    this.form.patchValue({ selectedFeatureIds }, { emitEvent: true });
   }
 
   retryLoadFeatures(): void {
@@ -92,6 +104,16 @@ export class FeaturesAmenitiesSectionComponent implements OnInit {
           this.chipItems.set([]);
         }
       });
+  }
+
+  // Maps stored amenity boolean flags on the document back to feature _ids for the chip UI.
+  private resolveSelectedFeatureIds(doc: PropertyDetailDocument, features: PropertyFeature[]): string[] {
+    return (features ?? [])
+      .filter(f => {
+        const key = FEATURE_SLUG_TO_AMENITY_KEY[normalizeFeatureSlug(f.slug)];
+        return key && (doc as any)?.[key] === true;
+      })
+      .map(f => f._id);
   }
 
   private setChipsFromFeatures(features: PropertyFeature[]): void {

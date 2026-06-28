@@ -29,8 +29,8 @@
            [attr.aria-label]="activeStepLabel()">
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'features-media'">
-          <app-features-amenities-section (formReady)="onAmenitiesFormReady($event)" />
-          <app-property-media-section (formReady)="onMediaFormReady($event)"
+          <app-features-amenities-section (formReady)="onFormReady('amenities', $event)" />
+          <app-property-media-section (formReady)="onFormReady('media', $event)"
                                       [propertyId]="editingId()"
                                       [existingImages]="existingPropertyImages()"
                                       [existingVideoUrl]="loadedProperty()?.videoTourUrl ?? null"
@@ -39,24 +39,24 @@
 
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'basic-info'">
-          <app-basic-information-section (formReady)="onBasicInfoFormReady($event)" />
+          <app-basic-information-section (formReady)="onFormReady('basicInfo', $event)" />
         </div>
 
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'pricing'">
-          <app-pricing-details-section (formReady)="onPricingFormReady($event)" />
+          <app-pricing-details-section (formReady)="onFormReady('pricing', $event)" />
         </div>
 
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'location'">
-          <app-property-location-step (formReady)="onLocationFormReady($event)"
+          <app-property-location-step (formReady)="onFormReady('location', $event)"
                                       [isActive]="activeStepKey() === 'location'" />
         </div>
 
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'contact-description'">
-          <app-contact-information-step (formReady)="onContactFormReady($event)" />
-          <app-property-description-step (formReady)="onDescriptionFormReady($event)"
+          <app-contact-information-step (formReady)="onFormReady('contact', $event)" />
+          <app-property-description-step (formReady)="onFormReady('description', $event)"
                                          [aiRequestBody]="aiRequestBody()" />
         </div>
 

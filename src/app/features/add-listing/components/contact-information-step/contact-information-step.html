@@ -48,9 +48,13 @@
       </div>
 
       <!-- Phone — library handles country code + format validation -->
+      <!-- autoSelectCountry + autoSelectedCountry: fallback to Pakistan for numbers stored
+           without a country code prefix; E.164 numbers (+XX...) still auto-detect correctly. -->
       <div>
         <ngx-material-intl-tel-input
           [preferredCountries]="['pk', 'sa', 'us']"
+          [autoSelectCountry]="true"
+          [autoSelectedCountry]="'pk'"
           [enablePlaceholder]="true"
           [enableSearch]="true"
           [mainLabel]="'addListing.contact.phone.label' | translate"

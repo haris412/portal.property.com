@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnDestroy, OnInit, Output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
@@ -43,10 +45,11 @@ export class PropertyMediaSectionComponent implements OnInit, OnDestroy {
   @Output() readonly formReady            = new EventEmitter<FormGroup>();
   @Output() readonly existingImageRemoved = new EventEmitter<number>();
 
-  readonly form = this.fb.nonNullable.group(
+  readonly form    = this.fb.nonNullable.group(
     { images: [[] as File[]], videoFiles: [[] as File[]] },
     { validators: mediaRequirementValidator }
   );
+  readonly isValid = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
 
   readonly newImagePreviews = signal<NewImagePreview[]>([]);
   readonly selectedVideoName = signal<string | null>(null);

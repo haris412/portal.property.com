@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { map, startWith } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -23,6 +24,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AddListingService, GenerateListingDescriptionRequest } from '../../../../core/services/add-listing.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
+import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 
 @Component({
   selector: 'app-property-description-step',
@@ -51,6 +53,7 @@ export class PropertyDescriptionStepComponent implements OnInit {
   @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   readonly form                    = this.buildForm();
+  readonly isValid                 = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
   readonly isGeneratingDescription = signal(false);
 
   readonly descriptionBanner = toSignal(
@@ -72,6 +75,12 @@ export class PropertyDescriptionStepComponent implements OnInit {
 
   ngOnInit(): void {
     this.formReady.emit(this.form);
+  }
+
+  patchFromProperty(doc: PropertyDetailDocument): void {
+    // propertyDescription is stored under a legacy alias in older API responses
+    const propertyDescription = (doc.propertyDescription ?? doc.description ?? '').toString();
+    this.form.patchValue({ propertyDescription });
   }
 
   onDescriptionAction(id: string): void {

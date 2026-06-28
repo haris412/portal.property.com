@@ -1,16 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   EventEmitter,
   OnInit,
   Output,
   inject,
-  signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { startWith } from 'rxjs';
+import { map, startWith } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
@@ -34,12 +33,10 @@ import { TranslateModule } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactInformationStepComponent implements OnInit {
-  private readonly fb         = inject(FormBuilder);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly fb = inject(FormBuilder);
 
-  // declared before buildForm() — buildForm() subscribes to statusChanges immediately
-  readonly canContinue = signal(false);
-  readonly form        = this.buildForm();
+  readonly form    = this.buildForm();
+  readonly isValid = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
 
   // parent receives the form reference once, on init
   @Output() readonly formReady = new EventEmitter<FormGroup>();
@@ -47,6 +44,17 @@ export class ContactInformationStepComponent implements OnInit {
   ngOnInit(): void {
     console.log('[Contact] init');
     this.formReady.emit(this.form);
+  }
+
+  patchFromProperty(doc: PropertyDetailDocument): void {
+    // contactPhoneNumber is stored under several legacy aliases depending on API version
+    const contactPhoneNumber = (doc.contactPhoneNumber ?? doc.contactPhone ?? doc.phone ?? '').toString();
+    this.form.patchValue({
+      contactName:        doc.contactName     ?? '',
+      contactEmail:       doc.contactEmail    ?? '',
+      contactPhoneNumber,
+      contactLocation:    doc.contactLocation ?? '',
+    });
   }
 
   // —— private ——
@@ -58,11 +66,6 @@ export class ContactInformationStepComponent implements OnInit {
       contactPhoneNumber: ['', Validators.required],  // format validated by ngx-material-intl-tel-input
       contactLocation:    [''],
     });
-
-    // gate the Continue button
-    form.statusChanges
-      .pipe(startWith(form.status), takeUntilDestroyed(this.destroyRef))
-      .subscribe(status => this.canContinue.set(status === 'VALID'));
 
     return form;
   }

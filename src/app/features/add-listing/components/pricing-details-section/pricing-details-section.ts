@@ -6,11 +6,11 @@ import {
   OnInit,
   Output,
   inject,
-  signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { startWith } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -42,11 +42,9 @@ export class PricingDetailsSectionComponent implements OnInit {
   private readonly fb          = inject(FormBuilder);
   private readonly destroyRef  = inject(DestroyRef);
 
-  // declared before buildForm() — buildForm() subscribes to statusChanges immediately
-  readonly canContinue = signal(false);
-  readonly form        = this.buildForm();
+  readonly form     = this.buildForm();
+  readonly isValid  = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
 
-  // static list — label + id only, form is the source of truth for values
   readonly counters: readonly { id: string; label: string }[] = [
     { id: 'numBedrooms',      label: 'Bedrooms'       },
     { id: 'numBathrooms',     label: 'Bathrooms'      },
@@ -60,6 +58,18 @@ export class PricingDetailsSectionComponent implements OnInit {
   ngOnInit(): void {
     console.log('[Pricing] init');
     this.formReady.emit(this.form);
+  }
+
+  patchFromProperty(doc: PropertyDetailDocument): void {
+    this.form.patchValue({
+      price:            doc.price            ?? 0,
+      areaSize:         doc.areaSize         ?? 0,
+      areaUnit:         doc.areaUnit         ?? 'sqft',
+      numBedrooms:      doc.numBedrooms      ?? 0,
+      numBathrooms:     doc.numBathrooms     ?? 0,
+      numParkingSpaces: doc.numParkingSpaces ?? 0,
+      numFloors:        doc.numFloors        ?? 0,
+    }, { emitEvent: false });
   }
 
   // single method for both +/- on counters and price/area steppers
@@ -77,9 +87,6 @@ export class PricingDetailsSectionComponent implements OnInit {
       event.preventDefault();
     }
   }
-
-  // —— private ——
-
   private buildForm() {
     const form = this.fb.nonNullable.group({
       price:            [75000,  [Validators.required, Validators.min(0)]],
@@ -90,11 +97,6 @@ export class PricingDetailsSectionComponent implements OnInit {
       numParkingSpaces: [0,      [Validators.required, Validators.min(0)]],
       numFloors:        [0,      [Validators.required, Validators.min(0)]],
     });
-
-    // gate the Continue button
-    form.statusChanges
-      .pipe(startWith(form.status), takeUntilDestroyed(this.destroyRef))
-      .subscribe(status => this.canContinue.set(status === 'VALID'));
 
     // clamp all numeric fields to ≥ 0 (handles paste and programmatic negative values)
     for (const name of NUMERIC_CONTROLS) {

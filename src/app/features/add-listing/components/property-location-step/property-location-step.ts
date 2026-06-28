@@ -79,7 +79,7 @@ export class PropertyLocationStepComponent implements OnInit {
   private readonly destroyRef   = inject(DestroyRef);
 
   readonly isActive       = input(false);
-  readonly canContinue    = signal(false);
+  readonly isValid        = signal(false);
   readonly hasCoordinates = signal(false);
   readonly form           = this.buildForm();
 
@@ -217,7 +217,7 @@ export class PropertyLocationStepComponent implements OnInit {
         const lat = coerceCoordinate(form.controls.latitude.value);
         const lng = coerceCoordinate(form.controls.longitude.value);
         this.hasCoordinates.set(lat != null && lng != null);
-        this.canContinue.set(form.status === 'VALID' && this.hasCoordinates());
+        this.isValid.set(form.status === 'VALID' && this.hasCoordinates());
       });
 
     form.controls.locationHierarchy.valueChanges
