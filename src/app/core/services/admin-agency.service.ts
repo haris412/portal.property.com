@@ -182,7 +182,7 @@ function appendParams(params: HttpParams, q: ListAgenciesQuery): HttpParams {
 @Injectable({ providedIn: 'root' })
 export class AdminAgencyService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/api/admin/agencies`;
+  private readonly baseUrl = `/admin/agencies`;
 
   /**
    * GET /api/admin/agencies — list with filters (Bearer admin token).

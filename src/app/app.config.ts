@@ -17,6 +17,8 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { AdminAuthService } from './core/services/admin-auth.service';
 import { environment } from '../environments/environment';
+import { loadingInterceptor } from './core/interceptors/loading.interceptor';
+import { urlInterceptor } from './core/interceptors/url.interceptor';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -48,7 +50,7 @@ export const appConfig: ApplicationConfig = {
       }),
     ),
     provideRouter(routes, withComponentInputBinding(), withViewTransitions()),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([urlInterceptor,authInterceptor, loadingInterceptor])),
     {
       provide: APP_INITIALIZER,
       useFactory: restoreSessionFactory,

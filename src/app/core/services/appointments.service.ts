@@ -251,7 +251,7 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
 @Injectable({ providedIn: 'root' })
 export class AppointmentsService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/appointments`;
+  private readonly base = `/appointments`;
 
   getByUserId(userId: string): Observable<AppointmentListItem[]> {
     const url = `${this.base}/user/${encodeURIComponent(userId)}`;

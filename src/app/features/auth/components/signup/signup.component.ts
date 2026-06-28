@@ -78,9 +78,11 @@ export class SignupComponent implements OnInit {
   ngOnInit(): void {
     this.getRoles();
     if (this.auth.userData()){
+      console.log(this.auth.userData());
       this.form.patchValue({
         ...this.auth.userData()
       });
+      if(this.auth?.userData()?.role === 'buyer') this.lockUserType.set(true);
     };
   }  
 
@@ -130,15 +132,15 @@ export class SignupComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: ['', [Validators.required]],
       // location: f.control<string | ICountry | null>('', [Validators.required]),
-      roleName: ['Seller', [Validators.required]],
+      role: ['Seller', [Validators.required]],
       agencyName: f.nonNullable.control('', { updateOn: 'blur' }),
       password: ['', [Validators.required]],
       agree: [false, [Validators.requiredTrue]],
     });
 
     // Show/hide agency name field and toggle its validators based on user type
-    form.controls.roleName.valueChanges
-      .pipe(startWith(form.controls.roleName.value), takeUntilDestroyed(this.destroyRef))
+    form.controls.role.valueChanges
+      .pipe(startWith(form.controls.role.value), takeUntilDestroyed(this.destroyRef))
       .subscribe((type) => {
         const ctrl = form.controls.agencyName;
         const isAgent = type === 'Agent';

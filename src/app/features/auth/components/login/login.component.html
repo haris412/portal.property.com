@@ -17,7 +17,7 @@
 
     @if (isAdmin && otpStep()) {
       <p class="text-muted-auth mb-3" role="status">
-        {{ 'public.signIn.admin.otpSent' | translate: { email: form.controls.identifier.value } }}
+        {{ 'public.signIn.admin.otpSent' | translate: { email: form.controls.email.value } }}
       </p>
     }
 
@@ -29,13 +29,13 @@
             <input
               id="login-identifier"
               matInput
-              formControlName="identifier"
+              formControlName="email"
               placeholder="jane@example.com"
               autocomplete="username"
               [readonly]="isAdmin && otpStep()"
             />
           </mat-form-field>
-          <app-form-field-error [control]="form.controls.identifier" [label]="'public.signIn.email' | translate" />
+          <app-form-field-error [control]="form.controls.email" [label]="'public.signIn.email' | translate" />
         </div>
 
         <div class="col-12">
@@ -96,15 +96,10 @@
             type="submit"
             mat-raised-button
             class="auth-primary-btn w-100"
-            [disabled]="!canSubmit()"
+            [disabled]="!form.valid"
           >
             {{ primaryActionLabel() }}
           </button>
-          @if (isAdmin && otpStep()) {
-            <button type="button" mat-button class="w-100" (click)="backToCredentials()">
-              {{ 'public.signIn.admin.differentAccount' | translate }}
-            </button>
-          }
         </div>
       </div>
     </form>

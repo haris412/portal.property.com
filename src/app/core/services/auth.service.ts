@@ -14,7 +14,6 @@ import {
   throwError,
 } from 'rxjs';
 import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
-import { environment } from '../../../environments/environment';
 import { hasPrimaryAgencyAdminRole } from '../models/role.models';
 import { SubscriptionSessionStorageService } from './subscription-session-storage.service';
 import { IUser } from '../interfaces/user.interface';
@@ -144,6 +143,7 @@ function extractAgencyId(raw: Record<string, unknown>): string | undefined {
 }
 
 export function fromApiUser(raw: Record<string, unknown>): User {
+  console.log(raw);
   const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
   const lastName  = (raw['lastName']  as string | undefined)?.trim() || undefined;
   const agency    = raw['agency'];
@@ -192,7 +192,7 @@ export class AuthService {
 
   getRoles(){
     return this.http
-        .get<{ success?: boolean; data?: { roles?: string[] } }>(`${environment.apiUrl}/api/auth/roles`)
+        .get<{ success?: boolean; data?: { roles?: string[] } }>(`/auth/roles`)
         .pipe(
           map((res) => {
             return res.data?.roles ?? []
@@ -247,7 +247,7 @@ export class AuthService {
     return this.http
       .post<
         { success?: boolean; data?: AuthApiResponse; message?: string } & AuthApiResponse
-      >(`${environment.apiUrl}/api/auth/login`, payload)
+      >(`/auth/login`, payload)
       .pipe(
         switchMap((res) => {
           if (res.success === false)
@@ -267,7 +267,7 @@ export class AuthService {
     return this.http
       .post<
         { success?: boolean; message?: string; data?: AuthApiResponse } & AuthApiResponse
-      >(`${environment.apiUrl}/api/auth/register`, payload)
+      >(`/auth/register`, payload)
       .pipe(
         switchMap((res) => {
           if (res.success === false)
@@ -285,7 +285,7 @@ export class AuthService {
     if (this.accessToken) {
       this.http
         .post(
-          `${environment.apiUrl}/api/auth/logout`,
+          `/auth/logout`,
           {},
           { headers: { Authorization: `Bearer ${this.accessToken}` } },
         )
@@ -297,6 +297,7 @@ export class AuthService {
 
   refreshAccessToken(): Observable<string> {
     const refresh = this.storage?.getItem(REFRESH_KEY);
+    console.log(refresh);
     if (!refresh) {
       this.clearAndRedirect();
       return of('');
@@ -306,7 +307,7 @@ export class AuthService {
       .post<{
         data?: { accessToken?: string };
         accessToken?: string;
-      }>(`${environment.apiUrl}/api/auth/refresh-token`, { refreshToken: refresh })
+      }>(`/auth/refresh-token`, { refreshToken: refresh })
       .pipe(
         map((res) => res.data?.accessToken ?? res.accessToken ?? ''),
         tap((at) => (at ? (this.accessToken = at) : this.clearAndRedirect())),
@@ -325,13 +326,13 @@ export class AuthService {
   }
 
   checkTokenValidityAndExpiry(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/auth/verify-token`, data);
+    return this.http.post<any>(`/auth/verify-token`, data);
   }
   // ── Password reset ─────────────────────────────────────────────────────────
 
   forgotPassword(email: string): Observable<void> {
     return this.postVoid(
-      `${environment.apiUrl}/api/auth/forgot-password`,
+      `/auth/forgot-password`,
       { email: email.trim() },
       'Could not send reset email. Please try again.',
     );
@@ -341,7 +342,7 @@ export class AuthService {
     const fallback = 'Invalid or expired code. Please try again.';
     return this.http
       .post<VerifyPasswordResetOtpResponse>(
-        `${environment.apiUrl}/api/auth/verify-password-reset-otp`,
+        `/api/auth/verify-password-reset-otp`,
         { email: email.trim(), otp: otp.trim() },
       )
       .pipe(
@@ -360,7 +361,7 @@ export class AuthService {
 
   resetPassword(resetToken: string, password: string): Observable<void> {
     return this.postVoid(
-      `${environment.apiUrl}/api/auth/reset-password`,
+      `/auth/reset-password`,
       { resetToken, password },
       'Could not reset password. Please start again.',
     );
@@ -371,7 +372,7 @@ export class AuthService {
   /** POST /api/auth/verify-invite-token — checks if the invite token is valid before showing the form. */
   verifyInviteToken(token: string): Observable<void> {
     return this.postVoid(
-      `${environment.apiUrl}/api/auth/verify-invite-token`,
+      `/auth/verify-invite-token`,
       { token },
       'This invite link is invalid or has expired.',
     );
@@ -380,7 +381,7 @@ export class AuthService {
   /** POST /api/auth/invite-set-password — activates account using the token from the invite link. */
   inviteSetPassword(token: string, password: string): Observable<void> {
     return this.postVoid(
-      `${environment.apiUrl}/api/auth/invite-set-password`,
+      `/auth/invite-set-password`,
       { token, password },
       'Could not set password. Please try again.',
     );
@@ -393,7 +394,7 @@ export class AuthService {
       'This link is invalid or has expired. Please request a new verification email.';
     const body = email?.trim() ? { token, email: email.trim() } : { token };
     return this.http
-      .post<SimpleApiResponse>(`${environment.apiUrl}/api/auth/verify-email`, body)
+      .post<SimpleApiResponse>(`/auth/verify-email`, body)
       .pipe(
         map((res) => ({ success: res.success ?? true })),
         catchError((err: unknown) =>
@@ -409,7 +410,7 @@ export class AuthService {
       .get<{
         success?: boolean;
         data?: { available?: boolean };
-      }>(`${environment.apiUrl}/api/auth/check-agency-name`, { params: { name: name.trim() } })
+      }>(`/auth/check-agency-name`, { params: { name: name.trim() } })
       .pipe(
         map((res) => res.data?.available ?? true),
         catchError(() => of(true)),
@@ -423,7 +424,7 @@ export class AuthService {
       .get<{
         success?: boolean;
         data?: { user?: Record<string, unknown> };
-      }>(`${environment.apiUrl}/api/users/${encodeURIComponent(id)}`)
+      }>(`/users/${encodeURIComponent(id)}`)
       .pipe(
         map((res) => {
           if (!res.data?.user) {

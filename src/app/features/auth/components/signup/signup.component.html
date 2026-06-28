@@ -94,9 +94,9 @@
                   <button
                     type="button"
                     class="user-type-pill col-2"
-                    [class.user-type-pill--active]="form.controls.roleName.value === option.value"
-                    (click)="form.controls.roleName.setValue(option.value)"
-                    [attr.aria-pressed]="form.controls.roleName.value === option.value"
+                    [class.user-type-pill--active]="form.controls.role.value === option.value"
+                    (click)="form.controls.role.setValue(option.value)"
+                    [attr.aria-pressed]="form.controls.role.value === option.value"
                   >
                     {{ option.label }}
                   </button>
@@ -139,7 +139,7 @@
           </div>
         }
 
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-12">
           <label class="form-label-auth" for="signup-password">{{ 'public.signUp.password' | translate }}</label>
           <mat-form-field appearance="outline">
             <input

@@ -10,11 +10,10 @@ import { CreateConversationDto } from "../models/createConversation.model";
 export class ConversationService {
   private readonly http = inject(HttpClient);
 
-  private readonly baseUrl = environment.apiUrl;
   private readonly controller = 'conversation';
 
   private url(action: string): string {
-    return `${this.baseUrl}/api/${this.controller}/${action}`;
+    return `/${this.controller}/${action}`;
   }
 
   create(data: CreateConversationDto): Observable<any> {
@@ -22,7 +21,7 @@ export class ConversationService {
   }
 
   getConversations(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/api/${this.controller}`);
+    return this.http.get(`/${this.controller}`);
   }
 
   getMessages(conversationId: string): Observable<any> {

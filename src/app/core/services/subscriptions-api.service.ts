@@ -156,7 +156,7 @@ export function responseIndicatesExistingSubscription(body: unknown): boolean {
 @Injectable({ providedIn: 'root' })
 export class SubscriptionsApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/subscriptions`;
+  private readonly base = `/subscriptions`;
 
   getSubscriptionsForUser(userId: string, agencyId?: string | null): Observable<unknown> {
     let params = new HttpParams().set('userId', userId);
