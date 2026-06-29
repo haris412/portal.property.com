@@ -78,9 +78,7 @@ export class PropertyDescriptionStepComponent implements OnInit {
   }
 
   patchFromProperty(doc: PropertyDetailDocument): void {
-    // propertyDescription is stored under a legacy alias in older API responses
-    const propertyDescription = (doc.propertyDescription ?? doc.description ?? '').toString();
-    this.form.patchValue({ propertyDescription });
+    this.form.patchValue({ propertyDescription: doc.propertyDescription ?? '' });
   }
 
   onDescriptionAction(id: string): void {

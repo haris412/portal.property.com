@@ -21,7 +21,7 @@ import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-bann
 import { SegmentedOptionGroupComponent } from '../../../../shared/ui/segmented-option-group/segmented-option-group';
 import { ActionChipListComponent } from '../../../../shared/ui/action-chip-list/action-chip-list';
 import { OptionItem, ActionChipData } from '../../../../core/interfaces/ui.models';
-import { PropertyCatalogCategory, PropertyCatalogData } from '../../../../core/models/property-catalog.model';
+import { PropertyCatalogCategory } from '../../../../core/models/property-catalog.model';
 import { AddListingService } from '../../../../core/services/add-listing.service';
 import { TranslateModule } from '@ngx-translate/core';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
@@ -52,16 +52,15 @@ export class BasicInformationSectionComponent implements OnInit {
   private readonly destroyRef        = inject(DestroyRef);
 
   readonly form    = this.buildForm();
-  readonly isValid = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
+  readonly isValid = toSignal(
+    this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')),
+    { initialValue: this.form.valid }
+  );
 
-  // catalog
-  readonly catalogStatus = signal<'loading' | 'ready' | 'error'>('loading');
-  readonly categories    = signal<readonly PropertyCatalogCategory[]>([]);
-
-  // tracks the selected category _id — set when user picks or when edit-mode patch arrives
+  readonly catalogStatus       = signal<'loading' | 'ready' | 'error'>('loading');
+  readonly categories          = signal<readonly PropertyCatalogCategory[]>([]);
   private readonly selectedCategoryId = signal('');
 
-  // derived automatically — no manual .set() anywhere, just reads two signals
   readonly availableSubtypes = computed(() =>
     this.categories().find(c => c._id === this.selectedCategoryId())?.subtypes ?? []
   );
@@ -76,53 +75,30 @@ export class BasicInformationSectionComponent implements OnInit {
     { id: 'title-loading',  label: 'Generating and populating field', muted: true, disabled: true },
   ];
 
-  // parent receives the form reference once, on init
   @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   ngOnInit(): void {
-    console.log('[BasicInfo] init');
     this.formReady.emit(this.form);
     this.loadCatalog();
   }
 
-  // Called by parent (edit mode) after the catalog loads for the first time, and internally
-  // after patchFromProperty. emitEvent:false on the patch skips propertyTypeId.valueChanges,
-  // so this syncs selectedCategoryId and the subtype validator manually.
+  // emitEvent:false on the patch skips propertyTypeId.valueChanges so we sync manually.
   refreshCategory(): void {
     const id = this.form.controls.propertyTypeId.value;
-    console.log('[BasicInfo] refreshCategory — id:', id || 'none');
     this.selectedCategoryId.set(id);
     this.toggleSubtypeValidator(id);
   }
 
-  // Patches the form from an existing property document (edit mode).
-  // Resolves legacy field aliases and catalog look-ups before patching so
-  // the caller only has to pass the raw doc + catalog.
-  patchFromProperty(doc: PropertyDetailDocument, catalog: PropertyCatalogData): void {
-    let propertyTypeId = (doc.propertyTypeId ?? '').toString();
-    let subtypeId      = (doc.subtypeId      ?? '').toString();
-
-    if (!propertyTypeId) {
-      const subtypeName  = (doc.subtype ?? doc.propertySubtypeName ?? doc.propertySubtype ?? '').toString();
-      const categoryName = this.resolveCategoryName(catalog, {
-        subtype:              subtypeName,
-        propertyType:         (doc.propertyType         ?? '').toString(),
-        propertyCategoryName: (doc.propertyCategoryName ?? '').toString(),
-      });
-      const category = catalog.categories.find(c => c.name === categoryName);
-      propertyTypeId  = category?._id ?? '';
-      subtypeId       = category?.subtypes.find(s => s.name === subtypeName)?._id ?? '';
-    }
-
-    const purpose      = (doc.purpose ?? '').toString().toLowerCase().includes('sale') ? 'sale' : 'rent';
-    const listingTitle = (doc.listingTitle ?? doc.title ?? '').toString();
+  patchFromProperty(doc: PropertyDetailDocument): void {
+    const purpose        = (doc.purpose ?? '').toString().toLowerCase().includes('sale') ? 'sale' : 'rent';
+    const listingTitle   = (doc.listingTitle ?? '').toString();
+    const propertyTypeId = (doc.propertyTypeId ?? '').toString();
+    const subtypeId      = (doc.subtypeId      ?? '').toString();
 
     // emitEvent:false prevents propertyTypeId.valueChanges from clearing subtypeId mid-patch.
     this.form.patchValue({ purpose, listingTitle, propertyTypeId, subtypeId }, { emitEvent: false });
     this.refreshCategory();
   }
-
-  // —— template events ——
 
   onPurposeChange(value: string): void {
     this.form.controls.purpose.setValue(value as ListingPurpose);
@@ -142,22 +118,19 @@ export class BasicInformationSectionComponent implements OnInit {
   }
 
   retryLoadCatalog(): void {
-    this.addListingService.invalidatePropertyCatalogCache();
+    this.addListingService.invalidateListingConfigCache();
     this.catalogStatus.set('loading');
     this.loadCatalog();
   }
 
-  // —— private ——
-
   private buildForm() {
     const form = this.fb.nonNullable.group({
       purpose:        ['rent' as ListingPurpose, Validators.required],
-      propertyTypeId: ['', Validators.required], // category _id → payload
-      subtypeId:      [''],                       // subtype  _id → payload
+      propertyTypeId: ['', Validators.required],
+      subtypeId:      [''],
       listingTitle:   ['', [Validators.required, Validators.maxLength(120)]],
     });
 
-    // user changed category → reset subtype, sync signal so availableSubtypes recomputes
     form.controls.propertyTypeId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(id => {
@@ -169,54 +142,19 @@ export class BasicInformationSectionComponent implements OnInit {
     return form;
   }
 
-  // single responsibility — fetches categories, sets catalogStatus, nothing else
   private loadCatalog(): void {
-    this.addListingService.getPropertyCatalog()
+    this.addListingService.getListingConfig()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ categories }) => {
-          this.categories.set(categories ?? []);
+        next: ({ catalog }) => {
+          this.categories.set(catalog.categories ?? []);
           this.catalogStatus.set('ready');
-          console.log('[BasicInfo] catalog ready —', categories.length, 'categories');
-          // sync selectedCategoryId in case form was pre-filled (edit mode)
-          // so availableSubtypes computed reflects the already-patched value
           this.refreshCategory();
         },
-        error: (err) => {
-          console.error('[BasicInfo] catalog error:', err);
-          this.catalogStatus.set('error');
-        },
+        error: () => this.catalogStatus.set('error'),
       });
   }
 
-  // Resolves a catalog category name from various stored field aliases (backward compatibility).
-  private resolveCategoryName(
-    catalog: PropertyCatalogData,
-    input: { subtype: string; propertyType: string; propertyCategoryName: string }
-  ): string {
-    const direct = (input.propertyCategoryName ?? '').trim();
-    if (direct) return direct;
-
-    const subtype = (input.subtype ?? '').trim().toLowerCase();
-    if (subtype) {
-      const found = (catalog.categories ?? []).find(c =>
-        (c.subtypes ?? []).some(st => st.name.trim().toLowerCase() === subtype)
-      );
-      if (found) return found.name;
-    }
-
-    const coarse = (input.propertyType ?? '').trim().toLowerCase();
-    if (coarse) {
-      const cats = catalog.categories ?? [];
-      return cats.find(c => c.name.trim().toLowerCase() === coarse)?.name
-          || cats.find(c => c.name.trim().toLowerCase().includes(coarse))?.name
-          || '';
-    }
-
-    return '';
-  }
-
-  // only toggles subtypeId required validator based on whether the category has subtypes
   private toggleSubtypeValidator(categoryId: string): void {
     const hasSubtypes = this.categories().some(c => c._id === categoryId && c.subtypes.length > 0);
     const ctrl = this.form.controls.subtypeId;

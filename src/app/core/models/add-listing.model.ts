@@ -1,44 +1,32 @@
 import type { LocationHierarchyItem } from './google-places.models';
-import type { ListingAmenityBooleans } from '../constants/listing-payload.constants';
 import type { ListingImagePayload } from '../services/media-upload.service';
 
-/** Flat payload the backend create/update endpoints accept. */
-export interface CreateListingPayload extends ListingAmenityBooleans {
-  // Basic
-  purpose: string;
-  listingTitle: string;
+export interface CreateListingPayload {
+  purpose:             string;
+  listingTitle:        string;
   propertyDescription: string;
-  propertyTypeId: string;   // category _id from /api/property-catalog
-  subtypeId: string;        // subtype  _id from /api/property-catalog
-
-  // Pricing
-  price: number | null;
-  areaSize: number | null;
-  areaUnit: string | null;
-  numBedrooms: number | null;
-  numBathrooms: number | null;
-  numParkingSpaces: number | null;
-  numFloors: number | null;
-
-  // Media
-  images: ListingImagePayload[];
-  videoTourUrl: string | null;
-
-  // Location
-  location: LocationHierarchyItem[];
-  latitude: number | null;
-  longitude: number | null;
-  fullAddress: string | null;
-  mapLink: string | null;
-  zipCode: string | null;
-
-  // Contact
-  contactName: string | null;
-  contactEmail: string | null;
-  contactPhoneNumber: string | null;
-  contactLocation: string | null;
-
-  // Meta
-  isFeatured: boolean;
-  status?: string;
+  propertyTypeId:      string;
+  subtypeId:           string;
+  featureIds:          string[];
+  price:               number | null;
+  areaSize:            number | null;
+  areaUnit:            string | null;
+  numBedrooms:         number | null;
+  numBathrooms:        number | null;
+  numParkingSpaces:    number | null;
+  numFloors:           number | null;
+  images:              ListingImagePayload[];
+  videoTourUrl:        string | null;
+  location:            LocationHierarchyItem[];
+  latitude:            number | null;
+  longitude:           number | null;
+  fullAddress:         string | null;
+  mapLink:             string | null;
+  zipCode:             string | null;
+  contactName:         string | null;
+  contactEmail:        string | null;
+  contactPhoneNumber:  string | null;
+  contactLocation:     string | null;
+  isFeatured:          boolean;
+  status?:             string;
 }

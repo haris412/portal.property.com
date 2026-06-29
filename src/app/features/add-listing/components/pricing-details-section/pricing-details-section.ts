@@ -18,7 +18,6 @@ import { SectionCardComponent } from '../../../../shared/ui/section-card/section
 import { CounterFieldComponent } from '../../../../shared/ui/counter-field/counter-field';
 import { TranslateModule } from '@ngx-translate/core';
 
-// numeric fields that must stay ≥ 0
 const NUMERIC_CONTROLS = [
   'price', 'areaSize', 'numBedrooms', 'numBathrooms', 'numParkingSpaces', 'numFloors',
 ] as const;
@@ -56,7 +55,6 @@ export class PricingDetailsSectionComponent implements OnInit {
   @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   ngOnInit(): void {
-    console.log('[Pricing] init');
     this.formReady.emit(this.form);
   }
 

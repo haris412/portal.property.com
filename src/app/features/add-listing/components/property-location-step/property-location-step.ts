@@ -145,6 +145,8 @@ export class PropertyLocationStepComponent implements OnInit {
       ? hierarchy[hierarchy.length - 1].name
       : (doc.neighborhood ?? doc.city ?? '').toString().trim();
 
+    // emitEvent:false prevents locationQuery.valueChanges from triggering wireSearch,
+    // which would clear locationHierarchy after its 300ms debounce.
     this.form.patchValue(
       {
         locationQuery:     locationQueryDisplay,
@@ -155,7 +157,7 @@ export class PropertyLocationStepComponent implements OnInit {
         latitude,
         longitude,
       },
-      { emitEvent: latitude != null && longitude != null }
+      { emitEvent: false }
     );
 
     if (latitude == null || longitude == null) {

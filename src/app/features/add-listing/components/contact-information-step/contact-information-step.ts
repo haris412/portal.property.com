@@ -42,18 +42,15 @@ export class ContactInformationStepComponent implements OnInit {
   @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   ngOnInit(): void {
-    console.log('[Contact] init');
     this.formReady.emit(this.form);
   }
 
   patchFromProperty(doc: PropertyDetailDocument): void {
-    // contactPhoneNumber is stored under several legacy aliases depending on API version
-    const contactPhoneNumber = (doc.contactPhoneNumber ?? doc.contactPhone ?? doc.phone ?? '').toString();
     this.form.patchValue({
-      contactName:        doc.contactName     ?? '',
-      contactEmail:       doc.contactEmail    ?? '',
-      contactPhoneNumber,
-      contactLocation:    doc.contactLocation ?? '',
+      contactName:        doc.contactName        ?? '',
+      contactEmail:       doc.contactEmail       ?? '',
+      contactPhoneNumber: doc.contactPhoneNumber ?? '',
+      contactLocation:    doc.contactLocation    ?? '',
     });
   }
 
