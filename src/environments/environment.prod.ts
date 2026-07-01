@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
   translateLoaderPrefix: '/property.admin/i18n/',
-  apiUrl: 'https://soletechs.net/property.api',
+  apiUrl: 'http://localhost:3000',
   wsUrl:  'https://soletechs.net/property.api',
   newRtcUrl: 'http://localhost:8000',
   geonames: {

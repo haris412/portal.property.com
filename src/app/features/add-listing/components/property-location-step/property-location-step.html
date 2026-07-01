@@ -3,12 +3,13 @@
                   icon="location_on"
                   variant="dashboard">
   <div class="location-step" [formGroup]="form">
-    <app-info-banner icon="info" [text]="locationBanner()" />
+
+    <app-info-banner icon="info" [text]="'addListing.location.banner' | translate" />
 
     <div class="location-step__grid">
       <div class="location-step__fields">
 
-        <!-- Location search -->
+        <!-- Location search — autocomplete via Google Places API -->
         <div>
           <label class="field-label">{{ 'addListing.location.search.label' | translate }}</label>
           <mat-form-field appearance="outline" class="w-100">
@@ -17,10 +18,10 @@
                    [placeholder]="'addListing.location.search.placeholder' | translate"
                    [matAutocomplete]="locationAuto"
                    (blur)="markLocationControlTouched('locationQuery')" />
-            @if (searchLoading()) {
+            @if (searchState().status === 'loading') {
               <mat-hint>{{ 'addListing.location.search.loading' | translate }}</mat-hint>
-            } @else if (searchError(); as err) {
-              <mat-hint>{{ err }}</mat-hint>
+            } @else if (searchErrorMsg(); as msg) {
+              <mat-hint>{{ msg }}</mat-hint>
             }
             <mat-autocomplete #locationAuto="matAutocomplete"
                               autoActiveFirstOption
@@ -37,7 +38,7 @@
             </mat-autocomplete>
           </mat-form-field>
 
-          <!-- Hierarchy breadcrumb shown after a place is selected -->
+          <!-- Breadcrumb — Pakistan › Punjab › Lahore › DHA -->
           @if (selectedHierarchy().length) {
             <div class="location-step__breadcrumb">
               @for (item of selectedHierarchy(); track item.level; let last = $last) {
@@ -52,8 +53,7 @@
             </div>
           }
 
-          <!-- Hierarchy validation error shown outside mat-form-field -->
-          @if (form.get('locationHierarchy')?.invalid && form.get('locationHierarchy')?.touched) {
+          @if (form.controls.locationHierarchy.invalid && form.controls.locationHierarchy.touched) {
             <p class="location-step__field-error">
               {{ 'addListing.location.search.required' | translate }}
             </p>
@@ -69,8 +69,8 @@
                    [placeholder]="'addListing.location.address.placeholder' | translate"
                    (blur)="markLocationControlTouched('fullAddress')" />
             <mat-error>
-              @if (form.get('fullAddress')?.hasError('server')) {
-                {{ form.get('fullAddress')?.getError('server') }}
+              @if (form.controls.fullAddress.hasError('server')) {
+                {{ form.controls.fullAddress.getError('server') }}
               } @else {
                 {{ 'addListing.location.address.required' | translate }}
               }
@@ -86,8 +86,8 @@
                    formControlName="mapLink"
                    [placeholder]="'addListing.location.mapLink.placeholder' | translate" />
             <mat-error>
-              @if (form.get('mapLink')?.hasError('server')) {
-                {{ form.get('mapLink')?.getError('server') }}
+              @if (form.controls.mapLink.hasError('server')) {
+                {{ form.controls.mapLink.getError('server') }}
               }
             </mat-error>
           </mat-form-field>
@@ -97,23 +97,23 @@
         <div>
           <label class="field-label">Zip / Postal Code</label>
           <mat-form-field appearance="outline" class="w-100">
-            <input matInput
-                   formControlName="zipCode"
-                   placeholder="e.g. 54000" />
+            <input matInput formControlName="zipCode" placeholder="e.g. 54000" />
           </mat-form-field>
         </div>
 
       </div>
 
+      <!-- Map — receives form so it can read/write lat/lng directly -->
       <div class="location-preview">
         <div class="location-preview__header">
           <h4 class="location-preview__title">{{ 'addListing.location.preview' | translate }}</h4>
           <p>Click the map or use your current location to refine the property pin.</p>
         </div>
         <div class="location-preview__map">
-          <app-location-map-picker [form]="form" />
+          <app-location-map-picker [form]="form" [isActive]="isActive()" />
         </div>
       </div>
+
     </div>
   </div>
 </app-section-card>

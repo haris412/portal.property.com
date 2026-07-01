@@ -29,39 +29,38 @@
            [attr.aria-label]="activeStepLabel()">
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'features-media'">
-          <app-features-amenities-section [form]="amenitiesForm" />
-          <app-property-media-section [form]="mediaForm"
+          <app-features-amenities-section (formReady)="onFormReady('amenities', $event)" />
+          <app-property-media-section (formReady)="onFormReady('media', $event)"
+                                      [propertyId]="editingId()"
                                       [existingImages]="existingPropertyImages()"
                                       [existingVideoUrl]="loadedProperty()?.videoTourUrl ?? null"
                                       (existingImageRemoved)="onExistingImageRemoved($event)" />
         </div>
 
-        @switch (activeStepKey()) {
-        @case ('basic-info') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
-          <app-basic-information-section [form]="basicInfoForm" />
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'basic-info'">
+          <app-basic-information-section (formReady)="onFormReady('basicInfo', $event)" />
         </div>
-        }
-        @case ('pricing') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
-          <app-pricing-details-section [form]="pricingForm" />
+
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'pricing'">
+          <app-pricing-details-section (formReady)="onFormReady('pricing', $event)" />
         </div>
-        }
-        @case ('location') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
-          <app-property-location-step [form]="locationForm" />
+
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'location'">
+          <app-property-location-step (formReady)="onFormReady('location', $event)"
+                                      [isActive]="activeStepKey() === 'location'" />
         </div>
-        }
-        @case ('contact-description') {
-        <div class="add-listing-page__step-grid add-listing-page__step-grid--single">
-          <app-contact-information-step [form]="contactForm" />
-          <app-property-description-step [form]="descriptionForm"
-                                         [aiDescriptionEnabled]="aiDescriptionContextReady()"
-                                         [aiDescriptionLoading]="isGeneratingDescription()"
-                                         (generateDescription)="onGenerateDescription()" />
+
+        <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
+             [hidden]="activeStepKey() !== 'contact-description'">
+          <app-contact-information-step (formReady)="onFormReady('contact', $event)" />
+          <app-property-description-step (formReady)="onFormReady('description', $event)"
+                                         [aiRequestBody]="aiRequestBody()" />
         </div>
-        }
-        @case ('review-publish') {
+
+        @if (activeStepKey() === 'review-publish') {
         <app-section-card title="Review & Publish"
                           description="Confirm the listing details below, then save a draft or publish when everything is ready."
                           variant="dashboard"
@@ -119,7 +118,6 @@
           </div>
         </app-section-card>
         }
-        }
 
         <div class="add-listing-page__navigation">
           <button class="add-listing-page__nav-button add-listing-page__nav-button--secondary"
@@ -130,7 +128,7 @@
           </button>
           <button class="add-listing-page__nav-button add-listing-page__nav-button--primary"
                   type="button"
-                  [disabled]="isLastStep()"
+                  [disabled]="isLastStep() || !currentStepCanContinue()"
                   (click)="goToNextStep()">
             Continue
           </button>

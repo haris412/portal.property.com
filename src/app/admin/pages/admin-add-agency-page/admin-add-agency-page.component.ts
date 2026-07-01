@@ -153,7 +153,7 @@ export class AdminAddAgencyPageComponent implements OnDestroy {
     const file = this.pendingLogoFile();
     if (file) {
       try {
-        logoUrl = (await this.mediaUpload.uploadImages([file]))[0]?.url;
+        logoUrl = (await this.mediaUpload.uploadImages([file]))[0];
       } catch (err: unknown) {
         this.submitting.set(false);
         this.notifications.error(apiErrorSummary(err));
