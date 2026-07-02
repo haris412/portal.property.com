@@ -1,24 +1,30 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   EventEmitter,
+  OnDestroy,
   Output,
   effect,
   inject,
   input,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { take } from 'rxjs';
-import { UserProfileModel } from '../../../../core/models/profile.models';
-import { UserService, UpdateUserPayload } from '../../../../core/services/user.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { NotificationService } from '../../../../core/services/notification.service';
+import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap, take } from 'rxjs';
 import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
-import { ActionButtonComponent } from "../../../../shared/ui/action-button/action-button";
+import type { PlaceSuggestion } from '../../../../core/models/google-places.models';
+import { UserProfileModel } from '../../../../core/models/profile.models';
+import { AuthService } from '../../../../core/services/auth.service';
+import { GooglePlacesService } from '../../../../core/services/google-places.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { UserService, UpdateUserPayload } from '../../../../core/services/user.service';
+import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -27,25 +33,34 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [
     TranslateModule,
     ReactiveFormsModule,
-    MatButtonModule,
+    MatAutocompleteModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     ActionButtonComponent,
-],
+  ],
   templateUrl: './profile-account-section.html',
   styleUrl: './profile-account-section.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProfileAccountSection {
-  private readonly fb = inject(FormBuilder);
-  private readonly userService = inject(UserService);
-  private readonly auth = inject(AuthService);
+export class ProfileAccountSection implements OnDestroy {
+  private readonly fb            = inject(FormBuilder);
+  private readonly userService   = inject(UserService);
+  private readonly auth          = inject(AuthService);
   private readonly notifications = inject(NotificationService);
+  private readonly googlePlaces  = inject(GooglePlacesService);
+  private readonly destroyRef    = inject(DestroyRef);
 
   readonly profile = input.required<UserProfileModel>();
-  readonly saving = signal(false);
+  readonly saving  = signal(false);
 
   @Output() readonly saved = new EventEmitter<Partial<UserProfileModel>>();
+
+  // ── Location autocomplete ───────────────────────────────────────────────────
+  readonly locationSuggestions   = signal<PlaceSuggestion[]>([]);
+  readonly locationSearchLoading = signal(false);
+  private sessionToken           = crypto.randomUUID();
+  private readonly locationQuery$ = new Subject<string>();
 
   readonly form = this.fb.nonNullable.group({
     firstName:   ['', [Validators.required, Validators.maxLength(60)]],
@@ -55,7 +70,6 @@ export class ProfileAccountSection {
   });
 
   constructor() {
-    // Re-patches whenever profile signal changes (initial load + after fetchUserProfile resolves)
     effect(() => {
       const p = this.profile();
       this.form.patchValue({
@@ -65,7 +79,30 @@ export class ProfileAccountSection {
         location:    p.location  ?? '',
       }, { emitEvent: false });
     });
+
+    this.bindLocationSearch();
   }
+
+  ngOnDestroy(): void {
+    this.locationQuery$.complete();
+  }
+
+  // ── Location handlers ───────────────────────────────────────────────────────
+
+  readonly displayLocation = (value: string | null): string => value ?? '';
+
+  onLocationInput(value: string): void {
+    this.locationQuery$.next(value.trim());
+  }
+
+  onLocationSelected(event: MatAutocompleteSelectedEvent): void {
+    const suggestion = event.option.value as PlaceSuggestion;
+    this.form.controls.location.setValue(suggestion.mainText, { emitEvent: false });
+    this.locationSuggestions.set([]);
+    this.sessionToken = crypto.randomUUID();
+  }
+
+  // ── Save ────────────────────────────────────────────────────────────────────
 
   save(): void {
     if (this.form.invalid) {
@@ -97,13 +134,37 @@ export class ProfileAccountSection {
             phone:     updatedUser.phoneNumber,
             location:  updatedUser.location,
           });
-          // Re-fetch to sync BehaviorSubject — updates header name and any other consumers
           this.auth.fetchUserProfile(id).pipe(take(1)).subscribe();
         },
         error: (err: unknown) => {
           this.saving.set(false);
           this.notifications.error(apiErrorSummary(err));
         },
+      });
+  }
+
+  // ── Private ─────────────────────────────────────────────────────────────────
+
+  private bindLocationSearch(): void {
+    this.locationQuery$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((query) => {
+          if (!query) {
+            this.locationSuggestions.set([]);
+            return of([] as PlaceSuggestion[]);
+          }
+          this.locationSearchLoading.set(true);
+          return this.googlePlaces.searchPlaces(query, this.sessionToken).pipe(
+            catchError(() => of([] as PlaceSuggestion[]))
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((results) => {
+        this.locationSearchLoading.set(false);
+        this.locationSuggestions.set(results);
       });
   }
 }

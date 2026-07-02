@@ -52,9 +52,7 @@
         }
 
         @if (activeSection() === 'security') {
-          <app-profile-security-section
-            (saved)="passwordChanged.emit($event)"
-          />
+          <app-profile-security-section />
         }
 
         @if (activeSection() === 'availability' && profile().role === 'agent') {

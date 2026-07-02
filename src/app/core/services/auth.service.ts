@@ -342,7 +342,7 @@ export class AuthService {
     const fallback = 'Invalid or expired code. Please try again.';
     return this.http
       .post<VerifyPasswordResetOtpResponse>(
-        `/api/auth/verify-password-reset-otp`,
+        `/auth/verify-password-reset-otp`,
         { email: email.trim(), otp: otp.trim() },
       )
       .pipe(
@@ -364,6 +364,14 @@ export class AuthService {
       `/auth/reset-password`,
       { resetToken, password },
       'Could not reset password. Please start again.',
+    );
+  }
+
+  changePassword(currentPassword: string, newPassword: string, confirmNewPassword: string): Observable<void> {
+    return this.postVoid(
+      `/auth/change-password`,
+      { currentPassword, newPassword, confirmNewPassword },
+      'Could not update password. Please try again.',
     );
   }
 
