@@ -1,8 +1,13 @@
 import { environment } from '../../../environments/environment';
 
-/** REST API host (no trailing slash), e.g. `http://localhost:3000`. */
+/** REST API host/base path without the `/api` route prefix. */
 export function apiBaseUrl(): string {
-  return environment.apiUrl.replace(/\/+$/, '');
+  return environment.apiUrl.replace(/\/+$/, '').replace(/\/api$/i, '');
+}
+
+/** REST API root including the `/api` route prefix. */
+export function apiRootUrl(): string {
+  return `${apiBaseUrl()}/api`;
 }
 
 /**
@@ -17,12 +22,12 @@ export function resolveApiUrl(relativePath: string): string {
     return relativePath;
   }
 
-  const base = apiBaseUrl();
+  const apiRoot = apiRootUrl();
   const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
   if (path === '/api' || path.startsWith('/api/')) {
-    return `${base}${path}`;
+    return `${apiBaseUrl()}${path}`;
   }
 
-  return `${base}/api${path}`;
+  return `${apiRoot}${path}`;
 }
