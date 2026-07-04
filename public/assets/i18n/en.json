@@ -289,11 +289,14 @@
       "email": "Email",
       "phone": "Phone",
       "status": "Status",
+      "featured": "Featured",
       "createdAt": "Created"
     },
     "statuses": {
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "featured": "Yes",
+      "notFeatured": "No"
     },
     "errors": {
       "noAgency": "No agency is linked to your account. Contact support if this is unexpected."
@@ -336,6 +339,8 @@
       "emailInvalid": "Enter a valid email address",
       "phoneRequired": "Phone number is required",
       "phoneInvalid": "Enter a valid phone number (10–15 digits)",
+      "featuredAgent": "Featured agent",
+      "featuredAgentHint": "Featured agents may be highlighted on your agency profile and search results.",
       "cancel": "Cancel",
       "createAgent": "Create agent",
       "saveAgent": "Save changes",

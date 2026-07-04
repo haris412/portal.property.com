@@ -41,6 +41,11 @@ function normalizeAgentRow(raw: unknown): AgentListItem | null {
     displayName: (raw['displayName'] as string | undefined)?.trim() || undefined,
     profileImageUrl: (raw['profileImageUrl'] as string | undefined)?.trim() || undefined,
     location: (raw['location'] as string | undefined)?.trim() || undefined,
+    isFeaturedAgent:
+      raw['isFeaturedAgent'] === true ||
+      raw['isFeaturedAgent'] === 'true' ||
+      raw['isFeatured'] === true ||
+      raw['isFeatured'] === 'true',
     isActive: raw['isActive'] === true || raw['isActive'] === 'true',
     isEmailVerified: raw['isEmailVerified'] === true,
     inviteStatus: (raw['inviteStatus'] as string | undefined) ?? undefined,

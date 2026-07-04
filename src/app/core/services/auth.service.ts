@@ -342,7 +342,7 @@ export class AuthService {
     const fallback = 'Invalid or expired code. Please try again.';
     return this.http
       .post<VerifyPasswordResetOtpResponse>(
-        `/api/auth/verify-password-reset-otp`,
+        `/auth/verify-password-reset-otp`,
         { email: email.trim(), otp: otp.trim() },
       )
       .pipe(

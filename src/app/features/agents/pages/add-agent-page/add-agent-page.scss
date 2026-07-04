@@ -170,6 +170,16 @@
     color: var(--primary);
   }
 
+  &__featured {
+    padding: 0.25rem 0;
+  }
+
+  &__featured-hint {
+    margin: 0.35rem 0 0 2rem;
+    color: var(--font-secondary);
+    font-size: 0.875rem;
+  }
+
   &__invite-banner {
     display: flex;
     gap: 0.75rem;
