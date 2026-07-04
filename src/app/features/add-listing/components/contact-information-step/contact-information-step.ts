@@ -1,20 +1,21 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
-  DestroyRef,
-  Input,
+  EventEmitter,
   OnInit,
+  Output,
   inject,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { merge } from 'rxjs';
+import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { map, startWith } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-contact-information-step',
@@ -23,6 +24,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
+    NgxMaterialIntlTelInputComponent,
     SectionCardComponent,
     InfoBannerComponent,
   ],
@@ -31,31 +33,37 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactInformationStepComponent implements OnInit {
-  @Input({ required: true }) form!: FormGroup;
+  private readonly fb = inject(FormBuilder);
 
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly translate = inject(TranslateService);
+  readonly form    = this.buildForm();
+  readonly isValid = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
 
-  readonly contactBanner = toSignal(
-    this.translate.stream('addListing.contact.banner'),
-    { initialValue: '' }
-  );
+  // parent receives the form reference once, on init
+  @Output() readonly formReady = new EventEmitter<FormGroup>();
 
   ngOnInit(): void {
-    const name = this.form.get('contactName');
-    const email = this.form.get('contactEmail');
-    const phone = this.form.get('contactPhoneNumber');
-    const streams = [name, email, phone].filter(Boolean).map((c) => merge(c!.valueChanges, c!.statusChanges));
-    if (streams.length) {
-      merge(...streams)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.cdr.markForCheck());
-    }
+    this.formReady.emit(this.form);
   }
 
-  markContactTouched(control: 'contactName' | 'contactEmail' | 'contactPhoneNumber'): void {
-    this.form.get(control)?.markAsTouched();
-    this.cdr.markForCheck();
+  patchFromProperty(doc: PropertyDetailDocument): void {
+    this.form.patchValue({
+      contactName:        doc.contactName        ?? '',
+      contactEmail:       doc.contactEmail       ?? '',
+      contactPhoneNumber: doc.contactPhoneNumber ?? '',
+      contactLocation:    doc.contactLocation    ?? '',
+    });
+  }
+
+  // —— private ——
+
+  private buildForm() {
+    const form = this.fb.nonNullable.group({
+      contactName:        ['', Validators.required],
+      contactEmail:       ['', [Validators.required, Validators.email]],
+      contactPhoneNumber: ['', Validators.required],  // format validated by ngx-material-intl-tel-input
+      contactLocation:    [''],
+    });
+
+    return form;
   }
 }

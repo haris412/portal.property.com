@@ -1,8 +1,8 @@
 export const environment = {
   production: true,
   translateLoaderPrefix: '/property.admin/i18n/',
-  apiUrl: 'https://soletechs.net/property.api',
-  wsUrl:  'https://soletechs.net/property.api',
+  apiUrl: 'https://soletechs.net/property.api/api',
+  wsUrl:  'https://soletechs.net/property.api/api',
   newRtcUrl: 'http://localhost:8000',
   geonames: {
     username: 'harissaeed',

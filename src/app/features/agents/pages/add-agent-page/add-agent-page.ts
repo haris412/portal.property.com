@@ -213,7 +213,7 @@ export class AddAgentPageComponent implements OnDestroy {
     if (!file) return undefined;
     this.notifications.info('Uploading profile image...');
     const [uploaded] = await this.mediaUpload.uploadImages([file]);
-    return uploaded.url;
+    return uploaded;
   }
 
   private bindLocationSearch(): void {

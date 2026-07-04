@@ -2,7 +2,7 @@
                   description="Write clear listing copy that highlights the property, location, and lifestyle fit."
                   icon="description"
                   variant="dashboard">
-  <div class="property-description-step" [formGroup]="form()">
+  <div class="property-description-step" [formGroup]="form">
     <app-info-banner icon="subject" [text]="descriptionBanner()" />
 
     <div class="property-description-step__editor">
@@ -19,11 +19,11 @@
                   formControlName="propertyDescription"
                   [placeholder]="'addListing.description.placeholder' | translate"></textarea>
         <mat-error>
-          @if (form().get('propertyDescription')?.hasError('server')) {
-            {{ form().get('propertyDescription')?.getError('server') }}
-          } @else if (form().get('propertyDescription')?.hasError('required')) {
+          @if (form.get('propertyDescription')?.hasError('server')) {
+            {{ form.get('propertyDescription')?.getError('server') }}
+          } @else if (form.get('propertyDescription')?.hasError('required')) {
             {{ 'addListing.description.required' | translate }}
-          } @else if (form().get('propertyDescription')?.hasError('minlength')) {
+          } @else if (form.get('propertyDescription')?.hasError('minlength')) {
             {{ 'addListing.description.tooShort' | translate }}
           }
         </mat-error>
