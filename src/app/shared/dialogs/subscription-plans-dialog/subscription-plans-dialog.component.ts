@@ -21,6 +21,7 @@ import type {
 } from '../../../core/interfaces/subscription.models';
 import type { ResponseModel } from '../../../core/models/response.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { DashboardService } from '../../../features/dashboard/services/dashboard.service';
 
 export interface SubscriptionPlansDialogData {
   roleName: string;
@@ -57,6 +58,7 @@ export class SubscriptionPlansDialogComponent {
   private readonly subscriptionSession = inject(SubscriptionSessionStorageService);
   private readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
+  private readonly dashboardService = inject(DashboardService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly data = inject<SubscriptionPlansDialogData>(MAT_DIALOG_DATA);
@@ -123,6 +125,7 @@ export class SubscriptionPlansDialogComponent {
           if (created) {
             this.subscriptionSession.write(created);
           }
+          this.dashboardService.requestRefresh();
           this.notifications.success('Your subscription has been saved.');
           this.dialogRef.close(card.id);
         },

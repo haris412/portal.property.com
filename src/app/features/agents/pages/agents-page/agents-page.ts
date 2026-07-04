@@ -110,6 +110,11 @@ export class AgentsPageComponent implements OnInit {
         valueGetter: (p) => this.formatStatus(p.data?.isActive),
         width: 120,
       },
+      {
+        headerValueGetter: () => t('agents.tc.featured'),
+        valueGetter: (p) => this.formatFeatured(p.data?.isFeaturedAgent),
+        width: 110,
+      },
       { field: 'createdAt', headerValueGetter: () => t('agents.tc.createdAt'), width: 140 },
       gridActionsColumnDef<AgentListItem>({ width: 64, maxWidth: 72 }),
     ];
@@ -209,6 +214,11 @@ export class AgentsPageComponent implements OnInit {
 
   private formatStatus(isActive?: boolean): string {
     const key = isActive === false ? 'agents.statuses.inactive' : 'agents.statuses.active';
+    return this.translate.instant(key) as string;
+  }
+
+  private formatFeatured(isFeaturedAgent?: boolean): string {
+    const key = isFeaturedAgent === true ? 'agents.statuses.featured' : 'agents.statuses.notFeatured';
     return this.translate.instant(key) as string;
   }
 }

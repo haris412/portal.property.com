@@ -6,10 +6,10 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
+import { apiRootUrl } from '../http/api-url';
 import { AuthService } from '../services/auth.service';
-import { environment } from '../../../environments/environment';
 
-const apiPrefix = `${environment.apiUrl}` || `${environment.wsUrl}`;
+const apiPrefix = apiRootUrl();
 function bearerTokenForRequest(
   auth: AuthService,
 ): string | null {

@@ -17,6 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AgentsService } from '../../../../core/services/agents.service';
@@ -42,6 +43,7 @@ import { UploadDropzoneComponent } from '../../../../shared/ui/upload-dropzone/u
     MatIconModule,
     MatProgressSpinnerModule,
     UploadDropzoneComponent,
+    MatCheckboxModule,
   ],
   templateUrl: './add-agent-page.html',
   styleUrl: './add-agent-page.scss',
@@ -83,6 +85,7 @@ export class AddAgentPageComponent implements OnDestroy {
     email:       ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
     phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{10,15}$/)]],
     location:    [''],
+    isFeaturedAgent: [false],
   });
 
   constructor() {
@@ -161,33 +164,36 @@ export class AddAgentPageComponent implements OnDestroy {
       return;
     }
 
+    const { firstName, lastName, email, phoneNumber, isFeaturedAgent } = this.form.getRawValue();
+    const editMode = this.isEditMode();
+
     this.submitting.set(true);
     try {
       const profileImageUrl = await this.uploadImageIfSelected();
       const { firstName, lastName, email, phoneNumber, location } = this.form.getRawValue();
       const editMode = this.isEditMode();
 
-      const request$ = editMode
-        ? this.agentsApi.updateAgent({
-            _id:             this.editAgentId,
-            agencyId:        this.agencyId,
-            firstName:       firstName.trim(),
-            lastName:        lastName.trim(),
-            email:           email.trim(),
-            phoneNumber:     phoneNumber.trim(),
-            location:        location.trim() || undefined,
-            profileImageUrl: profileImageUrl ?? this.loadedAgent?.profileImageUrl,
-            displayName:     this.loadedAgent?.displayName,
-          })
-        : this.agentsApi.createAgent({
-            agencyId:    this.agencyId,
-            firstName:   firstName.trim(),
-            lastName:    lastName.trim(),
-            email:       email.trim(),
-            phoneNumber: phoneNumber.trim(),
-            location:    location.trim() || undefined,
-            ...(profileImageUrl ? { profileImageUrl } : {}),
-          });
+    const request$ = editMode
+      ? this.agentsApi.updateAgent({
+          _id: this.editAgentId,
+          agencyId: this.agencyId,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          phoneNumber: phoneNumber.trim(),
+          displayName: this.loadedAgent?.displayName,
+          profileImageUrl: this.loadedAgent?.profileImageUrl,
+          location: this.loadedAgent?.location,
+          isFeaturedAgent,
+        })
+      : this.agentsApi.createAgent({
+          agencyId: this.agencyId,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          phoneNumber: phoneNumber.trim(),
+          isFeaturedAgent,
+        });
 
       await firstValueFrom(request$);
       const key = editMode ? 'agents.form.updateSuccess' : 'agents.form.createSuccess';
@@ -261,6 +267,7 @@ export class AddAgentPageComponent implements OnDestroy {
           email:       agent.email,
           phoneNumber: agent.phoneNumber ?? '',
           location:    agent.location ?? '',
+          isFeaturedAgent: agent.isFeaturedAgent === true,
         });
         if (agent.profileImageUrl) {
           this.imagePreviewUrl.set(agent.profileImageUrl);

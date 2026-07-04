@@ -8,6 +8,7 @@ export interface AgentListItem {
   displayName?: string;
   profileImageUrl?: string;
   location?: string;
+  isFeaturedAgent?: boolean;
   isActive?: boolean;
   isEmailVerified?: boolean;
   inviteStatus?: string;
@@ -28,6 +29,7 @@ export interface CreateAgentDTO {
   phoneNumber: string;
   location?: string;
   profileImageUrl?: string;
+  isFeaturedAgent?: boolean;
 }
 
 /** Body for PUT `/api/agents/updateAgent`. */
@@ -41,6 +43,7 @@ export interface UpdateAgentDTO {
   displayName?: string;
   profileImageUrl?: string;
   location?: string;
+  isFeaturedAgent?: boolean;
 }
 
 /** Body for PATCH `/api/agents/deactivate`. */

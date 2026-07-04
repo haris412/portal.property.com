@@ -1,0 +1,33 @@
+<app-section-card
+  title="Agency Agents"
+  description="Overview of agents managed under your agency."
+  density="compact"
+  variant="dashboard"
+  icon="groups"
+>
+  <div class="agent-overview-card">
+    <div class="row g-3">
+      @for (metric of metrics(); track metric.title) {
+        <div class="col-12 col-md-4">
+          <article class="agent-overview-card__metric">
+            <div class="agent-overview-card__metric-head">
+              <span class="agent-overview-card__metric-icon">
+                <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">
+                  {{ metric.icon }}
+                </mat-icon>
+              </span>
+            </div>
+            <div class="agent-overview-card__metric-title">{{ metric.title }}</div>
+            <div class="agent-overview-card__metric-value">{{ metric.value }}</div>
+            <p class="agent-overview-card__metric-hint">{{ metric.hint }}</p>
+          </article>
+        </div>
+      }
+    </div>
+
+    <div class="agent-overview-card__footer">
+      <span>Invite and manage agents from your agency workspace.</span>
+      <a routerLink="/agents" class="agent-overview-card__cta">Manage agents</a>
+    </div>
+  </div>
+</app-section-card>

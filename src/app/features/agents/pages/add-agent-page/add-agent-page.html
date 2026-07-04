@@ -168,6 +168,14 @@
               }
             </div>
 
+            <div class="col-12">
+              <div class="add-agent-page__featured">
+                <mat-checkbox formControlName="isFeaturedAgent">
+                  {{ 'agents.form.featuredAgent' | translate }}
+                </mat-checkbox>
+                <p class="add-agent-page__featured-hint">{{ 'agents.form.featuredAgentHint' | translate }}</p>
+              </div>
+            </div>
           </div>
 
           @if (!isEditMode()) {
