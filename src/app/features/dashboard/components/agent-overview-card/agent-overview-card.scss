@@ -1,0 +1,85 @@
+.agent-overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.agent-overview-card__metric {
+  height: 100%;
+  min-height: 7.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.agent-overview-card__metric-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
+}
+
+.agent-overview-card__metric-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  mat-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    font-size: var(--font-size-h4);
+  }
+}
+
+.agent-overview-card__metric-title {
+  margin-bottom: 0.25rem;
+  color: var(--font-main);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+}
+
+.agent-overview-card__metric-value {
+  color: var(--font-main);
+  font-size: var(--font-size-h3);
+  line-height: 1;
+  font-weight: var(--font-weight-heavy);
+}
+
+.agent-overview-card__metric-hint {
+  margin: 0.5rem 0 0;
+  color: var(--font-secondary);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-compact);
+}
+
+.agent-overview-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-soft);
+  color: var(--font-secondary);
+  font-size: var(--font-size-body-sm);
+}
+
+.agent-overview-card__cta {
+  flex: 0 0 auto;
+  color: var(--primary);
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+@media (max-width: 767.98px) {
+  .agent-overview-card__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

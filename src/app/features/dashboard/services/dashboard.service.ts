@@ -1,9 +1,37 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, Subject, of, delay } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { DashboardApiResponse, DashboardViewModel } from '../models/dashboard-api.model';
 import { DashboardData, StatCard, ActivityItem, ChartData } from '../models/stats.model';
+import { mapDashboardApiResponse } from '../utils/map-dashboard-api';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
+  private readonly http = inject(HttpClient);
+  private readonly refreshSubject = new Subject<void>();
+
+  /** Emits when dashboard data should be reloaded (e.g. after subscription change). */
+  readonly refresh$ = this.refreshSubject.asObservable();
+
+  requestRefresh(): void {
+    this.refreshSubject.next();
+  }
+
+  getDashboardApiData(
+    roleIds: string[],
+    userId: string,
+    displayName = 'there'
+  ): Observable<DashboardViewModel | null> {
+    const params = new HttpParams()
+      .set('userId', userId)
+      .set('roleId', JSON.stringify(roleIds));
+
+    return this.http
+      .get<DashboardApiResponse>('/dashboard/dashboardData', { params })
+      .pipe(map((body) => mapDashboardApiResponse(body, displayName)));
+  }
+
   getDashboardData(): Observable<DashboardData> {
     return of({
       stats: this.getMockStats(),

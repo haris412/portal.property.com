@@ -63,15 +63,22 @@ export const PLAN_SUMMARY = {
   renewalText: 'renews on 28 May 2026',
   listingLimit: 35,
   used: 24,
-  status: 'Active'
+  status: 'Active',
+  usagePercentage: 0
 };
 
 export const PLAN_FEATURES: PlanFeature[] = [
   { label: 'Listing limit', value: '35 properties' },
-  { label: 'Featured slots', value: '8 included' },
+  { label: 'Featured slots Left', value: '8 out of 10' },
   { label: 'Hot property boost', value: 'Enabled' },
-  { label: 'Lead credits left', value: '126' }
+  { label: 'Agent visibility left', value: '3 out of 5' }
 ];
+
+export const AGENT_COUNTS = {
+  total: 0,
+  active: 0,
+  inactive: 0
+};
 
 export const LOCATION_DEMAND: LocationDemand[] = [
   { name: 'Downtown Seattle', percent: 85 },

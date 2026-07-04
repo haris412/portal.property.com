@@ -11,5 +11,7 @@ import { LocationDemand } from '../../dashboard.mock';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LocationsDemandCardComponent {
+  readonly title = input('Hot Locations');
+  readonly subtitle = input('Buyer demand by area');
   readonly locations = input.required<LocationDemand[]>();
 }

@@ -16,12 +16,18 @@ export class PlanSummaryCardComponent {
   readonly price = input.required<string>();
   readonly renewalText = input.required<string>();
   readonly status = input.required<string>();
-  readonly listingLimit = input.required<number>();
+  readonly listingLimit = input.required<number | null>();
   readonly used = input.required<number>();
+  readonly usagePercentage = input.required<number>();
   readonly features = input.required<PlanFeature[]>();
 
+  readonly listingLimitLabel = computed(() => {
+    const limit = this.listingLimit();
+    return limit === null ? 'unlimited' : String(limit);
+  });
+
   readonly usagePercent = computed(() =>
-    Math.min(Math.round((this.used() / this.listingLimit()) * 100), 100)
+    Math.min(Math.max(Math.round(this.usagePercentage()), 0), 100)
   );
 
   readonly description = computed(() => `${this.price()} - ${this.renewalText()}`);
@@ -31,6 +37,7 @@ export class PlanSummaryCardComponent {
     if (normalized.includes('limit')) return 'query_stats';
     if (normalized.includes('featured')) return 'workspace_premium';
     if (normalized.includes('boost')) return 'rocket_launch';
+    if (normalized.includes('visibility')) return 'groups';
     if (normalized.includes('credit')) return 'near_me';
     return 'check_circle';
   }

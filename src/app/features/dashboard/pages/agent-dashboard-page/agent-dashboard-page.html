@@ -11,32 +11,41 @@
 
     <div class="agent-dashboard-page__stack">
       <app-dashboard-hero-card
-        [title]="hero.title"
-        [description]="hero.description"
-        [ctaLabel]="hero.ctaLabel"
+        [title]="hero().title"
+        [description]="hero().description"
+        [ctaLabel]="hero().ctaLabel"
       />
+
+      @if (showAgentOverview()) {
+        <app-agent-overview-card
+          [total]="agentCounts().total"
+          [active]="agentCounts().active"
+          [inactive]="agentCounts().inactive"
+        />
+      }
 
       <div class="row g-3 align-items-stretch">
         <div class="col-12 col-xl-8">
           <app-portfolio-breakdown-card
-            [activePortfolio]="portfolioSummary.activePortfolio"
-            [monthlyHint]="portfolioSummary.monthlyHint"
-            [saleShare]="portfolioSummary.saleShare"
-            [rentShare]="portfolioSummary.rentShare"
-            [footerText]="portfolioSummary.footerText"
-            [metrics]="portfolioMetrics"
+            [activePortfolio]="portfolioSummary().activePortfolio"
+            [monthlyHint]="portfolioSummary().monthlyHint"
+            [saleShare]="portfolioSummary().saleShare"
+            [rentShare]="portfolioSummary().rentShare"
+            [footerText]="portfolioSummary().footerText"
+            [metrics]="portfolioMetrics()"
           />
         </div>
 
         <div class="col-12 col-xl-4">
           <app-plan-summary-card
-            [name]="planSummary.name"
-            [price]="planSummary.price"
-            [renewalText]="planSummary.renewalText"
-            [status]="planSummary.status"
-            [listingLimit]="planSummary.listingLimit"
-            [used]="planSummary.used"
-            [features]="planFeatures"
+            [name]="planSummary().name"
+            [price]="planSummary().price"
+            [renewalText]="planSummary().renewalText"
+            [status]="planSummary().status"
+            [listingLimit]="planSummary().listingLimit"
+            [used]="planSummary().used"
+            [usagePercentage]="planSummary().usagePercentage"
+            [features]="planFeatures()"
           />
         </div>
       </div>
@@ -44,15 +53,19 @@
       <div class="row g-3 align-items-stretch">
         <div class="col-12 col-xl-8">
           <app-chart-panel
-            title="Trending Property Views"
-            subtitle="Daily profile visits for your top listings over the last 7 days."
+            [title]="viewsChart().title"
+            [subtitle]="viewsChart().subtitle"
             [options]="viewsChartOptions()"
             height="320px"
           />
         </div>
 
         <div class="col-12 col-xl-4">
-          <app-locations-demand-card [locations]="locationDemand" />
+          <app-locations-demand-card
+            [title]="hotLocations().title"
+            [subtitle]="hotLocations().subtitle"
+            [locations]="hotLocations().locations"
+          />
         </div>
       </div>
 

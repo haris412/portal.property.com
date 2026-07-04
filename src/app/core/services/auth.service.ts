@@ -36,12 +36,16 @@ export interface User {
   profileImageUrl?: string;
   location?: string;
   roles: string[];
+  roleId?: string;
+  roleIds?: string[];
   agencyName?: string;
   agencyId?: string;
 }
 interface StoredSession {
   _id: string;
   roles: string[];
+  roleId?: string;
+  roleIds?: string[];
   firstName?: string;
   lastName?: string;
   agencyId?: string;
@@ -109,6 +113,39 @@ function extractRoles(raw: Record<string, unknown>): string[] {
   return [];
 }
 
+function extractRoleIds(raw: Record<string, unknown>): string[] {
+  const ids = new Set<string>();
+  const addId = (value: unknown): void => {
+    if (typeof value !== 'string') return;
+    const id = value.trim();
+    if (id) ids.add(id);
+  };
+
+  addId(raw['roleId']);
+
+  const role = raw['role'];
+  if (typeof role === 'object' && role != null) {
+    addId((role as Record<string, unknown>)['_id']);
+    addId((role as Record<string, unknown>)['id']);
+  } else if (typeof role === 'string' && isLikelyObjectId(role.trim())) {
+    addId(role);
+  }
+
+  const roles = raw['roles'];
+  if (Array.isArray(roles)) {
+    for (const item of roles) {
+      if (typeof item === 'object' && item != null) {
+        addId((item as Record<string, unknown>)['_id']);
+        addId((item as Record<string, unknown>)['id']);
+      } else if (typeof item === 'string' && isLikelyObjectId(item.trim())) {
+        addId(item);
+      }
+    }
+  }
+
+  return [...ids];
+}
+
 function mergeRoleLists(...lists: Array<string[] | undefined>): string[] {
   const merged = new Set<string>();
   for (const list of lists) {
@@ -149,6 +186,7 @@ export function fromApiUser(raw: Record<string, unknown>): User {
   const agency    = raw['agency'];
   const agencyId  = extractAgencyId(raw);
   const roles     = extractRoles(raw);
+  const roleIds   = extractRoleIds(raw);
   return {
     _id: ((raw['_id'] ?? raw['id']) as string) || '',
     email: (raw['email'] as string | undefined) ?? '',
@@ -159,6 +197,8 @@ export function fromApiUser(raw: Record<string, unknown>): User {
     profileImageUrl: (raw['profileImageUrl'] as string | undefined)        || undefined,
     location:        (raw['location']        as string | undefined)?.trim() || undefined,
     roles,
+    roleId:          roleIds[0],
+    roleIds,
     agencyName:      typeof agency === 'object' && agency != null && 'name' in agency
                        ? (agency as { name: string }).name || undefined
                        : undefined,
@@ -437,6 +477,8 @@ export class AuthService {
             ...fresh,
             email: fresh.email || current?.email || '',
             roles: mergeRoleLists(current?.roles, fresh.roles),
+            roleId: fresh.roleId ?? current?.roleId,
+            roleIds: fresh.roleIds?.length ? fresh.roleIds : current?.roleIds,
             agencyId: fresh.agencyId ?? current?.agencyId ?? extractAgencyId(res.data.user),
           };
           this.userSubject.next(merged);
@@ -476,6 +518,8 @@ export class AuthService {
         _id: s._id,
         email: '',
         roles: s.roles ?? [],
+        roleId: s.roleId ?? s.roleIds?.[0],
+        roleIds: s.roleIds,
         firstName: s.firstName,
         lastName: s.lastName,
         name: [s.firstName, s.lastName].filter(Boolean).join(' ') || undefined,
@@ -494,6 +538,8 @@ export class AuthService {
     const merged: User = {
       ...user,
       roles: mergeRoleLists(existing?.roles, user.roles),
+      roleId: user.roleId ?? existing?.roleId,
+      roleIds: user.roleIds?.length ? user.roleIds : existing?.roleIds,
       agencyId: user.agencyId ?? existing?.agencyId ?? extractAgencyId(data.user),
     };
     this.userSubject.next(merged);
@@ -509,6 +555,8 @@ export class AuthService {
     const session: StoredSession = {
       _id: user._id,
       roles: user.roles?.length ? user.roles : (existing?.roles ?? []),
+      roleId: user.roleId ?? existing?.roleId ?? user.roleIds?.[0],
+      roleIds: user.roleIds?.length ? user.roleIds : (existing?.roleIds ?? []),
       firstName: user.firstName ?? existing?.firstName,
       lastName: user.lastName ?? existing?.lastName,
       agencyId: user.agencyId ?? existing?.agencyId,
