@@ -19,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AgentsService } from '../../../../core/services/agents.service';
 import { MediaUploadService } from '../../../../core/services/media-upload.service';
@@ -44,6 +45,7 @@ import { UploadDropzoneComponent } from '../../../../shared/ui/upload-dropzone/u
     MatProgressSpinnerModule,
     UploadDropzoneComponent,
     MatCheckboxModule,
+    NgxMaterialIntlTelInputComponent,
   ],
   templateUrl: './add-agent-page.html',
   styleUrl: './add-agent-page.scss',
@@ -83,8 +85,8 @@ export class AddAgentPageComponent implements OnDestroy {
     firstName:   ['', [Validators.required, Validators.maxLength(60)]],
     lastName:    ['', [Validators.required, Validators.maxLength(60)]],
     email:       ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
-    phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{10,15}$/)]],
-    location:    [''],
+    phoneNumber: ['', [Validators.required]],
+    location:    ['', [Validators.required]],
     isFeaturedAgent: [false],
   });
 
@@ -164,36 +166,50 @@ export class AddAgentPageComponent implements OnDestroy {
       return;
     }
 
-    const { firstName, lastName, email, phoneNumber, isFeaturedAgent } = this.form.getRawValue();
     const editMode = this.isEditMode();
+    if (!editMode && !this.selectedImageFile()) {
+      this.notifications.error(this.translate.instant('agents.form.profileImageRequired') as string);
+      return;
+    }
+
+    const { firstName, lastName, email, phoneNumber, location, isFeaturedAgent } =
+      this.form.getRawValue();
 
     this.submitting.set(true);
     try {
-      const profileImageUrl = await this.uploadImageIfSelected();
-      const { firstName, lastName, email, phoneNumber, location } = this.form.getRawValue();
-      const editMode = this.isEditMode();
+      const uploadedProfileImageUrl = await this.uploadImageIfSelected();
+      const profileImageUrl = uploadedProfileImageUrl ?? this.loadedAgent?.profileImageUrl;
 
-    const request$ = editMode
-      ? this.agentsApi.updateAgent({
-          _id: this.editAgentId,
-          agencyId: this.agencyId,
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
-          phoneNumber: phoneNumber.trim(),
-          displayName: this.loadedAgent?.displayName,
-          profileImageUrl: this.loadedAgent?.profileImageUrl,
-          location: this.loadedAgent?.location,
-          isFeaturedAgent,
-        })
-      : this.agentsApi.createAgent({
-          agencyId: this.agencyId,
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
-          phoneNumber: phoneNumber.trim(),
-          isFeaturedAgent,
-        });
+      if (!editMode && !profileImageUrl) {
+        this.notifications.error(this.translate.instant('agents.form.profileImageRequired') as string);
+        return;
+      }
+
+      const normalizedPhone = normalizePhoneNumberForApi(phoneNumber);
+
+      const request$ = editMode
+        ? this.agentsApi.updateAgent({
+            _id: this.editAgentId,
+            agencyId: this.agencyId,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim(),
+            phoneNumber: normalizedPhone,
+            displayName: this.loadedAgent?.displayName,
+            profileImageUrl,
+            location: location.trim(),
+            isFeaturedAgent,
+          })
+        : this.agentsApi.createAgent({
+            agencyId: this.agencyId,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim(),
+            phoneNumber: normalizedPhone,
+            location: location.trim(),
+            profileImageUrl: profileImageUrl!,
+            isFeaturedAgent,
+          });
 
       await firstValueFrom(request$);
       const key = editMode ? 'agents.form.updateSuccess' : 'agents.form.createSuccess';
@@ -281,4 +297,12 @@ export class AddAgentPageComponent implements OnDestroy {
       },
     });
   }
+}
+
+/** Strips formatting so API receives `+` plus 10–15 digits only. */
+function normalizePhoneNumberForApi(phone: string): string {
+  const trimmed = phone.trim();
+  const hasPlus = trimmed.startsWith('+');
+  const digits = trimmed.replace(/\D/g, '');
+  return hasPlus ? `+${digits}` : digits;
 }

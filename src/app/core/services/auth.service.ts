@@ -15,7 +15,6 @@ import {
 } from 'rxjs';
 import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
 import { hasPrimaryAgencyAdminRole } from '../models/role.models';
-import { SubscriptionSessionStorageService } from './subscription-session-storage.service';
 import { IUser } from '../interfaces/user.interface';
 import { IAccountSignUp } from '../interfaces/account.interface';
 
@@ -213,7 +212,6 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly subscriptionSession = inject(SubscriptionSessionStorageService);
   readonly userData = signal<IUser | null>(null);
   readonly activeSegment  = signal<'signup' | 'login'>('login');
   private accessToken: string | null = null;
@@ -579,9 +577,14 @@ export class AuthService {
   private clearSession(): void {
     this.accessToken = null;
     this.userSubject.next(null);
-    this.storage?.removeItem(REFRESH_KEY);
-    this.storage?.removeItem(USER_KEY);
-    this.subscriptionSession.clear();
+    this.userData.set(null);
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    localStorage.clear();
+    sessionStorage.clear();
   }
 
   private clearAndRedirect(): void {

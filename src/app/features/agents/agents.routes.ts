@@ -23,4 +23,14 @@ export const AGENTS_ROUTES: Routes = [
       import('./pages/add-agent-page/add-agent-page').then((m) => m.AddAgentPageComponent),
     title: 'Edit agent',
   },
+  {
+    path: 'setup-password/:agentId',
+    canActivate: [primaryAgencyAdminGuard],
+    loadComponent: () =>
+      import('../auth/pages/invite-set-password/invite-set-password.component').then(
+        (m) => m.InviteSetPasswordComponent,
+      ),
+    data: { embedded: true },
+    title: 'Set agent password',
+  },
 ];

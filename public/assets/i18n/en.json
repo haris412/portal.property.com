@@ -295,20 +295,28 @@
     "statuses": {
       "active": "Active",
       "inactive": "Inactive",
+      "pendingSetup": "Pending Setup",
       "featured": "Yes",
       "notFeatured": "No"
     },
     "errors": {
-      "noAgency": "No agency is linked to your account. Contact support if this is unexpected."
+      "noAgency": "No agency is linked to your account. Contact support if this is unexpected.",
+      "invalidAgent": "Agent could not be found."
     },
     "actions": {
       "edit": "Edit",
+      "setPassword": "Set password",
       "deactivate": "Deactivate",
       "activate": "Activate"
     },
     "messages": {
       "deactivated": "Agent deactivated successfully.",
-      "activated": "Agent activated successfully."
+      "activated": "Agent activated successfully.",
+      "inviteTokenMissing": "Invite link is not available for this agent.",
+      "passwordSet": "Agent password set successfully."
+    },
+    "setupPassword": {
+      "subtitle": "Set a password so this agent can sign in."
     },
     "confirm": {
       "deactivateTitle": "Deactivate agent?",
@@ -339,6 +347,15 @@
       "emailInvalid": "Enter a valid email address",
       "phoneRequired": "Phone number is required",
       "phoneInvalid": "Enter a valid phone number (10–15 digits)",
+      "location": "Location",
+      "locationPlaceholder": "City or area",
+      "locationRequired": "Location is required",
+      "profileImage": "Profile image",
+      "uploadPhotoTitle": "Upload profile photo",
+      "removePhoto": "Remove photo",
+      "profileImageRequired": "Profile image is required",
+      "firstName": "First name",
+      "firstNameRequired": "First name is required",
       "featuredAgent": "Featured agent",
       "featuredAgentHint": "Featured agents may be highlighted on your agency profile and search results.",
       "cancel": "Cancel",
