@@ -56,6 +56,10 @@ export interface AppointmentListItem {
   clientEmail?: string;
   /** API `clientPhoneNumber` */
   clientPhoneNumber?: string;
+  /** Assigned agent display name from API `agentName` */
+  agentName?: string;
+  /** Assigned agent user id from API `userId._id` */
+  assignedUserId?: string;
   /** Listing owner from `propertyId.userId` */
   agent?: string;
   agentPhone?: string;

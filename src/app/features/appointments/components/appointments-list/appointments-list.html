@@ -2,10 +2,14 @@
   <div class="appointments-list__desktop d-none d-lg-block">
     <div class="appointments-list__table-header"
          [class.appointments-list__table-header--with-actions]="showActions()"
-         [class.appointments-list__table-header--with-arrow]="showArrow()">
+         [class.appointments-list__table-header--with-arrow]="showArrow()"
+         [class.appointments-list__table-header--with-agent]="showAgentColumn()">
       <span>Property</span>
       <span>Date</span>
       <span>{{ personColumnLabel() }}</span>
+      @if (showAgentColumn()) {
+      <span>Agent</span>
+      }
       <span>Time</span>
       <span>Status</span>
 
@@ -21,6 +25,7 @@
          [class.appointments-list__row--clickable]="clickableRows()"
          [class.appointments-list__row--with-actions]="showActions()"
          [class.appointments-list__row--with-arrow]="showArrow()"
+         [class.appointments-list__row--with-agent]="showAgentColumn()"
          [attr.role]="clickableRows() ? 'button' : null"
          [attr.tabindex]="clickableRows() ? '0' : null"
          (click)="onRowClick(appointment)"
@@ -40,6 +45,12 @@
         <strong>{{ getPersonName(appointment) }}</strong>
         <span>{{ getPersonSubline(appointment) }}</span>
       </div>
+
+      @if (showAgentColumn()) {
+      <div>
+        <strong>{{ getAgentName(appointment) }}</strong>
+      </div>
+      }
 
       <div>
         <strong>{{ appointment.time }}</strong>
@@ -71,8 +82,10 @@
         @if (canShowConfirmAction(appointment)) {
         <button type="button"
                 class="appointments-list__action appointments-list__action--primary appointments-list__action--icon"
-                title="Confirm appointment"
-                aria-label="Confirm appointment"
+                [class.appointments-list__action--disabled]="!canConfirmAppointment(appointment)"
+                [disabled]="!canConfirmAppointment(appointment)"
+                [title]="confirmActionTitle(appointment)"
+                [attr.aria-label]="confirmActionTitle(appointment)"
                 (click)="onConfirm(appointment, $event)">
           <mat-icon fontSet="material-symbols-outlined"
                     inline>check_circle</mat-icon>
@@ -82,8 +95,10 @@
         @if (canCancel(appointment)) {
         <button type="button"
                 class="appointments-list__action appointments-list__action--danger appointments-list__action--icon"
-                title="Cancel appointment"
-                aria-label="Cancel appointment"
+                [class.appointments-list__action--disabled]="!canCancelAppointment(appointment)"
+                [disabled]="!canCancelAppointment(appointment)"
+                [title]="cancelActionTitle(appointment)"
+                [attr.aria-label]="cancelActionTitle(appointment)"
                 (click)="onCancel(appointment, $event)">
           <mat-icon fontSet="material-symbols-outlined"
                     inline>cancel</mat-icon>
@@ -119,6 +134,9 @@
       <div class="appointments-list__mobile-meta">
         {{ getPersonName(appointment) }} · {{ appointment.role }}
       </div>
+      @if (showAgentColumn()) {
+      <div class="appointments-list__mobile-meta">Agent: {{ getAgentName(appointment) }}</div>
+      }
 
       @if (showActions()) {
       <div class="appointments-list__mobile-actions">
@@ -136,8 +154,10 @@
         @if (canShowConfirmAction(appointment)) {
         <button type="button"
                 class="appointments-list__action appointments-list__action--primary appointments-list__action--icon"
-                title="Confirm appointment"
-                aria-label="Confirm appointment"
+                [class.appointments-list__action--disabled]="!canConfirmAppointment(appointment)"
+                [disabled]="!canConfirmAppointment(appointment)"
+                [title]="confirmActionTitle(appointment)"
+                [attr.aria-label]="confirmActionTitle(appointment)"
                 (click)="onConfirm(appointment, $event)">
           <mat-icon fontSet="material-symbols-outlined"
                     inline>check_circle</mat-icon>
@@ -147,8 +167,10 @@
         @if (canCancel(appointment)) {
         <button type="button"
                 class="appointments-list__action appointments-list__action--danger appointments-list__action--icon"
-                title="Cancel appointment"
-                aria-label="Cancel appointment"
+                [class.appointments-list__action--disabled]="!canCancelAppointment(appointment)"
+                [disabled]="!canCancelAppointment(appointment)"
+                [title]="cancelActionTitle(appointment)"
+                [attr.aria-label]="cancelActionTitle(appointment)"
                 (click)="onCancel(appointment, $event)">
           <mat-icon fontSet="material-symbols-outlined"
                     inline>cancel</mat-icon>

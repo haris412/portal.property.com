@@ -20,6 +20,7 @@ import { AppointmentListItem } from '../../../../core/models/appointment.models'
 import { AppointmentsService } from '../../../../core/services/appointments.service';
 import { AuthService, User } from '../../../../core/services/auth.service';
 import { ConfirmationDialogService } from '../../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
+import { hasPrimaryAgencyAdminRole } from '../../../../core/models/role.models';
 
 export type AppointmentTab = 'all' | 'confirmed' | 'pending' | 'completed';
 export type AppointmentViewerRole = 'agent' | 'user';
@@ -52,6 +53,12 @@ export class AppointmentsPageComponent {
   private readonly document = inject(DOCUMENT);
 
   readonly viewerRole = input<AppointmentViewerRole>('agent');
+
+  readonly showAgentColumn = computed(() =>
+    hasPrimaryAgencyAdminRole(this.auth.getCurrentUser()?.roles),
+  );
+
+  readonly currentUserId = computed(() => this.auth.getCurrentUser()?._id ?? null);
 
   readonly activeTab = signal<AppointmentTab>('all');
 
@@ -126,6 +133,10 @@ export class AppointmentsPageComponent {
   onConfirmClicked(item: AppointmentListItem): void {
     this.actionError.set(null);
 
+    if (!this.canCurrentUserManage(item)) {
+      return;
+    }
+
     if (this.isAppointmentSlotInThePast(item)) {
       this.confirmationDialog
         .alert({
@@ -159,6 +170,15 @@ export class AppointmentsPageComponent {
       });
   }
 
+  private canCurrentUserManage(item: AppointmentListItem): boolean {
+    if (!this.showAgentColumn()) {
+      return true;
+    }
+    const userId = this.auth.getCurrentUser()?._id?.trim() ?? '';
+    const assignedId = item.assignedUserId?.trim() || item.user?._id?.trim() || '';
+    return Boolean(userId && assignedId && userId === assignedId);
+  }
+
   /** True when the scheduled start is before “now” (same rules as list mapping). */
   private isAppointmentSlotInThePast(item: AppointmentListItem): boolean {
     const ms = item.scheduledStartMs;
@@ -183,6 +203,10 @@ export class AppointmentsPageComponent {
   }
 
   cancelAppointment(item: AppointmentListItem): void {
+    if (!this.canCurrentUserManage(item)) {
+      return;
+    }
+
     const next =
       item.status === 'confirmed' || item.status === 'in_progress'
         ? { api: 'Cancelled', ui: 'cancelled' as const }

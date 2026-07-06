@@ -29,6 +29,9 @@
         <app-appointments-list
           [appointments]="filteredAppointments()"
           [viewerRole]="viewerRole()"
+          [showAgentColumn]="showAgentColumn()"
+          [currentUserId]="currentUserId()"
+          [restrictActionsToOwnUser]="showAgentColumn()"
           [showActions]="true"
           (confirmClicked)="onConfirmClicked($event)"
           (rescheduleClicked)="rescheduleAppointment($event.id)"

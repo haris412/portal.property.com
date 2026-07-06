@@ -25,6 +25,18 @@
     &--with-actions {
       grid-template-columns: 2.1fr 1.3fr 1.5fr 0.9fr 1fr 1.8fr;
     }
+
+    &--with-agent {
+      grid-template-columns: 2fr 1.2fr 1.3fr 1.1fr 0.8fr 1fr;
+
+      &.appointments-list__table-header--with-actions {
+        grid-template-columns: 1.9fr 1.1fr 1.3fr 1.1fr 0.8fr 0.9fr 1.7fr;
+      }
+
+      &.appointments-list__table-header--with-arrow {
+        grid-template-columns: 2fr 1.2fr 1.3fr 1.1fr 0.8fr 1fr 32px;
+      }
+    }
   }
 
   &__row {
@@ -52,6 +64,18 @@
 
     &--with-actions {
       grid-template-columns: 2.1fr 1.3fr 1.5fr 0.9fr 1fr 1.8fr;
+    }
+
+    &--with-agent {
+      grid-template-columns: 2fr 1.2fr 1.3fr 1.1fr 0.8fr 1fr;
+
+      &.appointments-list__row--with-actions {
+        grid-template-columns: 1.9fr 1.1fr 1.3fr 1.1fr 0.8fr 0.9fr 1.7fr;
+      }
+
+      &.appointments-list__row--with-arrow {
+        grid-template-columns: 2fr 1.2fr 1.3fr 1.1fr 0.8fr 1fr 32px;
+      }
     }
 
     &--clickable:hover {
@@ -116,11 +140,19 @@
       border-color: var(--primary);
       color: var(--surface);
 
-      &:hover {
+      &:hover:not(:disabled) {
         background: var(--primary-hover);
         border-color: var(--primary-hover);
         color: var(--surface);
       }
+    }
+
+    &--disabled,
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      transform: none;
+      box-shadow: none;
     }
 
     &--danger {
@@ -128,7 +160,7 @@
       border-color: color-mix(in srgb, var(--error) 22%, var(--surface));
       color: var(--error-strong);
 
-      &:hover {
+      &:hover:not(:disabled) {
         background: color-mix(in srgb, var(--error) 12%, var(--surface));
         border-color: color-mix(in srgb, var(--error) 30%, var(--surface));
       }

@@ -17,6 +17,7 @@ export class VideoCallTopbarComponent {
   @Input() isMuted = false;
   @Input() isVideoOff = false;
   @Input() chatOpen = false;
+  @Input() showAppointmentsBack = true;
 
   @Output() muteToggle = new EventEmitter<void>();
   @Output() videoToggle = new EventEmitter<void>();

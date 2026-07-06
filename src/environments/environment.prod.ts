@@ -3,6 +3,7 @@ export const environment = {
   translateLoaderPrefix: '/property.admin/i18n/',
   apiUrl: 'https://soletechs.net/property.api/api',
   wsUrl:  'https://soletechs.net/property.api/api',
+  publicSiteUrl: 'https://soletechs.net',
   newRtcUrl: 'http://localhost:8000',
   geonames: {
     username: 'harissaeed',

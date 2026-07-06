@@ -14,6 +14,7 @@
     <app-appointments-list
       [appointments]="appointments()"
       viewerRole="agent"
+      [showAgentColumn]="showAgentColumn()"
       [showArrow]="true"
       [clickableRows]="true"
       (rowClicked)="goToAppointments()"
