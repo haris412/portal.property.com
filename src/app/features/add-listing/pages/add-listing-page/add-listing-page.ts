@@ -600,7 +600,7 @@ export class AddListingPageComponent implements AfterViewInit {
       this.contactForm.valid     &&
       this.descriptionForm.valid &&
       this.locationForm.valid    &&
-      (this.locationStep?.hasCoordinates() ?? false) &&
+      (this.locationStep?.hasLocation() ?? false) &&
       (!includeMedia || this.mediaForm.valid)
     );
   }
@@ -623,7 +623,7 @@ export class AddListingPageComponent implements AfterViewInit {
     const invalid: string[] = [];
     if (this.basicInfoForm.invalid)                                                   invalid.push('Basic information');
     if (this.pricingForm.invalid)                                                     invalid.push('Pricing');
-    if (this.locationForm.invalid || !(this.locationStep?.hasCoordinates() ?? false)) invalid.push('Location (map pin)');
+    if (this.locationForm.invalid || !(this.locationStep?.hasLocation() ?? false))    invalid.push('Location (map pin)');
     if (this.contactForm.invalid)                                                     invalid.push('Contact');
     if (this.descriptionForm.invalid)                                                 invalid.push('Description');
     if (!this.editingId() && this.mediaForm.invalid)                                  invalid.push('Media');
