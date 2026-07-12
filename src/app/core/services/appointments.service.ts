@@ -40,7 +40,69 @@ function roleLabel(user: unknown): string {
     return pickString(r as Record<string, unknown>, 'name') || '—';
   }
   if (typeof r === 'string') return r;
+  const roles = o['roles'];
+  if (Array.isArray(roles) && roles.length) {
+    const first = roles[0];
+    if (typeof first === 'string') return first;
+    if (first && typeof first === 'object') {
+      return pickString(first as Record<string, unknown>, 'name') || '—';
+    }
+  }
   return '—';
+}
+
+function userRecordId(u: unknown): string {
+  if (!u || typeof u !== 'object') return '';
+  return pickString(u as Record<string, unknown>, '_id', 'id');
+}
+
+function userHasAgentRole(u: unknown): boolean {
+  if (!u || typeof u !== 'object') return false;
+  const o = u as Record<string, unknown>;
+
+  const role = o['role'];
+  if (role && typeof role === 'object') {
+    if (pickString(role as Record<string, unknown>, 'name').toLowerCase() === 'agent') {
+      return true;
+    }
+  }
+  if (typeof role === 'string' && role.toLowerCase() === 'agent') {
+    return true;
+  }
+
+  const roles = o['roles'];
+  if (Array.isArray(roles)) {
+    return roles.some((item) => {
+      if (typeof item === 'string') return item.toLowerCase() === 'agent';
+      if (item && typeof item === 'object') {
+        return pickString(item as Record<string, unknown>, 'name').toLowerCase() === 'agent';
+      }
+      return false;
+    });
+  }
+
+  return false;
+}
+
+/** Agent responsible for the appointment (not the buyer/client). */
+function extractAssignedAgentUserId(
+  o: Record<string, unknown>,
+  appointmentUser: unknown,
+  listingOwner: unknown,
+): string | undefined {
+  const direct = pickString(o, 'agentId', 'assignedAgentId', 'agentUserId');
+  if (direct) return direct;
+
+  if (userHasAgentRole(appointmentUser)) {
+    const agentId = userRecordId(appointmentUser);
+    if (agentId) return agentId;
+  }
+
+  const listingOwnerId = userRecordId(listingOwner);
+  if (listingOwnerId) return listingOwnerId;
+
+  const fallbackId = userRecordId(appointmentUser);
+  return fallbackId || undefined;
 }
 
 function normalizeStatus(raw: string): AppointmentStatus {
@@ -168,10 +230,16 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
   if (appointmentUser && typeof appointmentUser === 'object') {
     const u = appointmentUser as Record<string, unknown>;
     const roleRaw = u['role'];
-    const roleObj =
-      roleRaw && typeof roleRaw === 'object'
-        ? (roleRaw as Record<string, unknown>)
-        : null;
+    const rolesRaw = u['roles'];
+    let roleObj: Record<string, unknown> | null =
+      roleRaw && typeof roleRaw === 'object' ? (roleRaw as Record<string, unknown>) : null;
+
+    if (!roleObj && Array.isArray(rolesRaw) && rolesRaw.length) {
+      const first = rolesRaw[0];
+      if (first && typeof first === 'object') {
+        roleObj = first as Record<string, unknown>;
+      }
+    }
 
     userObj = {
       _id: pickString(u, '_id', 'id') || undefined,
@@ -195,7 +263,9 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
   const clientName = clientNameFromApi || personName(appointmentUser);
   const clientPhone = clientPhoneFromApi || personPhone(appointmentUser);
 
-  const agentName = personName(listingOwner);
+  const agentNameFromApi = pickString(o, 'agentName');
+  const listingOwnerName = personName(listingOwner);
+  const agentName = agentNameFromApi || listingOwnerName;
   const agentPhone = personPhone(listingOwner);
 
   const { date: dateDisplay, time: timeDisplay } = formatAppointmentDateTime(
@@ -222,6 +292,8 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
   const appointmentLink =
     pickString(o, 'appointmentLink', 'appointment_link') || undefined;
 
+  const assignedUserId = extractAssignedAgentUserId(o, appointmentUser, listingOwner);
+
   return {
     id,
     property,
@@ -231,6 +303,8 @@ function mapApiToListItem(raw: unknown): AppointmentListItem | null {
     clientName: clientName || undefined,
     clientEmail: clientEmailFromApi || undefined,
     clientPhoneNumber: clientPhone || undefined,
+    agentName: agentName || undefined,
+    assignedUserId,
     agent: agentName || undefined,
     agentPhone: agentPhone || undefined,
     listingPropertyId,

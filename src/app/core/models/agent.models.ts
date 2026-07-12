@@ -12,6 +12,7 @@ export interface AgentListItem {
   isActive?: boolean;
   isEmailVerified?: boolean;
   inviteStatus?: string;
+  inviteToken?: string;
   role?: { name: string };
   createdAt?: string;
 }
@@ -50,4 +51,11 @@ export interface UpdateAgentDTO {
 export interface DeactivateAgentDTO {
   _id: string;
   agencyId: string;
+}
+
+/** Body for PATCH `/api/agents/set-password`. */
+export interface SetAgentPasswordDTO {
+  _id: string;
+  agencyId: string;
+  password: string;
 }

@@ -292,20 +292,28 @@
     "statuses": {
       "active": "فعال",
       "inactive": "غیر فعال",
+      "pendingSetup": "سیٹ اپ زیر التواء",
       "featured": "ہاں",
       "notFeatured": "نہیں"
     },
     "errors": {
-      "noAgency": "آپ کے اکاؤنٹ سے کوئی ایجنسی منسلک نہیں ہے۔ اگر یہ غلط لگے تو سپورٹ سے رابطہ کریں۔"
+      "noAgency": "آپ کے اکاؤنٹ سے کوئی ایجنسی منسلک نہیں ہے۔ اگر یہ غلط لگے تو سپورٹ سے رابطہ کریں۔",
+      "invalidAgent": "ایجنٹ نہیں ملا۔"
     },
     "actions": {
       "edit": "ترمیم",
+      "setPassword": "پاس ورڈ سیٹ کریں",
       "deactivate": "غیر فعال کریں",
       "activate": "فعال کریں"
     },
     "messages": {
       "deactivated": "ایجنٹ کامیابی سے غیر فعال کر دیا گیا۔",
-      "activated": "ایجنٹ کامیابی سے فعال کر دیا گیا۔"
+      "activated": "ایجنٹ کامیابی سے فعال کر دیا گیا۔",
+      "inviteTokenMissing": "اس ایجنٹ کے لیے دعوتی لنک دستیاب نہیں ہے۔",
+      "passwordSet": "ایجنٹ کا پاس ورڈ کامیابی سے سیٹ ہو گیا۔"
+    },
+    "setupPassword": {
+      "subtitle": "ایجنٹ کے سائن ان کے لیے پاس ورڈ سیٹ کریں۔"
     },
     "confirm": {
       "deactivateTitle": "ایجنٹ غیر فعال کریں؟",
@@ -336,6 +344,13 @@
       "emailInvalid": "درست ای میل درج کریں",
       "phoneRequired": "فون نمبر ضروری ہے",
       "phoneInvalid": "درست فون نمبر درج کریں (10–15 ہندسے)",
+      "location": "مقام",
+      "locationPlaceholder": "شہر یا علاقہ",
+      "locationRequired": "مقام ضروری ہے",
+      "profileImage": "پروفائل تصویر",
+      "uploadPhotoTitle": "پروفائل تصویر اپ لوڈ کریں",
+      "removePhoto": "تصویر ہٹائیں",
+      "profileImageRequired": "پروفائل تصویر ضروری ہے",
       "featuredAgent": "نمایاں ایجنٹ",
       "featuredAgentHint": "نمایاں ایجنٹس آپ کی ایجنسی پروفائل اور تلاش کے نتائج میں نمایاں ہو سکتے ہیں۔",
       "cancel": "منسوخ",

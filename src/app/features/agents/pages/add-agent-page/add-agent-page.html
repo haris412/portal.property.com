@@ -84,24 +84,31 @@
             </div>
 
             <!-- Phone -->
-            <div class="col-12 col-md-6">
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>{{ 'agents.form.phone' | translate }}</mat-label>
-                <mat-icon matPrefix>phone</mat-icon>
-                <input
-                  matInput
-                  formControlName="phoneNumber"
-                  type="tel"
-                  autocomplete="tel"
-                  [placeholder]="'agents.form.phonePlaceholder' | translate"
-                />
-                @if (form.controls.phoneNumber.hasError('required') && form.controls.phoneNumber.touched) {
-                  <mat-error>{{ 'agents.form.phoneRequired' | translate }}</mat-error>
-                }
-                @if (form.controls.phoneNumber.hasError('pattern') && form.controls.phoneNumber.touched) {
-                  <mat-error>{{ 'agents.form.phoneInvalid' | translate }}</mat-error>
-                }
-              </mat-form-field>
+            <div class="col-12 col-md-6 add-agent-page__phone-field">
+              <ngx-material-intl-tel-input
+                appearance="outline"
+                [preferredCountries]="['sa', 'us']"
+                [enablePlaceholder]="true"
+                [enableSearch]="true"
+                [fieldControlName]="'phoneNumber'"
+              />
+              @if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) {
+                <p class="add-agent-page__field-error" role="alert">
+                  @if (form.controls.phoneNumber.hasError('required')) {
+                    {{ 'agents.form.phoneRequired' | translate }}
+                  } @else if (form.controls.phoneNumber.hasError('phoneLeadingZero')) {
+                    {{ form.controls.phoneNumber.getError('phoneLeadingZero')?.message ?? ('agents.form.phoneInvalid' | translate) }}
+                  } @else if (
+                    form.controls.phoneNumber.hasError('phoneTooShort') ||
+                    form.controls.phoneNumber.hasError('phoneTooLong') ||
+                    form.controls.phoneNumber.hasError('invalidCountryCode')
+                  ) {
+                    {{ form.controls.phoneNumber.getError('message') ?? ('agents.form.phoneInvalid' | translate) }}
+                  } @else {
+                    {{ 'agents.form.phoneInvalid' | translate }}
+                  }
+                </p>
+              }
             </div>
 
             <!-- Location -->
@@ -134,6 +141,9 @@
                     </mat-option>
                   }
                 </mat-autocomplete>
+                @if (form.controls.location.hasError('required') && form.controls.location.touched) {
+                  <mat-error>{{ 'agents.form.locationRequired' | translate }}</mat-error>
+                }
               </mat-form-field>
             </div>
 

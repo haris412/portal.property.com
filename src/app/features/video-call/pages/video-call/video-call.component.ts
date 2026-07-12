@@ -19,6 +19,7 @@ import { VideoChatSocketService } from '../../../../core/services/video-chat-soc
 import { VideoCallChatPanelComponent } from '../../components/video-call-chat-panel/video-call-chat-panel.component';
 import { VideoCallTopbarComponent } from '../../components/video-call-topbar/video-call-topbar.component';
 import { VideoCallChatMessage } from '../../models/video-call-chat-message';
+import { environment } from '../../../../../environments/environment';
 
 const REMOTE_LEFT_STATUS = 'The other participant left the call';
 
@@ -76,6 +77,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   /** Local call controls. */
   isMuted = false;
   isVideoOff = false;
+  readonly showAppointmentsBack = this.auth.isLoggedIn();
   /** Right-side chat panel UI. */
   chatOpen = false;
   chatConnected = false;
@@ -236,15 +238,34 @@ export class VideoCallComponent implements OnInit, OnDestroy {
     this.clearTransientBanner();
     this.userEndedCall = true;
     this.teardownMediaAndConnections();
-    void this.router.navigate(['/appointments']);
+    if (this.auth.isLoggedIn()) {
+      void this.router.navigate(['/appointments']);
+      return;
+    }
+    this.redirectGuestAfterCall();
   }
 
-  /** Optional: leave to appointments after the other party ended (you stayed on the call). */
+  /** Optional: leave to appointments after the other party ended (logged-in users only). */
   goToAppointments(): void {
+    if (!this.auth.isLoggedIn()) {
+      this.endCall();
+      return;
+    }
     this.clearTransientBanner();
     this.userEndedCall = true;
     this.teardownMediaAndConnections();
     void this.router.navigate(['/appointments']);
+  }
+
+  private redirectGuestAfterCall(): void {
+    const url = environment.publicSiteUrl?.trim();
+    if (url) {
+      window.location.assign(url);
+      return;
+    }
+    this.remoteDisconnected = true;
+    this.statusText = 'You left the call.';
+    this.cdr.markForCheck();
   }
 
   toggleMute(): void {
@@ -468,7 +489,11 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   }
 
   private patchAppointmentInProgressOnce(): void {
-    if (this.inProgressPatchSent || !this.isLikelyMongoAppointmentId(this.roomName)) {
+    if (
+      this.inProgressPatchSent ||
+      !this.auth.isLoggedIn() ||
+      !this.isLikelyMongoAppointmentId(this.roomName)
+    ) {
       return;
     }
     this.inProgressPatchSent = true;
@@ -490,6 +515,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   private maybePatchAppointmentCompleted(): void {
     if (
       this.completedPatchSent ||
+      !this.auth.isLoggedIn() ||
       !this.isLikelyMongoAppointmentId(this.roomName) ||
       !this.otherJoined ||
       !this.userEndedCall ||

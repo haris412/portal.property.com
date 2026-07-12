@@ -69,7 +69,10 @@
         </div>
       </div>
 
-      <app-appointments-table-card [appointments]="appointments()" />
+      <app-appointments-table-card
+        [appointments]="appointments()"
+        [showAgentColumn]="showAgentOverview()"
+      />
     </div>
   </div>
 </app-page-shell>

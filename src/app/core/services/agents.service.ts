@@ -8,8 +8,10 @@ import type {
   AgentsListResult,
   CreateAgentDTO,
   DeactivateAgentDTO,
+  SetAgentPasswordDTO,
   UpdateAgentDTO,
 } from '../models/agent.models';
+import { extractInviteToken } from '../utils/agent-invite.utils';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -48,7 +50,11 @@ function normalizeAgentRow(raw: unknown): AgentListItem | null {
       raw['isFeatured'] === 'true',
     isActive: raw['isActive'] === true || raw['isActive'] === 'true',
     isEmailVerified: raw['isEmailVerified'] === true,
-    inviteStatus: (raw['inviteStatus'] as string | undefined) ?? undefined,
+    inviteStatus:
+      (raw['inviteStatus'] as string | undefined) ??
+      (raw['status'] as string | undefined) ??
+      undefined,
+    inviteToken: extractInviteToken(raw),
     role,
     createdAt: (raw['createdAt'] as string | undefined) ?? undefined,
   };
@@ -133,6 +139,13 @@ export class AgentsService {
   deactivateAgent(payload: DeactivateAgentDTO): Observable<AgentListItem> {
     return this.http
       .patch<unknown>(`${this.baseUrl}/deactivate`, payload)
+      .pipe(map((body) => this.extractAgentFromResponse(body)));
+  }
+
+  /** PATCH `/api/agents/set-password` — agency admin sets password for a pending agent. */
+  setAgentPassword(payload: SetAgentPasswordDTO): Observable<AgentListItem> {
+    return this.http
+      .patch<unknown>(`${this.baseUrl}/set-password`, payload)
       .pipe(map((body) => this.extractAgentFromResponse(body)));
   }
 

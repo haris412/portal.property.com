@@ -6,7 +6,6 @@ import {
   AppointmentsListComponent
 } from '../../../appointments/components/appointments-list/appointments-list';
 import { AppointmentListItem } from '../../../../core/models/appointment.models';
-
 @Component({
   selector: 'app-appointments-table-card',
   standalone: true,
@@ -19,6 +18,7 @@ export class AppointmentsTableCardComponent {
   private readonly router = inject(Router);
 
   readonly appointments = input.required<AppointmentListItem[]>();
+  readonly showAgentColumn = input(false);
 
   goToAppointments(): void {
     this.router.navigate(['/appointments']);

@@ -38,12 +38,19 @@
           variant="danger"
           (controlClick)="endCall.emit()"
         />
-      } @else {
+      } @else if (showAppointmentsBack) {
         <app-video-call-control-button
           icon="event"
           label="Appointments"
           variant="primary"
           (controlClick)="appointmentsBack.emit()"
+        />
+      } @else {
+        <app-video-call-control-button
+          icon="call_end"
+          label="Leave call"
+          variant="danger"
+          (controlClick)="endCall.emit()"
         />
       }
     </nav>

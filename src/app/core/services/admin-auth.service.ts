@@ -122,9 +122,13 @@ export class AdminAuthService {
   private clearAdminStorageOnly(): void {
     this.accessToken = null;
     this.userSubject.next(null);
-    this.storage?.removeItem(ADMIN_REFRESH_KEY);
-    this.storage?.removeItem(ADMIN_USER_KEY);
-    this.clearAdminLoginChallenge();
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    localStorage.clear();
+    sessionStorage.clear();
   }
 
   /**

@@ -26,6 +26,14 @@ export const routes: Routes = [
       import('./features/auth/invite.routes').then((m) => m.INVITE_ROUTES),
   },
   {
+    path: 'video/:roomName',
+    loadComponent: () =>
+      import('./features/video-call/pages/video-call/video-call.component').then(
+        (m) => m.VideoCallComponent
+      ),
+    title: 'Video call',
+  },
+  {
     path: 'admin',
     loadChildren: () => import('./admin/admin.routes').then((m) => m.ADMIN_ROUTES),
   },
@@ -104,14 +112,6 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/appointments/appointments.routes').then((m) => m.APPOINTMENTS_ROUTES),
         title: 'Appointments',
-      },
-      {
-        path: 'video/:roomName',
-        loadComponent: () =>
-          import('./features/video-call/pages/video-call/video-call.component').then(
-            (m) => m.VideoCallComponent
-          ),
-        title: 'Video call',
       },
       {
         path: 'subscription-plan',

@@ -25,6 +25,11 @@ import {
 } from '../../../../shared/ui/grid-row-menu-cell/grid-row-menu-cell.component';
 import { ConfirmationDialogService } from '../../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import {
+  isAcceptedInviteStatus,
+  isPendingInviteStatus,
+  normalizeInviteStatusKey,
+} from '../../../../core/utils/agent-invite.utils';
 
 @Component({
   selector: 'app-agents-page',
@@ -107,8 +112,8 @@ export class AgentsPageComponent implements OnInit {
       { field: 'phoneNumber', headerValueGetter: () => t('agents.tc.phone'), width: 150 },
       {
         headerValueGetter: () => t('agents.tc.status'),
-        valueGetter: (p) => this.formatStatus(p.data?.isActive),
-        width: 120,
+        valueGetter: (p) => this.formatStatus(p.data),
+        width: 140,
       },
       {
         headerValueGetter: () => t('agents.tc.featured'),
@@ -137,12 +142,30 @@ export class AgentsPageComponent implements OnInit {
         },
       },
       {
+        label: t('agents.actions.setPassword'),
+        icon: 'lock_open',
+        hidden: (rowData: unknown) => !isPendingInviteStatus((rowData as AgentListItem | undefined)?.inviteStatus),
+        action: (_id: string, rowData?: unknown) => this.openSetPasswordScreen(rowData as AgentListItem),
+      },
+      {
         label: t('agents.actions.deactivate'),
         icon: 'person_off',
-        hidden: (rowData: unknown) => (rowData as AgentListItem | undefined)?.isActive === false,
+        hidden: (rowData: unknown) => {
+          const agent = rowData as AgentListItem | undefined;
+          if (isPendingInviteStatus(agent?.inviteStatus)) {
+            return true;
+          }
+          return agent?.isActive === false;
+        },
         action: (id: string, rowData?: unknown) => this.deactivateAgent(id, rowData as AgentListItem),
       },
     ];
+  }
+
+  private openSetPasswordScreen(agent: AgentListItem): void {
+    void this.router.navigate(['/agents/setup-password', agent._id], {
+      state: { agentName: this.formatName(agent) },
+    });
   }
 
   private deactivateAgent(agentId: string, agent: AgentListItem): void {
@@ -212,9 +235,39 @@ export class AgentsPageComponent implements OnInit {
     return name || row.email || '—';
   }
 
-  private formatStatus(isActive?: boolean): string {
+  private formatStatus(row?: AgentListItem | null): string {
+    if (!row) {
+      return '—';
+    }
+
+    const inviteStatus = row.inviteStatus?.trim();
+    if (!inviteStatus) {
+      return this.formatActiveStatus(row.isActive);
+    }
+
+    const normalizedInviteStatus = normalizeInviteStatusKey(inviteStatus);
+    if (isAcceptedInviteStatus(inviteStatus)) {
+      return this.formatActiveStatus(row.isActive);
+    }
+
+    if (isPendingInviteStatus(inviteStatus)) {
+      return this.formatInviteStatusLabel(inviteStatus, normalizedInviteStatus);
+    }
+
+    return this.formatActiveStatus(row.isActive);
+  }
+
+  private formatActiveStatus(isActive?: boolean): string {
     const key = isActive === false ? 'agents.statuses.inactive' : 'agents.statuses.active';
     return this.translate.instant(key) as string;
+  }
+
+  private formatInviteStatusLabel(inviteStatus: string, normalized: string): string {
+    if (normalized === 'pendingsetup') {
+      return this.translate.instant('agents.statuses.pendingSetup') as string;
+    }
+
+    return inviteStatus.replace(/([a-z])([A-Z])/g, '$1 $2');
   }
 
   private formatFeatured(isFeaturedAgent?: boolean): string {
