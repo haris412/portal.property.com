@@ -69,10 +69,35 @@
       <div class="col-12 col-md-6">
         <mat-form-field appearance="outline" class="w-100">
           <mat-label>{{ 'profile.accountSettings.location.label' | translate }}</mat-label>
-          <input matInput formControlName="location" [placeholder]="'profile.accountSettings.location.placeholder' | translate" />
+          <mat-icon matPrefix>location_on</mat-icon>
+          <input
+            matInput
+            formControlName="location"
+            autocomplete="off"
+            [placeholder]="'profile.accountSettings.location.placeholder' | translate"
+            [matAutocomplete]="locationAuto"
+            (input)="onLocationInput($any($event.target).value)"
+          />
+          @if (locationSearchLoading()) {
+            <mat-hint>Searching...</mat-hint>
+          }
           @if (form.controls.location.hasError('maxlength')) {
             <mat-error>{{ 'profile.accountSettings.location.tooLong' | translate }}</mat-error>
           }
+          <mat-autocomplete
+            #locationAuto="matAutocomplete"
+            [displayWith]="displayLocation"
+            (optionSelected)="onLocationSelected($event)"
+          >
+            @for (suggestion of locationSuggestions(); track suggestion.placeId) {
+              <mat-option [value]="suggestion">
+                <span>{{ suggestion.mainText }}</span>
+                @if (suggestion.secondaryText) {
+                  <span class="location-secondary"> — {{ suggestion.secondaryText }}</span>
+                }
+              </mat-option>
+            }
+          </mat-autocomplete>
         </mat-form-field>
       </div>
 
