@@ -36,7 +36,6 @@ export interface ListingFormSnapshot {
     contactLocation:    string | null;
   };
   location: {
-    placeId:           string | null;
     locationHierarchy: LocationHierarchyItem[];
     placeId:           string | null;
     fullAddress:       string | null;

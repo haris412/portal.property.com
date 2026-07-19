@@ -181,7 +181,6 @@ export class PropertyLocationStepComponent implements OnInit {
       placeId:           [''],
       locationQuery:     [''],
       locationHierarchy: [[] as LocationHierarchyItem[]],
-      placeId:           [''],
       fullAddress:       ['', Validators.required],
       mapLink:           [''],
       zipCode:           [''],
