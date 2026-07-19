@@ -36,6 +36,7 @@ export interface ListingFormSnapshot {
     contactLocation:    string | null;
   };
   location: {
+    placeId:           string | null;
     locationHierarchy: LocationHierarchyItem[];
     fullAddress:       string | null;
     mapLink:           string | null;
@@ -51,7 +52,7 @@ export function buildListingPayload(
   isFeatured:    boolean
 ): CreateListingPayload {
   const { basic, description, pricing, amenities, contact, location } = forms;
-
+  console.log('Building listing payload with forms:', forms, 'and uploaded media:', uploadedMedia, 'isFeatured:', isFeatured);
   return {
     purpose:             basic.purpose === 'sale' ? 'For Sale' : 'For Rent',
     listingTitle:        (basic.listingTitle ?? '').trim(),
@@ -68,6 +69,7 @@ export function buildListingPayload(
     numFloors:           pricing.numFloors        ?? null,
     images:              uploadedMedia.images,
     videoTourUrl:        uploadedMedia.videoTourUrl,
+    placeId:             location.placeId?? null ,
     location:            location.locationHierarchy ?? [],
     latitude:            location.latitude          ?? null,
     longitude:           location.longitude         ?? null,
