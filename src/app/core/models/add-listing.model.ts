@@ -19,6 +19,7 @@ export interface CreateListingPayload {
   videoTourUrl:        string | null;
   placeId:             string | null;
   location:            LocationHierarchyItem[];
+  placeId:             string | null;
   latitude:            number | null;
   longitude:           number | null;
   fullAddress:         string | null;

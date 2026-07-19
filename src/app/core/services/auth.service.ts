@@ -405,6 +405,14 @@ export class AuthService {
     );
   }
 
+  changePassword(currentPassword: string, newPassword: string, confirmNewPassword: string): Observable<void> {
+    return this.postVoid(
+      `/auth/change-password`,
+      { currentPassword, newPassword, confirmNewPassword },
+      'Could not update password. Please try again.',
+    );
+  }
+
   // ── Invite flow ────────────────────────────────────────────────────────────
 
   /** POST /api/auth/verify-invite-token — checks if the invite token is valid before showing the form. */

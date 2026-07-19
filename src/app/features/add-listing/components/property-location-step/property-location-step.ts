@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { startWith, catchError, debounceTime, distinctUntilChanged, finalize, merge, of, switchMap, take, tap } from 'rxjs';
+import { startWith, catchError, debounceTime, distinctUntilChanged, filter, finalize, merge, of, switchMap, take, tap } from 'rxjs';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -81,6 +81,10 @@ export class PropertyLocationStepComponent implements OnInit {
   readonly isActive       = input(false);
   readonly isValid        = signal(false);
   readonly hasCoordinates = signal(false);
+  // True once a real location is chosen — either a map pin (hasCoordinates) or a placeId
+  // picked from search. Place Details no longer auto-fills coordinates, so coordinates alone
+  // can't gate "location chosen" anymore.
+  readonly hasLocation    = signal(false);
   readonly form           = this.buildForm();
 
   readonly suggestions    = signal<PlaceSuggestion[]>([]);
@@ -113,34 +117,16 @@ export class PropertyLocationStepComponent implements OnInit {
     debugger;
     const suggestion = event.option.value as PlaceSuggestion;
     this.form.controls.locationQuery.setValue(suggestion.mainText, { emitEvent: false });
-    this.searchState.set({ status: 'loading' });
 
-    this.googlePlaces
-      .getPlaceDetails(suggestion.placeId, this.sessionToken)
-      .pipe(
-        finalize(() => this.searchState.set({ status: 'idle' })),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: details => {
-          if (!details) {
-            this.searchState.set({ status: 'error', message: 'Could not load place details. Please try again.' });
-            return;
-          }
-          this.placeId = suggestion.placeId;
-          this.form.patchValue({
-            placeId:           suggestion.placeId,
-            locationHierarchy: this.googlePlaces.buildLocationHierarchy(suggestion.placeId, details.addressComponents),
-            latitude:          details.latitude,
-            longitude:         details.longitude,
-            fullAddress:       details.formattedAddress,
-            mapLink:           `https://maps.google.com/?q=${details.latitude},${details.longitude}`,
-          });
-          console.log('Place selected:', suggestion.placeId, this.form.value);
-          this.suggestions.set([]);
-          this.sessionToken = crypto.randomUUID();
-        },
-      });
+    // Place Details is no longer called from the frontend — the backend resolves full
+    // address/coordinates from placeId internally. Only the placeId + autocomplete's
+    // own text are captured here; latitude/longitude are set by the map pin (click/drag).
+    this.form.patchValue({
+      placeId:     suggestion.placeId,
+      fullAddress: [suggestion.mainText, suggestion.secondaryText].filter(Boolean).join(', '),
+    });
+    this.suggestions.set([]);
+    this.sessionToken = crypto.randomUUID();
   }
 
   patchFromProperty(doc: PropertyDetailDocument): void {
@@ -178,30 +164,15 @@ export class PropertyLocationStepComponent implements OnInit {
 
     const sessionToken = crypto.randomUUID();
 
+    // Place Details is no longer called from the frontend — this can only recover a
+    // placeId from the top autocomplete match now, not coordinates. Latitude/longitude for
+    // legacy properties missing them must be set manually via the map pin.
     this.googlePlaces.searchPlaces(searchText, sessionToken)
-      .pipe(
-        take(1),
-        switchMap(suggestions => {
-          const first = suggestions[0];
-          if (!first?.placeId) return of(null);
-          return this.googlePlaces.getPlaceDetails(first.placeId, sessionToken);
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(details => {
-        if (!details) return;
-
-        const currentLat = coerceCoordinate(this.form.controls.latitude.value);
-        const currentLng = coerceCoordinate(this.form.controls.longitude.value);
-        if (currentLat != null && currentLng != null) return;
-
-        const existingMapLink = this.form.controls.mapLink.value?.trim();
-        this.form.patchValue({
-          latitude:    details.latitude,
-          longitude:   details.longitude,
-          mapLink:     existingMapLink || `https://maps.google.com/?q=${details.latitude},${details.longitude}`,
-          fullAddress: this.form.controls.fullAddress.value?.trim() || details.formattedAddress,
-        }, { emitEvent: true });
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(suggestions => {
+        const first = suggestions[0];
+        if (!first?.placeId || this.form.controls.placeId.value) return;
+        this.form.controls.placeId.setValue(first.placeId);
       });
   }
 
@@ -210,6 +181,7 @@ export class PropertyLocationStepComponent implements OnInit {
       placeId:           [''],
       locationQuery:     [''],
       locationHierarchy: [[] as LocationHierarchyItem[]],
+      placeId:           [''],
       fullAddress:       ['', Validators.required],
       mapLink:           [''],
       zipCode:           [''],
@@ -220,14 +192,16 @@ export class PropertyLocationStepComponent implements OnInit {
     merge(
       form.statusChanges.pipe(startWith(form.status)),
       form.controls.latitude.valueChanges,
-      form.controls.longitude.valueChanges
+      form.controls.longitude.valueChanges,
+      form.controls.placeId.valueChanges
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         const lat = coerceCoordinate(form.controls.latitude.value);
         const lng = coerceCoordinate(form.controls.longitude.value);
         this.hasCoordinates.set(lat != null && lng != null);
-        this.isValid.set(form.status === 'VALID' && this.hasCoordinates());
+        this.hasLocation.set(this.hasCoordinates() || !!form.controls.placeId.value?.trim());
+        this.isValid.set(form.status === 'VALID' && this.hasLocation());
       });
 
     form.controls.locationHierarchy.valueChanges
@@ -240,6 +214,12 @@ export class PropertyLocationStepComponent implements OnInit {
   private wireSearch(): void {
     this.form.controls.locationQuery.valueChanges
       .pipe(
+        // Selecting a mat-option writes the raw suggestion object into this control's value
+        // (a real, emitEvent:true change) before onPlaceSelected()'s own corrective setValue
+        // runs. Without this guard, that object reaches debounceTime/tap below and — once its
+        // 300ms debounce elapses — silently wipes out the hierarchy onPlaceSelected() already
+        // built from a valid selection.
+        filter((value): value is string => typeof value === 'string'),
         debounceTime(300),
         distinctUntilChanged(),
         tap(() => {

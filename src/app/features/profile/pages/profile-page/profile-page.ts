@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ProfileShellComponent } from '../../components/profile-shell/profile-shell';
 import { AgentDayAvailability, UserProfileModel } from '../../../../core/models/profile.models';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -29,27 +29,17 @@ export class ProfilePageComponent {
   readonly profile = signal<UserProfileModel>(this.mapUserToProfile());
 
   constructor() {
-    const id = this.auth.getUserId();
-    if (!id) return;
-
-    // Fetch full profile once — populates email, phone, location, avatar from API
-    this.auth.fetchUserProfile(id)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => {
-        // Preserve availability edits — only update user fields from the API response
-        this.profile.update((current) => ({
-          ...this.mapUserToProfile(),
-          availability: current.availability,
-        }));
-      });
+    effect(() => {
+      this.currentUser();
+      this.profile.update((current) => ({
+        ...this.mapUserToProfile(),
+        availability: current.availability,
+      }));
+    }, { allowSignalWrites: true });
   }
 
   onAccountSaved(payload: Partial<UserProfileModel>): void {
     this.profile.update((current) => ({ ...current, ...payload }));
-  }
-
-  onPasswordChanged(_payload: { currentPassword: string; newPassword: string; confirmPassword: string }): void {
-    // TODO: wire up change password API
   }
 
   onAvailabilitySaved(payload: AgentDayAvailability[]): void {

@@ -38,6 +38,7 @@ export interface ListingFormSnapshot {
   location: {
     placeId:           string | null;
     locationHierarchy: LocationHierarchyItem[];
+    placeId:           string | null;
     fullAddress:       string | null;
     mapLink:           string | null;
     zipCode:           string | null;
@@ -69,8 +70,9 @@ export function buildListingPayload(
     numFloors:           pricing.numFloors        ?? null,
     images:              uploadedMedia.images,
     videoTourUrl:        uploadedMedia.videoTourUrl,
-    placeId:             location.placeId?? null ,
-    location:            location.locationHierarchy ?? [],
+    // location intentionally forced empty in every payload — hierarchy is disabled for now.
+    location:            [],
+    placeId:             location.placeId           ?? null,
     latitude:            location.latitude          ?? null,
     longitude:           location.longitude         ?? null,
     fullAddress:         location.fullAddress       ?? null,

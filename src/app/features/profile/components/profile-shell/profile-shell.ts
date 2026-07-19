@@ -31,12 +31,7 @@ export class ProfileShellComponent {
   /** When set, availability GET/PUT uses `/api/users/:id/availability`; otherwise `/api/users/me/availability`. */
   readonly availabilityUserId = input<string | null>(null);
 
-  @Output() readonly accountSaved = new EventEmitter<Partial<UserProfileModel>>();
-  @Output() readonly passwordChanged = new EventEmitter<{
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  }>();
+  @Output() readonly accountSaved     = new EventEmitter<Partial<UserProfileModel>>();
   @Output() readonly availabilitySaved = new EventEmitter<AgentDayAvailability[]>();
 
   readonly activeSection = signal<ProfileSectionKey>('account');
