@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { AuthPortalPageComponent } from './features/auth/pages/auth-portal-page/auth-portal-page.component';
 import { VerifyEmailComponent } from './features/auth/components/verify-email/verify-email.component';
-import { dashboardGuard } from './core/guards/auth.guard';
+import { dashboardGuard, authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -45,7 +45,7 @@ export const routes: Routes = [
   {
     path: '',
     component: LayoutComponent,
-    // canActivate: [authGuard],
+    canActivate: [authGuard],
     children: [
       {
         path: '',
@@ -112,6 +112,14 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/appointments/appointments.routes').then((m) => m.APPOINTMENTS_ROUTES),
         title: 'Appointments',
+      },
+      {
+        path: 'subscription-usage',
+        loadChildren: () =>
+          import('./features/subscription-usage/subscription-usage.routes').then(
+            (m) => m.SUBSCRIPTION_USAGE_ROUTES
+          ),
+        title: 'Plan usage',
       },
       {
         path: 'subscription-plan',

@@ -1,0 +1,137 @@
+<app-page-shell>
+  <div class="subscription-usage-page">
+    <nav class="subscription-usage-page__breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/dashboard" class="subscription-usage-page__breadcrumb-link">
+        <mat-icon fontIcon="arrow_back" aria-hidden="true" />
+        {{ 'subscriptionUsage.backToDashboard' | translate }}
+      </a>
+    </nav>
+
+    <header class="subscription-usage-page__header">
+      <div>
+        <h1 class="subscription-usage-page__title">{{ 'subscriptionUsage.title' | translate }}</h1>
+        <p class="subscription-usage-page__subtitle">{{ 'subscriptionUsage.subtitle' | translate }}</p>
+      </div>
+
+      @if (canUpgradePlan()) {
+        <button type="button" mat-raised-button class="subscription-usage-page__upgrade" (click)="openSubscriptionPlans()">
+          <mat-icon fontIcon="workspace_premium" aria-hidden="true" />
+          {{ 'subscriptionUsage.upgradePlan' | translate }}
+        </button>
+      }
+    </header>
+
+    @if (loading()) {
+      <p class="subscription-usage-page__message">{{ 'subscriptionUsage.loading' | translate }}</p>
+    } @else if (loadError()) {
+      <p class="subscription-usage-page__message subscription-usage-page__message--error" role="alert">
+        {{ loadError() }}
+      </p>
+    } @else if (quota(); as plan) {
+      <app-section-card
+        [title]="plan.planName"
+        [description]="plan.price + ' · ' + plan.renewalText"
+        density="comfortable"
+      >
+        <div class="subscription-usage-page__plan-meta">
+          <span class="subscription-usage-page__status">
+            <mat-icon fontIcon="verified" aria-hidden="true" />
+            {{ plan.status }}
+          </span>
+        </div>
+      </app-section-card>
+
+      <section class="subscription-usage-page__featured-hero" aria-labelledby="featured-quota-title">
+        <div class="subscription-usage-page__featured-copy">
+          <span class="subscription-usage-page__featured-icon" aria-hidden="true">
+            <mat-icon fontSet="material-symbols-outlined" inline>workspace_premium</mat-icon>
+          </span>
+          <div>
+            <h2 id="featured-quota-title" class="subscription-usage-page__featured-title">
+              {{ 'subscriptionUsage.featured.title' | translate }}
+            </h2>
+            <p class="subscription-usage-page__featured-subtitle">
+              {{ 'subscriptionUsage.featured.subtitle' | translate }}
+            </p>
+          </div>
+        </div>
+
+        <div class="subscription-usage-page__featured-stats">
+          <div class="subscription-usage-page__featured-stat subscription-usage-page__featured-stat--primary">
+            <strong>{{ plan.featured.remaining }}</strong>
+            <span>{{ 'subscriptionUsage.featured.remaining' | translate }}</span>
+          </div>
+          <div class="subscription-usage-page__featured-stat">
+            <strong>{{ plan.featured.used }}</strong>
+            <span>{{ 'subscriptionUsage.featured.used' | translate }}</span>
+          </div>
+          <div class="subscription-usage-page__featured-stat">
+            <strong>{{ plan.featured.total }}</strong>
+            <span>{{ 'subscriptionUsage.featured.total' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="subscription-usage-page__meter">
+          <div class="subscription-usage-page__meter-row">
+            <span>{{ 'subscriptionUsage.featured.usage' | translate }}</span>
+            <strong>{{ plan.featured.percentUsed }}%</strong>
+          </div>
+          <div class="subscription-usage-page__meter-bar">
+            <span [style.width.%]="plan.featured.percentUsed"></span>
+          </div>
+        </div>
+
+        <p class="subscription-usage-page__hint">
+          {{ 'subscriptionUsage.featured.liveCount' | translate:{ count: plan.featuredPropertiesLive } }}
+        </p>
+      </section>
+
+      <section class="subscription-usage-page__grid" aria-label="Other plan quotas">
+        <article class="subscription-usage-page__quota-card">
+          <div class="subscription-usage-page__quota-head">
+            <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">home_work</mat-icon>
+            <h3>{{ 'subscriptionUsage.listings.title' | translate }}</h3>
+          </div>
+          <p class="subscription-usage-page__quota-value">
+            {{ plan.listings.used }} / {{ listingLimitLabel(plan.listings.limit) }}
+          </p>
+          @if (plan.listings.limit !== null) {
+            <div class="subscription-usage-page__meter-bar subscription-usage-page__meter-bar--compact">
+              <span [style.width.%]="plan.listings.percentUsed"></span>
+            </div>
+          }
+        </article>
+
+        <article class="subscription-usage-page__quota-card">
+          <div class="subscription-usage-page__quota-head">
+            <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">groups</mat-icon>
+            <h3>{{ 'subscriptionUsage.agentVisibility.title' | translate }}</h3>
+          </div>
+          <p class="subscription-usage-page__quota-value">
+            {{ plan.agentVisibility.remaining }} / {{ plan.agentVisibility.total }}
+          </p>
+          <p class="subscription-usage-page__quota-caption">
+            {{ 'subscriptionUsage.agentVisibility.remaining' | translate }}
+          </p>
+          <div class="subscription-usage-page__meter-bar subscription-usage-page__meter-bar--compact">
+            <span [style.width.%]="plan.agentVisibility.percentUsed"></span>
+          </div>
+        </article>
+
+        <article class="subscription-usage-page__quota-card">
+          <div class="subscription-usage-page__quota-head">
+            <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">rocket_launch</mat-icon>
+            <h3>{{ 'subscriptionUsage.hotBoost.title' | translate }}</h3>
+          </div>
+          <p class="subscription-usage-page__quota-value">
+            {{
+              plan.hotPropertyBoostEnabled
+                ? ('subscriptionUsage.hotBoost.enabled' | translate)
+                : ('subscriptionUsage.hotBoost.disabled' | translate)
+            }}
+          </p>
+        </article>
+      </section>
+    }
+  </div>
+</app-page-shell>

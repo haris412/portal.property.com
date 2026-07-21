@@ -170,9 +170,48 @@
     "notifications": "اطلاعات",
     "userMenu": {
       "settings": "ترتیبات",
+      "planUsage": "پلان کا استعمال",
       "subscriptionPlans": "Subscription plans",
       "userPortal": "صارف پورٹل",
       "logout": "لاگ آؤٹ"
+    }
+  },
+  "settings": {
+    "title": "ترتیبات"
+  },
+  "subscriptionUsage": {
+    "viewUsage": "پلان کا استعمال دیکھیں",
+    "title": "پلان کا استعمال",
+    "subtitle": "دیکھیں کہ آپ کے موجودہ سبسکرپشن پلان میں کتنا کوٹہ باقی ہے۔",
+    "settingsCard": "فیچرڈ سلاٹس، لسٹنگ کی حد، اور دیگر پلان کوٹے دیکھیں۔",
+    "backToDashboard": "ڈیش بورڈ",
+    "upgradePlan": "پلان اپ گریڈ کریں",
+    "loading": "پلان کا استعمال لوڈ ہو رہا ہے…",
+    "unlimited": "لامحدود",
+    "errors": {
+      "notSignedIn": "اپنے پلان کا استعمال دیکھنے کے لیے سائن ان کریں۔",
+      "loadFailed": "پلان کا استعمال لوڈ نہیں ہو سکا۔ بعد میں دوبارہ کوشش کریں۔"
+    },
+    "featured": {
+      "title": "فیچرڈ لسٹنگز",
+      "subtitle": "آپ کے موجودہ پلان پر باقی فیچرڈ سلاٹس۔",
+      "remaining": "باقی",
+      "used": "استعمال شدہ",
+      "total": "کل allowance",
+      "usage": "فیچرڈ کا استعمال",
+      "liveCount": "آپ کے پورٹ فولیو میں فی الحال {{count}} فیچرڈ پراپرٹیز لائیو ہیں۔"
+    },
+    "listings": {
+      "title": "لسٹنگ کی حد"
+    },
+    "agentVisibility": {
+      "title": "ایجنٹ visibility",
+      "remaining": "باقی visibility سلاٹس"
+    },
+    "hotBoost": {
+      "title": "Hot property boost",
+      "enabled": "فعال",
+      "disabled": "غیر فعال"
     }
   },
   "agencies": {

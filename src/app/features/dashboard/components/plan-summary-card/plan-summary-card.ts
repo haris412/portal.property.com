@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 import { SectionCardComponent } from '../../../../shared/ui/section-card/section-card';
 import { PlanFeature } from '../../dashboard.mock';
 
 @Component({
   selector: 'app-plan-summary-card',
   standalone: true,
-  imports: [SectionCardComponent, MatIconModule],
+  imports: [SectionCardComponent, MatIconModule, RouterLink, TranslateModule],
   templateUrl: './plan-summary-card.html',
   styleUrl: './plan-summary-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

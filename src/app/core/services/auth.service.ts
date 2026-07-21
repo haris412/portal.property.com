@@ -256,6 +256,9 @@ export class AuthService {
   peekRefreshToken(): string | null {
     return this.storage?.getItem(REFRESH_KEY) ?? null;
   }
+  hasStoredRefreshToken(): boolean {
+    return Boolean(this.peekRefreshToken()?.trim());
+  }
   hasRole(role: string): boolean {
     return this.getCurrentUser()?.roles?.includes(role) ?? false;
   }
