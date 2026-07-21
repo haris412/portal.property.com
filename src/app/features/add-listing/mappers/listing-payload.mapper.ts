@@ -52,7 +52,7 @@ export function buildListingPayload(
   isFeatured:    boolean
 ): CreateListingPayload {
   const { basic, description, pricing, amenities, contact, location } = forms;
-
+  console.log('Building listing payload with forms:', forms, 'and uploaded media:', uploadedMedia, 'isFeatured:', isFeatured);
   return {
     purpose:             basic.purpose === 'sale' ? 'For Sale' : 'For Rent',
     listingTitle:        (basic.listingTitle ?? '').trim(),

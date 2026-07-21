@@ -94,6 +94,7 @@ export class PropertyLocationStepComponent implements OnInit {
   readonly selectedHierarchy = signal<LocationHierarchyItem[]>([]);
 
   private sessionToken = crypto.randomUUID();
+  placeId: string | null = null;
 
   readonly displaySuggestion = (value: PlaceSuggestion | string | null | undefined): string => {
     if (!value) return '';
@@ -113,6 +114,7 @@ export class PropertyLocationStepComponent implements OnInit {
   }
 
   onPlaceSelected(event: MatAutocompleteSelectedEvent): void {
+    debugger;
     const suggestion = event.option.value as PlaceSuggestion;
     this.form.controls.locationQuery.setValue(suggestion.mainText, { emitEvent: false });
 
@@ -136,8 +138,10 @@ export class PropertyLocationStepComponent implements OnInit {
 
     // emitEvent:false prevents locationQuery.valueChanges from triggering wireSearch,
     // which would clear locationHierarchy after its 300ms debounce.
+    console.log(this.placeId, locationQueryDisplay, hierarchy, doc.fullAddress, mapLink, latitude, longitude);
     this.form.patchValue(
       {
+        placeId:           this.placeId ?? '',
         locationQuery:     locationQueryDisplay,
         locationHierarchy: hierarchy,
         fullAddress:       doc.fullAddress ?? '',
@@ -148,7 +152,7 @@ export class PropertyLocationStepComponent implements OnInit {
       },
       { emitEvent: false }
     );
-
+    console.log(this.form.value);
     if (latitude == null || longitude == null) {
       this.geocodeMissingCoordinates(locationQueryDisplay, doc.fullAddress ?? '');
     }
@@ -174,9 +178,9 @@ export class PropertyLocationStepComponent implements OnInit {
 
   private buildForm() {
     const form = this.fb.nonNullable.group({
+      placeId:           [''],
       locationQuery:     [''],
       locationHierarchy: [[] as LocationHierarchyItem[]],
-      placeId:           [''],
       fullAddress:       ['', Validators.required],
       mapLink:           [''],
       zipCode:           [''],
