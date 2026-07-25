@@ -21,7 +21,7 @@ import { SectionCardComponent } from '../../../../shared/ui/section-card/section
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { LocationMapPickerComponent } from '../location-map-picker/location-map-picker';
 import { GooglePlacesService } from '../../../../core/services/google-places.service';
-import type { LocationHierarchyItem, PlaceSuggestion } from '../../../../core/models/google-places.models';
+import type { GooglePlacePrediction, LocationHierarchyItem, PlaceSuggestion } from '../../../../core/models/google-places.models';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 
 function coerceCoordinate(value: unknown): number | null {
@@ -87,7 +87,7 @@ export class PropertyLocationStepComponent implements OnInit {
   readonly hasLocation    = signal(false);
   readonly form           = this.buildForm();
 
-  readonly suggestions    = signal<PlaceSuggestion[]>([]);
+  readonly suggestions    = signal<GooglePlacePrediction[]>([]);
   readonly searchState    = signal<SearchState>({ status: 'idle' });
   readonly searchErrorMsg = computed(() => { const s = this.searchState(); return s.status === 'error' ? s.message : null; });
 
@@ -96,9 +96,9 @@ export class PropertyLocationStepComponent implements OnInit {
   private sessionToken = crypto.randomUUID();
   placeId: string | null = null;
 
-  readonly displaySuggestion = (value: PlaceSuggestion | string | null | undefined): string => {
+  readonly displaySuggestion = (value: GooglePlacePrediction  | string | null | undefined): string => {
     if (!value) return '';
-    return typeof value === 'string' ? value : value.mainText;
+    return typeof value === 'string' ? value : value.structuredFormat.mainText.text;
   };
 
   @Output() readonly formReady = new EventEmitter<FormGroup>();
@@ -115,15 +115,15 @@ export class PropertyLocationStepComponent implements OnInit {
 
   onPlaceSelected(event: MatAutocompleteSelectedEvent): void {
     debugger;
-    const suggestion = event.option.value as PlaceSuggestion;
-    this.form.controls.locationQuery.setValue(suggestion.mainText, { emitEvent: false });
+    const suggestion = event.option.value as GooglePlacePrediction;
+    this.form.controls.locationQuery.setValue(suggestion.structuredFormat.mainText.text , { emitEvent: false });
 
     // Place Details is no longer called from the frontend — the backend resolves full
     // address/coordinates from placeId internally. Only the placeId + autocomplete's
     // own text are captured here; latitude/longitude are set by the map pin (click/drag).
     this.form.patchValue({
       placeId:     suggestion.placeId,
-      fullAddress: [suggestion.mainText, suggestion.secondaryText].filter(Boolean).join(', '),
+      fullAddress: [suggestion.structuredFormat.mainText.text, suggestion.structuredFormat.secondaryText?.text].filter(Boolean).join(', '),
     });
     this.suggestions.set([]);
     this.sessionToken = crypto.randomUUID();
@@ -227,14 +227,14 @@ export class PropertyLocationStepComponent implements OnInit {
         }),
         switchMap(value => {
           const input = (value ?? '').toString().trim();
-          if (!input) return of([] as PlaceSuggestion[]);
+          if (!input) return of([] as GooglePlacePrediction[]);
 
           this.searchState.set({ status: 'loading' });
 
           return this.googlePlaces.searchPlaces(input, this.sessionToken).pipe(
             catchError(() => {
               this.searchState.set({ status: 'error', message: 'Could not load suggestions. Please try again.' });
-              return of([] as PlaceSuggestion[]);
+              return of([] as GooglePlacePrediction[]);
             }),
             finalize(() => this.searchState.set({ status: 'idle' }))
           );

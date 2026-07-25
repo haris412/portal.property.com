@@ -18,7 +18,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Subject, catchError, debounceTime, distinctUntilChanged, of, switchMap, take } from 'rxjs';
 import { apiErrorSummary } from '../../../../core/http/parse-http-api-error';
-import type { PlaceSuggestion } from '../../../../core/models/google-places.models';
+import type { GooglePlacePrediction, PlaceSuggestion } from '../../../../core/models/google-places.models';
 import { UserProfileModel } from '../../../../core/models/profile.models';
 import { AuthService } from '../../../../core/services/auth.service';
 import { GooglePlacesService } from '../../../../core/services/google-places.service';
@@ -57,7 +57,7 @@ export class ProfileAccountSection implements OnDestroy {
   @Output() readonly saved = new EventEmitter<Partial<UserProfileModel>>();
 
   // ── Location autocomplete ───────────────────────────────────────────────────
-  readonly locationSuggestions   = signal<PlaceSuggestion[]>([]);
+  readonly locationSuggestions   = signal<GooglePlacePrediction[]>([]);
   readonly locationSearchLoading = signal(false);
   private sessionToken           = crypto.randomUUID();
   private readonly locationQuery$ = new Subject<string>();
@@ -96,8 +96,8 @@ export class ProfileAccountSection implements OnDestroy {
   }
 
   onLocationSelected(event: MatAutocompleteSelectedEvent): void {
-    const suggestion = event.option.value as PlaceSuggestion;
-    this.form.controls.location.setValue(suggestion.mainText, { emitEvent: false });
+    const suggestion = event.option.value as GooglePlacePrediction;
+    this.form.controls.location.setValue(suggestion.structuredFormat.mainText.text, { emitEvent: false });
     this.locationSuggestions.set([]);
     this.sessionToken = crypto.randomUUID();
   }
@@ -153,11 +153,11 @@ export class ProfileAccountSection implements OnDestroy {
         switchMap((query) => {
           if (!query) {
             this.locationSuggestions.set([]);
-            return of([] as PlaceSuggestion[]);
+            return of([] as GooglePlacePrediction[]);
           }
           this.locationSearchLoading.set(true);
           return this.googlePlaces.searchPlaces(query, this.sessionToken).pipe(
-            catchError(() => of([] as PlaceSuggestion[]))
+            catchError(() => of([] as GooglePlacePrediction[]))
           );
         }),
         takeUntilDestroyed(this.destroyRef)
