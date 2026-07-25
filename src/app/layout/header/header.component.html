@@ -61,6 +61,15 @@
             </a>
 
             @if (canOpenSubscriptionPlans()) {
+              <a
+                routerLink="/subscription-usage"
+                class="header__dropdown-item"
+                (click)="closeUserMenu()"
+              >
+                <mat-icon fontIcon="query_stats" aria-hidden="true"></mat-icon>
+                <span>{{ 'header.userMenu.planUsage' | translate }}</span>
+              </a>
+
               <button
                 type="button"
                 class="header__dropdown-item"

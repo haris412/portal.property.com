@@ -31,9 +31,9 @@
       </div>
     </div>
 
-    <button type="button" class="plan-summary-card__cta">
-      <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">trending_up</mat-icon>
-      <span>Upgrade Plan</span>
-    </button>
+    <a routerLink="/subscription-usage" class="plan-summary-card__cta">
+      <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">query_stats</mat-icon>
+      <span>{{ 'subscriptionUsage.viewUsage' | translate }}</span>
+    </a>
   </div>
 </app-section-card>

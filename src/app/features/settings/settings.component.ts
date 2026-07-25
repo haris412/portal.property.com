@@ -1,24 +1,28 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatIconModule } from '@angular/material/icon';
 import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/ui/breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, BreadcrumbComponent],
+  imports: [RouterLink, TranslateModule, MatIconModule, BreadcrumbComponent],
   template: `
   <div class="page-container">
     <app-breadcrumb [items]="breadcrumbs" />
     <div class="page-header">
-      <h2 class="page-title">Settings</h2>
+      <h2 class="page-title">{{ 'settings.title' | translate }}</h2>
     </div>
-    <div class="placeholder-card">
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="24" r="22" stroke="var(--border-soft)" stroke-width="2"/>
-        <circle cx="24" cy="24" r="6" stroke="var(--font-secondary)" stroke-width="2"/>
-        <path d="M24 6v4M24 38v4M6 24h4M38 24h4" stroke="var(--font-secondary)" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <p>Settings panel coming soon</p>
+
+    <div class="settings-links">
+      <a routerLink="/subscription-usage" class="settings-links__card">
+        <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">workspace_premium</mat-icon>
+        <div>
+          <strong>{{ 'subscriptionUsage.title' | translate }}</strong>
+          <p>{{ 'subscriptionUsage.settingsCard' | translate }}</p>
+        </div>
+      </a>
     </div>
   </div>
 `,
@@ -29,6 +33,7 @@ import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/ui/breadcrumb/
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    padding: 1rem;
   }
 
   .page-header {
@@ -44,17 +49,43 @@ import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/ui/breadcrumb/
     margin: 0;
   }
 
-  .placeholder-card {
-    background: var(--surface);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-xl);
-    padding: 4rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .settings-links {
+    display: grid;
     gap: 1rem;
-    color: var(--font-secondary);
-    font-size: 0.9rem;
+  }
+
+  .settings-links__card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+
+    strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: var(--font-main);
+    }
+
+    p {
+      margin: 0;
+      color: var(--font-secondary);
+      font-size: var(--font-size-body-sm);
+    }
+
+    mat-icon {
+      color: var(--primary);
+    }
+
+    &:hover {
+      border-color: var(--border-soft-strong);
+      box-shadow: var(--shadow-soft);
+    }
   }
 `],
 })

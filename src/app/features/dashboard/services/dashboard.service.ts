@@ -5,6 +5,8 @@ import { map } from 'rxjs/operators';
 import { DashboardApiResponse, DashboardViewModel } from '../models/dashboard-api.model';
 import { DashboardData, StatCard, ActivityItem, ChartData } from '../models/stats.model';
 import { mapDashboardApiResponse } from '../utils/map-dashboard-api';
+import { mapPlanQuotaApiResponse } from '../../subscription-usage/utils/map-plan-quota';
+import type { PlanQuotaViewModel } from '../../subscription-usage/models/plan-quota.model';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -30,6 +32,16 @@ export class DashboardService {
     return this.http
       .get<DashboardApiResponse>('/dashboard/dashboardData', { params })
       .pipe(map((body) => mapDashboardApiResponse(body, displayName)));
+  }
+
+  getPlanQuotaData(roleIds: string[], userId: string): Observable<PlanQuotaViewModel | null> {
+    const params = new HttpParams()
+      .set('userId', userId)
+      .set('roleId', JSON.stringify(roleIds));
+
+    return this.http
+      .get<DashboardApiResponse>('/dashboard/dashboardData', { params })
+      .pipe(map((body) => mapPlanQuotaApiResponse(body)));
   }
 
   getDashboardData(): Observable<DashboardData> {
