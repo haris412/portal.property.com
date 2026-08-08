@@ -181,4 +181,12 @@ export class SubscriptionsApiService {
       body,
     );
   }
+
+  checkActiveSubscriptionAndFeaturedCount(
+    userId:string,
+  ) {
+    return this.http.get<any>(
+      `${this.base}/${userId}/status`
+    ).toPromise();
+  }
 }

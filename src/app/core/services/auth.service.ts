@@ -179,7 +179,6 @@ function extractAgencyId(raw: Record<string, unknown>): string | undefined {
 }
 
 export function fromApiUser(raw: Record<string, unknown>): User {
-  console.log(raw);
   const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
   const lastName  = (raw['lastName']  as string | undefined)?.trim() || undefined;
   const agency    = raw['agency'];
@@ -255,6 +254,9 @@ export class AuthService {
   }
   peekRefreshToken(): string | null {
     return this.storage?.getItem(REFRESH_KEY) ?? null;
+  }
+  hasStoredRefreshToken(): boolean {
+    return Boolean(this.peekRefreshToken()?.trim());
   }
   hasRole(role: string): boolean {
     return this.getCurrentUser()?.roles?.includes(role) ?? false;

@@ -122,6 +122,7 @@
     color: var(--surface);
     font-size: var(--font-size-body-sm);
     font-weight: var(--font-weight-bold);
+    text-decoration: none;
     transition: background 160ms ease, transform 160ms ease;
 
     &:hover {

@@ -29,9 +29,9 @@
                               (optionSelected)="onPlaceSelected($event)">
               @for (suggestion of suggestions(); track suggestion.placeId) {
                 <mat-option [value]="suggestion">
-                  <span class="location-option__main">{{ suggestion.mainText }}</span>
-                  @if (suggestion.secondaryText) {
-                    <span class="location-option__secondary"> — {{ suggestion.secondaryText }}</span>
+                  <span class="location-option__main">{{ suggestion.structuredFormat.mainText.text }}</span>
+                  @if (suggestion.structuredFormat.secondaryText) {
+                    <span class="location-option__secondary"> — {{ suggestion.structuredFormat.secondaryText.text }}</span>
                   }
                 </mat-option>
               }

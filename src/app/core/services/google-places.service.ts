@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
-import type { PlaceSuggestion } from '../models/google-places.models';
+import type { GooglePlacePrediction, PlaceSuggestion } from '../models/google-places.models';
+import { environment } from '../../../environments/environment.prod';
 
 // Our own backend's envelopes for the places proxy — both already flattened server-side
 // (see placesService.js), so Google's raw response shapes never need to be typed here at all.
@@ -17,17 +18,15 @@ export class GooglePlacesService {
   // that's needed, same as every other service in this app.
   private readonly http = inject(HttpClient);
 
-  searchPlaces(input: string, sessionToken: string): Observable<PlaceSuggestion[]> {
-    const trimmed = input.trim();
-    // Fewer than 3 characters isn't worth a round trip — our backend rejects it anyway
-    // (see placesRoutes.js's isLength({ min: 3 })), so skip the call entirely here too.
-    if (trimmed.length < 3) return of([]);
+  searchPlaces(query: string, sessionToken: string): Observable<GooglePlacePrediction[]> {
+    if (!query.trim()) return of([]);
 
-    return this.http
-      .post<AutocompleteProxyResponse>('/places/autocomplete', { input: trimmed, sessionToken })
-      .pipe(
-        map(res => res.data?.suggestions ?? []),
-        catchError(() => of([] as PlaceSuggestion[]))
-      );
+    return this.http.post<{ data: { suggestions: GooglePlacePrediction[] } }>(
+      `${environment.apiUrl}/places/autocomplete`,
+      { input: query }
+    ).pipe(
+      map(res => res?.data.suggestions ?? []),
+      catchError(() => of([]))
+    );
   }
 }

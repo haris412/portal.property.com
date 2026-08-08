@@ -173,9 +173,48 @@
     "notifications": "Notifications",
     "userMenu": {
       "settings": "Settings",
+      "planUsage": "Plan usage",
       "subscriptionPlans": "Subscription plans",
       "userPortal": "User portal",
       "logout": "Logout"
+    }
+  },
+  "settings": {
+    "title": "Settings"
+  },
+  "subscriptionUsage": {
+    "viewUsage": "View plan usage",
+    "title": "Plan usage",
+    "subtitle": "See how much of your current subscription plan is still available.",
+    "settingsCard": "Check featured slots, listing limits, and other plan quotas.",
+    "backToDashboard": "Dashboard",
+    "upgradePlan": "Upgrade plan",
+    "loading": "Loading plan usage…",
+    "unlimited": "Unlimited",
+    "errors": {
+      "notSignedIn": "Sign in to view your plan usage.",
+      "loadFailed": "Could not load plan usage. Please try again later."
+    },
+    "featured": {
+      "title": "Featured listings",
+      "subtitle": "Remaining featured slots on your current plan.",
+      "remaining": "Remaining",
+      "used": "Used",
+      "total": "Total allowance",
+      "usage": "Featured usage",
+      "liveCount": "{{count}} featured properties currently live in your portfolio."
+    },
+    "listings": {
+      "title": "Listing limit"
+    },
+    "agentVisibility": {
+      "title": "Agent visibility",
+      "remaining": "Remaining visibility slots"
+    },
+    "hotBoost": {
+      "title": "Hot property boost",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
     }
   },
   "agencies": {

@@ -134,9 +134,9 @@
                 >
                   @for (suggestion of locationSuggestions(); track suggestion.placeId) {
                     <mat-option [value]="suggestion">
-                      <span class="add-agent-page__location-main">{{ suggestion.mainText }}</span>
-                      @if (suggestion.secondaryText) {
-                        <span class="add-agent-page__location-secondary"> — {{ suggestion.secondaryText }}</span>
+                      <span class="add-agent-page__location-main">{{ suggestion.structuredFormat.mainText.text }}</span>
+                      @if (suggestion.structuredFormat.secondaryText) {
+                        <span class="add-agent-page__location-secondary"> — {{ suggestion.structuredFormat.secondaryText.text }}</span>
                       }
                     </mat-option>
                   }
