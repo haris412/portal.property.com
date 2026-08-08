@@ -65,7 +65,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 const FEATURED_LISTING_QUOTA_MESSAGE =
   'You are out of featured listing quota. Upgrade your plan or remove another featured property.';
@@ -465,11 +465,43 @@ export class AddListingPageComponent implements AfterViewInit {
 
   async onReviewSaveDraft(): Promise<void> { await this.onSaveDraft(); }
 
-  onFeaturedToggle(checked: boolean): void {
-    if (!checked)                                    { this.isFeatured.set(false); return; }
-    if (this.wasFeaturedWhenLoaded())                { this.isFeatured.set(true);  return; }
-    if (!this.assertFeaturedListingQuotaAvailable()) { this.isFeatured.set(false); return; }
-    this.isFeatured.set(true);
+  async onFeaturedToggle(event: MatSlideToggleChange) {
+    const checked = event.checked;
+
+    if (!checked)                     { this.isFeatured.set(false); return; }
+    if (this.wasFeaturedWhenLoaded()) { this.isFeatured.set(true);  return; }
+
+    const userId = this.auth.getUserId();
+    if (!userId) { this.isFeatured.set(false); event.source.checked = false; return; }
+
+    try {
+      const subscriptionResponse =
+        await this.subscriptionsApi.checkActiveSubscriptionAndFeaturedCount(userId);
+
+      if (
+        subscriptionResponse.success &&
+        subscriptionResponse.data.status.toLowerCase() === 'active'
+      ) {
+        if (subscriptionResponse?.data?.activeFeaturedCount > 0) {
+          this.isFeatured.set(true);
+        } else {
+          this.notifications.warning(FEATURED_LISTING_QUOTA_MESSAGE);
+          this.isFeatured.set(false);
+          event.source.checked = false;
+        }
+      } else {
+        this.notifications.warning(
+          'You do not have an active subscription. Please subscribe to a plan to feature your listing.',
+        );
+        this.isFeatured.set(false);
+        event.source.checked = false;
+      }
+    } catch (error) {
+      console.error('Error checking subscription and featured count:', error);
+      this.notifications.warning('Could not verify your subscription. Please try again.');
+      this.isFeatured.set(false);
+      event.source.checked = false;
+    }
   }
 
   private async onPublishListing(): Promise<void> {

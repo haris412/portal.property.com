@@ -114,7 +114,6 @@ export class PropertyLocationStepComponent implements OnInit {
   }
 
   onPlaceSelected(event: MatAutocompleteSelectedEvent): void {
-    debugger;
     const suggestion = event.option.value as GooglePlacePrediction;
     this.form.controls.locationQuery.setValue(suggestion.structuredFormat.mainText.text , { emitEvent: false });
 

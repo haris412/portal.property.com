@@ -179,7 +179,6 @@ function extractAgencyId(raw: Record<string, unknown>): string | undefined {
 }
 
 export function fromApiUser(raw: Record<string, unknown>): User {
-  console.log(raw);
   const firstName = (raw['firstName'] as string | undefined)?.trim() || undefined;
   const lastName  = (raw['lastName']  as string | undefined)?.trim() || undefined;
   const agency    = raw['agency'];
