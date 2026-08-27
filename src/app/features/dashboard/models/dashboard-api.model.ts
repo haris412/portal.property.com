@@ -18,6 +18,7 @@ export interface DashboardApiDashboardData {
   totalSalesProperties?: number;
   totalRentProperties?: number;
   featuredPropertiesCount?: number;
+  hotPropertiesCount?: number;
   subscriptionPlanData?: DashboardApiSubscriptionPlanData;
   analyticsData?: DashboardApiAnalyticsData;
   agentCount?: number;

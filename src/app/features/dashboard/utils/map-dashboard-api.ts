@@ -99,6 +99,7 @@ export function mapDashboardApiResponse(
   const totalSales = dashboard.totalSalesProperties ?? 0;
   const totalRent = dashboard.totalRentProperties ?? 0;
   const featuredCount = dashboard.featuredPropertiesCount ?? 0;
+  const hotCount = dashboard.hotPropertiesCount ?? 0;
 
   const plan = dashboard.subscriptionPlanData ?? {};
   const trending = dashboard.analyticsData?.trendingPropertyViews;
@@ -147,7 +148,7 @@ export function mapDashboardApiResponse(
     portfolioMetrics: [
       { ...PORTFOLIO_METRICS[0], value: totalSales },
       { ...PORTFOLIO_METRICS[1], value: totalRent },
-      { ...PORTFOLIO_METRICS[2], value: 0 },
+      { ...PORTFOLIO_METRICS[2], value: hotCount, hint: 'Most viewed in their area' },
       { ...PORTFOLIO_METRICS[3], value: featuredCount },
     ],
     planSummary: {

@@ -46,7 +46,7 @@ export const PORTFOLIO_METRICS: PortfolioMetric[] = [
   {
     title: 'Hot Properties',
     value: 7,
-    hint: 'High views this week',
+    hint: 'Most viewed in their area',
     icon: 'local_fire_department'
   },
   {
