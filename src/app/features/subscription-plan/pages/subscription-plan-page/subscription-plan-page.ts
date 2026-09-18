@@ -21,6 +21,7 @@ import { SectionCardComponent } from '../../../../shared/ui/section-card/section
 import { SubscriptionConfigService } from '../../../../core/services/subscription-config.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import type { Role, RoleListItem } from '../../../../core/models/role.models';
+import { toSubscriptionConfigRoleName } from '../../../../core/models/role.models';
 import type {
   SubscriptionConfig,
   SubscriptionConfigBulkPayload,
@@ -114,10 +115,16 @@ export class SubscriptionPlanPageComponent implements OnInit {
     this.loadError.set(null);
     this.subscriptionApi.getAllRoles().subscribe({
       next: (res: ResponseModel<Role>) => {
-        const list = Array.isArray(res.data.roles) ? res.data.roles : [];
-        this.roles.set(list);
+        const list = (Array.isArray(res.data.roles) ? res.data.roles : []).map((item) => ({
+          ...item,
+          name: toSubscriptionConfigRoleName(String(item.name ?? '')),
+        }));
+        const unique = list.filter(
+          (item, index) => list.findIndex((other) => other.name === item.name) === index,
+        );
+        this.roles.set(unique);
         if (list.length > 0 && !this.planForm.controls.roleName.value) {
-          const first = String(list[0].name ?? '');
+          const first = toSubscriptionConfigRoleName(String(list[0].name ?? ''));
           this.planForm.controls.roleName.setValue(first);
           this.loadConfigsForRole(first);
         }
@@ -153,8 +160,9 @@ export class SubscriptionPlanPageComponent implements OnInit {
   }
 
   onRoleSelected(): void {
-    const role = this.planForm.controls.roleName.value.trim();
+    const role = toSubscriptionConfigRoleName(this.planForm.controls.roleName.value);
     if (role) {
+      this.planForm.controls.roleName.setValue(role, { emitEvent: false });
       this.loadConfigsForRole(role);
     } else {
       this.configRows.clear();
@@ -163,9 +171,10 @@ export class SubscriptionPlanPageComponent implements OnInit {
   }
 
   private loadConfigsForRole(roleName: string): void {
+    const role = toSubscriptionConfigRoleName(roleName);
     this.loadingConfigs.set(true);
     this.loadError.set(null);
-    this.subscriptionApi.getSubscriptionConfigByRole(roleName).subscribe({
+    this.subscriptionApi.getSubscriptionConfigByRole(role).subscribe({
       next: (res: ResponseModel<SubscriptionConfig>) => {
         this.loadError.set(null);
         const configs = res.data.subscriptionConfigs ?? [];
@@ -208,11 +217,12 @@ export class SubscriptionPlanPageComponent implements OnInit {
   }
 
   save(): void {
-    const role = this.planForm.controls.roleName.value.trim();
+    const role = toSubscriptionConfigRoleName(this.planForm.controls.roleName.value);
     if (!role) {
       this.notifications.warning('Select a role.');
       return;
     }
+    this.planForm.controls.roleName.setValue(role, { emitEvent: false });
 
     if (this.planForm.invalid) {
       this.planForm.markAllAsTouched();

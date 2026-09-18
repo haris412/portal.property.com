@@ -13,7 +13,7 @@ import {
   SubscriptionPlansDialogComponent,
   type SubscriptionPlansDialogData,
 } from '../../shared/dialogs/subscription-plans-dialog/subscription-plans-dialog.component';
-import { isAdminRole, isBuyerRole, isSubscriptionPlansGateExcluded } from '../models/role.models';
+import { isAdminRole, isBuyerRole, isSubscriptionPlansGateExcluded, toSubscriptionConfigRoleName } from '../models/role.models';
 
 @Injectable({ providedIn: 'root' })
 export class SubscriptionPlansGateService {
@@ -111,7 +111,10 @@ export class SubscriptionPlansGateService {
   }
 
   private openPlansDialog(roleName: string, disableClose: boolean): Observable<void> {
-    const data: SubscriptionPlansDialogData = { roleName, canClose: !disableClose };
+    const data: SubscriptionPlansDialogData = {
+      roleName: toSubscriptionConfigRoleName(roleName),
+      canClose: !disableClose,
+    };
     return this.dialog
       .open(SubscriptionPlansDialogComponent, {
         width: 'min(1200px, 96vw)',

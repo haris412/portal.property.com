@@ -24,6 +24,7 @@
         Retry
       </button>
     } @else {
+      <div class="subscription-plans-dialog__stack">
       <div class="subscription-plans-dialog__grid">
         @for (card of cards; track card.id) {
           <article
@@ -32,6 +33,7 @@
             [class.subscription-plans-dialog__card--recommended]="card.emphasis && !card.isCurrentPlan"
             [class.subscription-plans-dialog__card--current]="card.isCurrentPlan"
             [class.subscription-plans-dialog__card--selected]="selectedCardId === card.id && !card.isCurrentPlan"
+            [class.subscription-plans-dialog__card--locked]="isFreeLocked(card)"
           >
             @if (card.emphasis && !card.isCurrentPlan) {
               <div class="subscription-plans-dialog__recommended-ribbon" aria-label="Recommended plan">
@@ -74,6 +76,10 @@
                   Active quotas: {{ card.numberOfFeatureListing }} featured listings,
                   {{ card.numberOfAgentVisibility }} agent visibility
                 </p>
+              } @else if (isFreeLocked(card)) {
+                <p class="subscription-plans-dialog__quota-hint">
+                  Paid plans cannot be changed to Free.
+                </p>
               } @else {
                 <p class="subscription-plans-dialog__quota-hint">
                   Includes {{ card.numberOfFeatureListing }} featured listings,
@@ -105,41 +111,56 @@
                   color="primary"
                   type="button"
                   class="subscription-plans-dialog__cta"
-                  [disabled]="submittingCardId !== null || card.isCurrentPlan"
+                  [disabled]="isPlanActionDisabled(card)"
                   (click)="subscribePlan(card)"
                 >
-                  @if (card.isCurrentPlan) {
-                    Current plan
-                  } @else if (selectedCardId === card.id && submittingCardId !== card.id) {
-                    Confirm subscription
-                  } @else if (submittingCardId === card.id) {
-                    Saving...
-                  } @else {
-                    Select plan
-                  }
+                  {{ ctaLabel(card) }}
                 </button>
               } @else {
                 <button
                   mat-stroked-button
                   type="button"
                   class="subscription-plans-dialog__cta"
-                  [disabled]="submittingCardId !== null || card.isCurrentPlan"
+                  [disabled]="isPlanActionDisabled(card)"
                   (click)="subscribePlan(card)"
                 >
-                  @if (card.isCurrentPlan) {
-                    Current plan
-                  } @else if (selectedCardId === card.id && submittingCardId !== card.id) {
-                    Confirm subscription
-                  } @else if (submittingCardId === card.id) {
-                    Saving...
-                  } @else {
-                    Select plan
-                  }
+                  {{ ctaLabel(card) }}
                 </button>
               }
             </footer>
           </article>
         }
+      </div>
+
+      @if (showPaymentMethods) {
+        <section class="subscription-plans-dialog__methods" aria-label="Payment methods">
+          <h3 class="subscription-plans-dialog__methods-title">Pay with</h3>
+          <p class="subscription-plans-dialog__methods-copy">
+            Card uses Stripe. JazzCash and EasyPaisa use Paymob’s hosted checkout.
+          </p>
+          <div class="subscription-plans-dialog__methods-grid">
+            @for (method of checkoutMethods; track method.id) {
+              <button
+                type="button"
+                class="subscription-plans-dialog__method"
+                [class.subscription-plans-dialog__method--disabled]="!method.enabled"
+                [disabled]="submittingMethodId !== null"
+                (click)="payWith(method)"
+              >
+                <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">
+                  {{ method.id === 'card' ? 'credit_card' : 'account_balance_wallet' }}
+                </mat-icon>
+                <span>{{ method.label }}</span>
+                @if (submittingMethodId === method.id) {
+                  <small>Redirecting...</small>
+                } @else if (!method.enabled) {
+                  <small>Not configured</small>
+                }
+              </button>
+            }
+          </div>
+        </section>
+      }
       </div>
     }
   </div>

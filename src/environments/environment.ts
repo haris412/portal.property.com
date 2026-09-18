@@ -3,7 +3,8 @@ export const environment = {
   translateLoaderPrefix: '/i18n/',
   //translateLoaderPrefix: 'https://soletechs.net/property.admin/i18/',
   apiUrl: 'http://localhost:3000/api',
-  wsUrl:  'http://localhost:3000',  //socket handshake  same server, different path 
+  wsUrl:  'http://localhost:3000',
+  //wsUrl:  'https://soletechs.net/property.api',  //socket handshake  same server, different path 
   /** Public marketing site — anonymous video guests return here after leaving a call. */
   publicSiteUrl: 'https://soletechs.net/property.web/home',
 

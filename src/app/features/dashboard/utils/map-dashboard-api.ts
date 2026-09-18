@@ -13,6 +13,7 @@ import type {
   DashboardApiSubscriptionPlanData,
   DashboardViewModel,
 } from '../models/dashboard-api.model';
+import { formatPkrAmount } from '../../../core/utils/format-pkr';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -56,7 +57,7 @@ function formatPrice(
   if (amount == null) {
     return PLAN_SUMMARY.price;
   }
-  return `$${amount}/month`;
+  return `${formatPkrAmount(amount)}/month`;
 }
 
 function isUnlimitedListingLimit(

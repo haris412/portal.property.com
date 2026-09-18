@@ -59,7 +59,7 @@ export const PORTFOLIO_METRICS: PortfolioMetric[] = [
 
 export const PLAN_SUMMARY = {
   name: 'Professional Plus',
-  price: '$89/month',
+  price: 'PKR 8,900/month',
   renewalText: 'renews on 28 May 2026',
   listingLimit: 35,
   used: 24,

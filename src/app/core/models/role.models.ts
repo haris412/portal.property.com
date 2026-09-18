@@ -48,6 +48,15 @@ export function hasPrimaryAgencyAdminRole(roles: string[] | undefined | null): b
   return (roles ?? []).some((r) => isPrimaryAgencyAdminRole(r));
 }
 
+/** SubscriptionConfig API stores this role as `Primary Agency Admin`, not `PrimaryAgencyAdmin`. */
+export function toSubscriptionConfigRoleName(role: string | undefined | null): string {
+  const trimmed = role?.trim() ?? '';
+  if (isPrimaryAgencyAdminRole(trimmed)) {
+    return 'Primary Agency Admin';
+  }
+  return trimmed;
+}
+
 export interface RoleListItem {
   _id?: string;
   name: RoleName | string;

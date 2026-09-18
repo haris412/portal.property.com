@@ -1,0 +1,20 @@
+<app-page-shell>
+  <div class="payment-result-page">
+    <nav class="payment-result-page__breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/dashboard" class="payment-result-page__breadcrumb-link">
+        <mat-icon fontIcon="arrow_back" aria-hidden="true" />
+        Back to dashboard
+      </a>
+    </nav>
+
+    <h1 class="payment-result-page__title">Payment cancelled</h1>
+    <p class="payment-result-page__copy">
+      No charge was made. Your current plan is unchanged. You can choose a plan again whenever you are ready.
+    </p>
+
+    <div class="payment-result-page__actions">
+      <button type="button" mat-raised-button color="primary" (click)="openPlans()">Choose a plan</button>
+      <a routerLink="/dashboard" mat-stroked-button>Go to dashboard</a>
+    </div>
+  </div>
+</app-page-shell>

@@ -129,6 +129,13 @@ export const routes: Routes = [
           ),
         title: 'Subscription plan',
       },
+      {
+        path: 'subscription',
+        loadChildren: () =>
+          import('./features/subscription-payment/subscription-payment.routes').then(
+            (m) => m.SUBSCRIPTION_PAYMENT_ROUTES
+          ),
+      },
     ],
   },
   {

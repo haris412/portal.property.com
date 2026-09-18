@@ -1,6 +1,7 @@
 import { formatDate } from '@angular/common';
 import type { DashboardApiDashboardData, DashboardApiResponse } from '../../dashboard/models/dashboard-api.model';
 import type { PlanQuotaViewModel, QuotaMeter } from '../models/plan-quota.model';
+import { formatPkrAmount } from '../../../core/utils/format-pkr';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -41,7 +42,7 @@ function formatPrice(monthlyPrice: number | undefined, price: number | undefined
   if (amount == null) {
     return '—';
   }
-  return `$${amount}/month`;
+  return `${formatPkrAmount(amount)}/month`;
 }
 
 function buildQuotaMeter(remaining: number, total: number): QuotaMeter {

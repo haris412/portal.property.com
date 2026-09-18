@@ -3,14 +3,17 @@ import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { finalize } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import { SubscriptionConfigService } from '../../../core/services/subscription-config.service';
 import {
   SubscriptionsApiService,
+  extractSubscriptionFromResponse,
   extractSubscriptionFromSuccessResponse,
 } from '../../../core/services/subscriptions-api.service';
 import { SubscriptionSessionStorageService } from '../../../core/services/subscription-session-storage.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { toSubscriptionConfigRoleName } from '../../../core/models/role.models';
 import { apiErrorSummary } from '../../../core/http/parse-http-api-error';
 import type {
   Subscription,
@@ -22,6 +25,8 @@ import type {
 import type { ResponseModel } from '../../../core/models/response.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { DashboardService } from '../../../features/dashboard/services/dashboard.service';
+import { PaymentsApiService, type CheckoutMethod, type CheckoutMethodId } from '../../../core/services/payments-api.service';
+import { formatPkrAmount } from '../../../core/utils/format-pkr';
 
 export interface SubscriptionPlansDialogData {
   roleName: string;
@@ -55,6 +60,7 @@ export class SubscriptionPlansDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<SubscriptionPlansDialogComponent>);
   private readonly subscriptionConfigApi = inject(SubscriptionConfigService);
   private readonly subscriptionsApi = inject(SubscriptionsApiService);
+  private readonly paymentsApi = inject(PaymentsApiService);
   private readonly subscriptionSession = inject(SubscriptionSessionStorageService);
   private readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
@@ -68,9 +74,18 @@ export class SubscriptionPlansDialogComponent {
   cards: PlanCardViewModel[] = [];
   submittingCardId: PlanCardViewModel['id'] | null = null;
   selectedCardId: PlanCardViewModel['id'] | null = null;
+  checkoutMethods: CheckoutMethod[] = [
+    { id: 'card', label: 'Card', provider: 'stripe', enabled: false },
+    { id: 'jazzcash', label: 'JazzCash', provider: 'paymob', enabled: false },
+    { id: 'easypaisa', label: 'EasyPaisa', provider: 'paymob', enabled: false },
+  ];
+  showPaymentMethods = false;
+  submittingMethodId: CheckoutMethodId | null = null;
+  private currentPlanType: SubscriptionType | null = null;
 
   constructor() {
     this.loadPlans();
+    this.loadCheckoutMethods();
   }
 
   retryLoad(): void {
@@ -85,9 +100,46 @@ export class SubscriptionPlansDialogComponent {
     return this.data.canClose === true || this.selectedCardId !== null || this.cards.some((card) => card.isCurrentPlan);
   }
 
+  ctaLabel(card: PlanCardViewModel): string {
+    if (card.isCurrentPlan) {
+      return 'Current plan';
+    }
+    if (this.isFreeLocked(card)) {
+      return 'Unavailable';
+    }
+    if (this.submittingCardId === card.id || this.submittingMethodId) {
+      return card.subscriptionType === 'Free' ? 'Saving...' : 'Redirecting...';
+    }
+    if (this.selectedCardId === card.id) {
+      if (card.subscriptionType !== 'Free' && this.showPaymentMethods) {
+        return 'Choose a payment method';
+      }
+      return card.subscriptionType === 'Free' ? 'Confirm subscription' : 'Continue to payment';
+    }
+    return 'Select plan';
+  }
+
+  isPlanActionDisabled(card: PlanCardViewModel): boolean {
+    return this.submittingCardId !== null || card.isCurrentPlan || this.isFreeLocked(card);
+  }
+
+  isFreeLocked(card: PlanCardViewModel): boolean {
+    return card.subscriptionType === 'Free' && this.hasPaidPlan();
+  }
+
+  hasPaidPlan(): boolean {
+    return this.currentPlanType === 'Monthly' || this.currentPlanType === 'Annual';
+  }
+
   subscribePlan(card: PlanCardViewModel): void {
+    if (this.isFreeLocked(card)) {
+      this.notifications.error('You already have a paid plan and cannot switch to Free.');
+      return;
+    }
+
     if (this.selectedCardId !== card.id) {
       this.selectedCardId = card.id;
+      this.showPaymentMethods = false;
       this.cdr.markForCheck();
       return;
     }
@@ -95,6 +147,17 @@ export class SubscriptionPlansDialogComponent {
     const user = this.auth.getCurrentUser();
     if (!user?._id?.trim()) {
       this.notifications.error('You must be signed in to subscribe.');
+      return;
+    }
+
+    if (card.subscriptionType === 'Monthly' || card.subscriptionType === 'Annual') {
+      const enabled = this.checkoutMethods.filter((method) => method.enabled);
+      if (enabled.length === 1) {
+        this.startPaidCheckout(card, enabled[0].id);
+        return;
+      }
+      this.showPaymentMethods = true;
+      this.cdr.markForCheck();
       return;
     }
 
@@ -135,19 +198,80 @@ export class SubscriptionPlansDialogComponent {
       });
   }
 
+  payWith(method: CheckoutMethod): void {
+    const card = this.cards.find((item) => item.id === this.selectedCardId);
+    if (!card || (card.subscriptionType !== 'Monthly' && card.subscriptionType !== 'Annual')) {
+      return;
+    }
+    if (!method.enabled) {
+      this.notifications.error(
+        method.id === 'card'
+          ? 'Card payments are not configured yet. Add a Stripe secret key in the API .env file.'
+          : `${method.label} is not configured yet. Add Paymob keys and the ${method.label} integration id in the API .env file.`,
+      );
+      return;
+    }
+    this.startPaidCheckout(card, method.id);
+  }
+
+  private startPaidCheckout(card: PlanCardViewModel, method: CheckoutMethodId): void {
+    if (card.subscriptionType !== 'Monthly' && card.subscriptionType !== 'Annual') {
+      return;
+    }
+
+    this.submittingCardId = card.id;
+    this.submittingMethodId = method;
+    this.cdr.markForCheck();
+
+    this.paymentsApi
+      .createCheckout({ subscriptionType: card.subscriptionType, method })
+      .pipe(
+        finalize(() => {
+          this.submittingCardId = null;
+          this.submittingMethodId = null;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          const checkoutUrl = res?.data?.checkoutUrl?.trim();
+          if (!checkoutUrl) {
+            this.notifications.error('Could not start checkout.');
+            return;
+          }
+          window.location.assign(checkoutUrl);
+        },
+        error: (err: unknown) => {
+          this.notifications.error(apiErrorSummary(err) || 'Could not start checkout.');
+        },
+      });
+  }
+
   private loadPlans(): void {
     this.loading = true;
     this.loadError = null;
     this.cdr.markForCheck();
 
-    this.subscriptionConfigApi.getSubscriptionConfigByRole(this.data.roleName).subscribe({
-      next: (res: ResponseModel<SubscriptionConfig>) => {
-        const raw = res?.data?.subscriptionConfigs ?? [];
-        const user = this.auth.getCurrentUser();
-        const active =
-          user?._id != null
-            ? this.subscriptionSession.getForUser(user._id, user.agencyId ?? null)
-            : null;
+    const user = this.auth.getCurrentUser();
+    const configs$ = this.subscriptionConfigApi.getSubscriptionConfigByRole(
+      toSubscriptionConfigRoleName(this.data.roleName),
+    );
+    const subscription$ = user?._id
+      ? this.subscriptionsApi.getSubscriptionsForUser(user._id, user.agencyId ?? undefined).pipe(
+          catchError(() => of(null)),
+        )
+      : of(null);
+
+    forkJoin({ configs: configs$, subscription: subscription$ }).subscribe({
+      next: ({ configs, subscription }: { configs: ResponseModel<SubscriptionConfig>; subscription: unknown }) => {
+        const raw = configs?.data?.subscriptionConfigs ?? [];
+        let active = extractSubscriptionFromResponse(subscription);
+        if (active) {
+          this.subscriptionSession.write(active);
+        } else if (user?._id) {
+          active = this.subscriptionSession.getForUser(user._id, user.agencyId ?? null);
+        }
+        this.currentPlanType = active?.subscriptionType ?? null;
         this.cards = buildPlanCards(raw, active);
         this.selectedCardId = this.cards.find((card) => card.isCurrentPlan)?.id ?? null;
         this.loading = false;
@@ -156,6 +280,29 @@ export class SubscriptionPlansDialogComponent {
       error: () => {
         this.loadError = 'Could not load subscription plans.';
         this.loading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private loadCheckoutMethods(): void {
+    this.paymentsApi.getCheckoutMethods().subscribe({
+      next: (res) => {
+        this.checkoutMethods = res?.data?.methods?.length
+          ? res.data.methods
+          : [
+              { id: 'card', label: 'Card', provider: 'stripe', enabled: false },
+              { id: 'jazzcash', label: 'JazzCash', provider: 'paymob', enabled: false },
+              { id: 'easypaisa', label: 'EasyPaisa', provider: 'paymob', enabled: false },
+            ];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.checkoutMethods = [
+          { id: 'card', label: 'Card', provider: 'stripe', enabled: false },
+          { id: 'jazzcash', label: 'JazzCash', provider: 'paymob', enabled: false },
+          { id: 'easypaisa', label: 'EasyPaisa', provider: 'paymob', enabled: false },
+        ];
         this.cdr.markForCheck();
       },
     });
@@ -242,7 +389,7 @@ export function buildPlanCards(
       title: 'Free Plan',
       subtitle: 'For personal',
       icon: 'home',
-      priceDisplay: '$0',
+      priceDisplay: formatPkrAmount(0),
       billingLabel: 'forever',
       emphasis: false,
       lines: freeLines.length > 0 ? freeLines : ['Basic access'],
@@ -256,7 +403,7 @@ export function buildPlanCards(
       title: 'Monthly Plan',
       subtitle: 'For small business',
       icon: 'calendar_month',
-      priceDisplay: `$${monthlyTotal.toFixed(monthlyTotal % 1 === 0 ? 0 : 2)}`,
+      priceDisplay: formatPkrAmount(monthlyTotal),
       billingLabel: 'month',
       emphasis: true,
       lines: monthlyLines.length > 0 ? monthlyLines : ['No features configured'],
@@ -270,7 +417,7 @@ export function buildPlanCards(
       title: 'Annual Plan',
       subtitle: 'For enterprise',
       icon: 'domain',
-      priceDisplay: `$${annualTotal.toFixed(annualTotal % 1 === 0 ? 0 : 2)}`,
+      priceDisplay: formatPkrAmount(annualTotal),
       billingLabel: 'year',
       emphasis: false,
       lines: annualLines.length > 0 ? annualLines : ['No features configured'],

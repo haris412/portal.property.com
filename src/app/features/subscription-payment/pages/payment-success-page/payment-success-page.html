@@ -1,0 +1,44 @@
+<app-page-shell>
+  <div class="payment-result-page">
+    <nav class="payment-result-page__breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/dashboard" class="payment-result-page__breadcrumb-link">
+        <mat-icon fontIcon="arrow_back" aria-hidden="true" />
+        Back to dashboard
+      </a>
+    </nav>
+
+    @if (state() === 'loading' || (state() === 'pending' && !pollFinished())) {
+      <h1 class="payment-result-page__title">Confirming your payment</h1>
+      <p class="payment-result-page__copy">
+        Please wait while we activate your subscription. This usually takes a few seconds.
+      </p>
+    } @else if (state() === 'pending') {
+      <h1 class="payment-result-page__title">Payment is still processing</h1>
+      <p class="payment-result-page__copy">
+        Your payment was submitted. If the webhook has not arrived yet, refresh the dashboard in a moment.
+      </p>
+      <a routerLink="/dashboard" mat-raised-button color="primary">Go to dashboard</a>
+    } @else if (state() === 'paid') {
+      <h1 class="payment-result-page__title">Payment successful</h1>
+      <p class="payment-result-page__copy">
+        Your {{ payment()?.subscriptionType }} plan is now active
+        @if (amountLabel(); as amount) {
+          — {{ amount }}
+        }.
+      </p>
+      <a routerLink="/dashboard" mat-raised-button color="primary">Go to dashboard</a>
+    } @else if (state() === 'failed') {
+      <h1 class="payment-result-page__title">Payment was not completed</h1>
+      <p class="payment-result-page__copy">
+        We could not activate a paid subscription for this checkout. You can try again from plan usage.
+      </p>
+      <a routerLink="/subscription-usage" mat-stroked-button>Open plan usage</a>
+    } @else {
+      <h1 class="payment-result-page__title">Missing checkout session</h1>
+      <p class="payment-result-page__copy">
+        Return to the dashboard and choose a plan again if you still want to subscribe.
+      </p>
+      <a routerLink="/dashboard" mat-stroked-button>Go to dashboard</a>
+    }
+  </div>
+</app-page-shell>
