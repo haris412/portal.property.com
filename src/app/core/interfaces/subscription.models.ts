@@ -14,6 +14,8 @@ export interface Subscription {
   subscriptionDate: string;
   subscriptionResetDate: string | null;
   subscriptionExpiryDate: string | null;
+  recurring?: boolean;
+  providerSubscriptionId?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

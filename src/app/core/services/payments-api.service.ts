@@ -21,6 +21,8 @@ export interface PaymentRecord {
   method?: CheckoutMethodId;
   provider: string;
   providerSessionId: string;
+  recurring?: boolean;
+  providerSubscriptionId?: string | null;
   status: PaymentStatus;
   paidAt: string | null;
   createdAt?: string;
@@ -37,6 +39,7 @@ export interface CheckoutMethod {
 export interface CheckoutRequest {
   subscriptionType: PaidSubscriptionType;
   method?: CheckoutMethodId;
+  recurring?: boolean;
 }
 
 export interface CheckoutEnvelope {

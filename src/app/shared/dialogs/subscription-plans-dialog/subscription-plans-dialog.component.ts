@@ -80,6 +80,7 @@ export class SubscriptionPlansDialogComponent {
     { id: 'easypaisa', label: 'EasyPaisa', provider: 'paymob', enabled: false },
   ];
   showPaymentMethods = false;
+  showBillingChoice = false;
   submittingMethodId: CheckoutMethodId | null = null;
   private currentPlanType: SubscriptionType | null = null;
 
@@ -111,6 +112,9 @@ export class SubscriptionPlansDialogComponent {
       return card.subscriptionType === 'Free' ? 'Saving...' : 'Redirecting...';
     }
     if (this.selectedCardId === card.id) {
+      if (card.subscriptionType !== 'Free' && this.showBillingChoice) {
+        return 'Choose billing';
+      }
       if (card.subscriptionType !== 'Free' && this.showPaymentMethods) {
         return 'Choose a payment method';
       }
@@ -140,6 +144,7 @@ export class SubscriptionPlansDialogComponent {
     if (this.selectedCardId !== card.id) {
       this.selectedCardId = card.id;
       this.showPaymentMethods = false;
+      this.showBillingChoice = false;
       this.cdr.markForCheck();
       return;
     }
@@ -152,11 +157,17 @@ export class SubscriptionPlansDialogComponent {
 
     if (card.subscriptionType === 'Monthly' || card.subscriptionType === 'Annual') {
       const enabled = this.checkoutMethods.filter((method) => method.enabled);
+      if (enabled.length === 1 && enabled[0].id === 'card') {
+        this.showBillingChoice = true;
+        this.cdr.markForCheck();
+        return;
+      }
       if (enabled.length === 1) {
-        this.startPaidCheckout(card, enabled[0].id);
+        this.startPaidCheckout(card, enabled[0].id, false);
         return;
       }
       this.showPaymentMethods = true;
+      this.showBillingChoice = false;
       this.cdr.markForCheck();
       return;
     }
@@ -211,10 +222,29 @@ export class SubscriptionPlansDialogComponent {
       );
       return;
     }
-    this.startPaidCheckout(card, method.id);
+    if (method.id === 'card') {
+      this.showBillingChoice = true;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.startPaidCheckout(card, method.id, false);
   }
 
-  private startPaidCheckout(card: PlanCardViewModel, method: CheckoutMethodId): void {
+  payWithCard(recurring: boolean): void {
+    const card = this.cards.find((item) => item.id === this.selectedCardId);
+    if (!card || (card.subscriptionType !== 'Monthly' && card.subscriptionType !== 'Annual')) {
+      return;
+    }
+    this.startPaidCheckout(card, 'card', recurring);
+  }
+
+  billingHint(): string {
+    const card = this.cards.find((item) => item.id === this.selectedCardId);
+    const period = card?.subscriptionType === 'Annual' ? 'year' : 'month';
+    return `Pay once charges a single card payment. Auto-renew bills this amount every ${period} through Stripe until cancelled.`;
+  }
+
+  private startPaidCheckout(card: PlanCardViewModel, method: CheckoutMethodId, recurring = false): void {
     if (card.subscriptionType !== 'Monthly' && card.subscriptionType !== 'Annual') {
       return;
     }
@@ -224,7 +254,7 @@ export class SubscriptionPlansDialogComponent {
     this.cdr.markForCheck();
 
     this.paymentsApi
-      .createCheckout({ subscriptionType: card.subscriptionType, method })
+      .createCheckout({ subscriptionType: card.subscriptionType, method, recurring })
       .pipe(
         finalize(() => {
           this.submittingCardId = null;

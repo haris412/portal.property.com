@@ -136,7 +136,7 @@
         <section class="subscription-plans-dialog__methods" aria-label="Payment methods">
           <h3 class="subscription-plans-dialog__methods-title">Pay with</h3>
           <p class="subscription-plans-dialog__methods-copy">
-            Card uses Stripe. JazzCash and EasyPaisa use Paymob’s hosted checkout.
+            Card uses Stripe. JazzCash and EasyPaisa use Paymob’s hosted checkout and are pay-once only.
           </p>
           <div class="subscription-plans-dialog__methods-grid">
             @for (method of checkoutMethods; track method.id) {
@@ -158,6 +158,35 @@
                 }
               </button>
             }
+          </div>
+        </section>
+      }
+
+      @if (showBillingChoice) {
+        <section class="subscription-plans-dialog__methods" aria-label="Card billing">
+          <h3 class="subscription-plans-dialog__methods-title">Card billing</h3>
+          <p class="subscription-plans-dialog__methods-copy">{{ billingHint() }}</p>
+          <div class="subscription-plans-dialog__methods-grid subscription-plans-dialog__methods-grid--two">
+            <button
+              type="button"
+              class="subscription-plans-dialog__method"
+              [disabled]="submittingMethodId !== null"
+              (click)="payWithCard(false)"
+            >
+              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">payments</mat-icon>
+              <span>Pay once</span>
+              <small>{{ submittingMethodId === 'card' ? 'Redirecting...' : 'One-time Stripe charge' }}</small>
+            </button>
+            <button
+              type="button"
+              class="subscription-plans-dialog__method"
+              [disabled]="submittingMethodId !== null"
+              (click)="payWithCard(true)"
+            >
+              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">autorenew</mat-icon>
+              <span>Auto-renew</span>
+              <small>{{ submittingMethodId === 'card' ? 'Redirecting...' : 'Stripe recurring billing' }}</small>
+            </button>
           </div>
         </section>
       }
