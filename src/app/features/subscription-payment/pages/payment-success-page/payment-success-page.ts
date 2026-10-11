@@ -15,7 +15,7 @@ import { PageShellComponent } from '../../../../shared/ui/page-shell/page-shell'
 import { PaymentsApiService, type PaymentRecord } from '../../../../core/services/payments-api.service';
 import { SubscriptionPlansGateService } from '../../../../core/services/subscription-plans-gate.service';
 import { DashboardService } from '../../../dashboard/services/dashboard.service';
-import { formatPkrAmount } from '../../../../core/utils/format-pkr';
+import { formatMoney } from '../../../../core/utils/format-money';
 
 type PageState = 'loading' | 'paid' | 'failed' | 'pending' | 'missing';
 
@@ -75,7 +75,7 @@ export class PaymentSuccessPageComponent {
           return;
         }
 
-        this.amountLabel.set(`${formatPkrAmount(payment.amount)} (${payment.subscriptionType})`);
+        this.amountLabel.set(`${formatMoney(payment.amount, payment.currency)} (${payment.subscriptionType})`);
 
         if (payment.status === 'Paid') {
           this.state.set('paid');

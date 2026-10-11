@@ -37,12 +37,16 @@ function formatRenewalText(dateRaw: string | undefined): string {
   return `Renews on ${formatDate(parsed, 'd MMM yyyy', 'en-US')}`;
 }
 
-function formatPrice(monthlyPrice: number | undefined, price: number | undefined): string {
+function formatPrice(
+  monthlyPrice: number | undefined,
+  price: number | undefined,
+  formatAmount: (amount: number) => string,
+): string {
   const amount = monthlyPrice ?? price;
   if (amount == null) {
     return '—';
   }
-  return `${formatPkrAmount(amount)}/month`;
+  return `${formatAmount(amount)}/month`;
 }
 
 function buildQuotaMeter(remaining: number, total: number): QuotaMeter {
@@ -67,7 +71,10 @@ function buildListingPercent(used: number, limit: number | null): number {
   return Math.min(Math.round((used / limit) * 100), 100);
 }
 
-export function mapPlanQuotaApiResponse(body: DashboardApiResponse | unknown): PlanQuotaViewModel | null {
+export function mapPlanQuotaApiResponse(
+  body: DashboardApiResponse | unknown,
+  formatAmount: (amount: number) => string = formatPkrAmount,
+): PlanQuotaViewModel | null {
   const dashboard = unwrapDashboardData(body);
   if (!dashboard) {
     return null;
@@ -87,7 +94,7 @@ export function mapPlanQuotaApiResponse(body: DashboardApiResponse | unknown): P
 
   return {
     planName: plan.planName?.trim() || 'Current plan',
-    price: formatPrice(plan.monthlyPrice, plan.price),
+    price: formatPrice(plan.monthlyPrice, plan.price, formatAmount),
     renewalText: formatRenewalText(plan.renewalDate),
     status: plan.status?.trim() || 'Active',
     featured: buildQuotaMeter(featuredRemaining, featuredTotal),

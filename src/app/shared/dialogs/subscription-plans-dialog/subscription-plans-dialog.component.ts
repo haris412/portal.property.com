@@ -26,6 +26,7 @@ import type { ResponseModel } from '../../../core/models/response.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { DashboardService } from '../../../features/dashboard/services/dashboard.service';
 import { PaymentsApiService, type CheckoutMethod, type CheckoutMethodId } from '../../../core/services/payments-api.service';
+import { LocaleCurrencyService } from '../../../core/services/locale-currency.service';
 import { formatPkrAmount } from '../../../core/utils/format-pkr';
 
 export interface SubscriptionPlansDialogData {
@@ -40,6 +41,7 @@ export interface PlanCardViewModel {
   subtitle: string;
   icon: string;
   priceDisplay: string;
+  priceAmountPkr: number;
   billingLabel: string;
   emphasis: boolean;
   lines: string[];
@@ -61,6 +63,7 @@ export class SubscriptionPlansDialogComponent {
   private readonly subscriptionConfigApi = inject(SubscriptionConfigService);
   private readonly subscriptionsApi = inject(SubscriptionsApiService);
   private readonly paymentsApi = inject(PaymentsApiService);
+  private readonly localeCurrency = inject(LocaleCurrencyService);
   private readonly subscriptionSession = inject(SubscriptionSessionStorageService);
   private readonly auth = inject(AuthService);
   private readonly notifications = inject(NotificationService);
@@ -241,7 +244,23 @@ export class SubscriptionPlansDialogComponent {
   billingHint(): string {
     const card = this.cards.find((item) => item.id === this.selectedCardId);
     const period = card?.subscriptionType === 'Annual' ? 'year' : 'month';
-    return `Pay once charges a single card payment. Auto-renew bills this amount every ${period} through Stripe until cancelled.`;
+    const price = card?.priceDisplay || 'this amount';
+    return `Pay once charges a single card payment of ${price}. Auto-renew bills that amount every ${period} through Stripe until cancelled.`;
+  }
+
+  methodChargeLabel(method: CheckoutMethod): string | null {
+    const card = this.cards.find((item) => item.id === this.selectedCardId);
+    if (!card || card.subscriptionType === 'Free') return null;
+    if (method.id === 'card') return card.priceDisplay;
+    if (this.localeCurrency.isPkr()) return null;
+    return formatPkrAmount(card.priceAmountPkr);
+  }
+
+  ratesUnavailableNote(): string | null {
+    if (!this.localeCurrency.ratesUnavailable || this.localeCurrency.requestedCurrency === 'PKR') {
+      return null;
+    }
+    return 'Live exchange rates are unavailable, so prices are shown in PKR and card checkout in your local currency cannot start.';
   }
 
   private startPaidCheckout(card: PlanCardViewModel, method: CheckoutMethodId, recurring = false): void {
@@ -254,7 +273,12 @@ export class SubscriptionPlansDialogComponent {
     this.cdr.markForCheck();
 
     this.paymentsApi
-      .createCheckout({ subscriptionType: card.subscriptionType, method, recurring })
+      .createCheckout({
+        subscriptionType: card.subscriptionType,
+        method,
+        recurring,
+        currency: method === 'card' ? this.localeCurrency.requestedCurrency : undefined,
+      })
       .pipe(
         finalize(() => {
           this.submittingCardId = null;
@@ -292,7 +316,7 @@ export class SubscriptionPlansDialogComponent {
         )
       : of(null);
 
-    forkJoin({ configs: configs$, subscription: subscription$ }).subscribe({
+    forkJoin({ configs: configs$, subscription: subscription$, fx: this.localeCurrency.ready() }).subscribe({
       next: ({ configs, subscription }: { configs: ResponseModel<SubscriptionConfig>; subscription: unknown }) => {
         const raw = configs?.data?.subscriptionConfigs ?? [];
         let active = extractSubscriptionFromResponse(subscription);
@@ -302,7 +326,7 @@ export class SubscriptionPlansDialogComponent {
           active = this.subscriptionSession.getForUser(user._id, user.agencyId ?? null);
         }
         this.currentPlanType = active?.subscriptionType ?? null;
-        this.cards = buildPlanCards(raw, active);
+        this.cards = buildPlanCards(raw, active, (amount) => this.localeCurrency.formatFromPkr(amount));
         this.selectedCardId = this.cards.find((card) => card.isCurrentPlan)?.id ?? null;
         this.loading = false;
         this.cdr.markForCheck();
@@ -396,6 +420,7 @@ function quotaTotalsForRows(rows: SubscriptionConfigListDto[]): {
 export function buildPlanCards(
   configs: SubscriptionConfigListDto[],
   active: Subscription | null,
+  formatAmount: (amount: number) => string = formatPkrAmount,
 ): PlanCardViewModel[] {
   const sorted = sortConfigsForDisplay(configs);
 
@@ -419,7 +444,8 @@ export function buildPlanCards(
       title: 'Free Plan',
       subtitle: 'For personal',
       icon: 'home',
-      priceDisplay: formatPkrAmount(0),
+      priceDisplay: formatAmount(0),
+      priceAmountPkr: 0,
       billingLabel: 'forever',
       emphasis: false,
       lines: freeLines.length > 0 ? freeLines : ['Basic access'],
@@ -433,7 +459,8 @@ export function buildPlanCards(
       title: 'Monthly Plan',
       subtitle: 'For small business',
       icon: 'calendar_month',
-      priceDisplay: formatPkrAmount(monthlyTotal),
+      priceDisplay: formatAmount(monthlyTotal),
+      priceAmountPkr: monthlyTotal,
       billingLabel: 'month',
       emphasis: true,
       lines: monthlyLines.length > 0 ? monthlyLines : ['No features configured'],
@@ -447,7 +474,8 @@ export function buildPlanCards(
       title: 'Annual Plan',
       subtitle: 'For enterprise',
       icon: 'domain',
-      priceDisplay: formatPkrAmount(annualTotal),
+      priceDisplay: formatAmount(annualTotal),
+      priceAmountPkr: annualTotal,
       billingLabel: 'year',
       emphasis: false,
       lines: annualLines.length > 0 ? annualLines : ['No features configured'],

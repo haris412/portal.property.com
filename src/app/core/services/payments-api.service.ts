@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import type { SubscriptionType, SuccessResponseModel } from '../interfaces/subscription.models';
@@ -16,6 +16,8 @@ export interface PaymentRecord {
   subscriptionType: PaidSubscriptionType;
   amount: number;
   currency: string;
+  baseAmount?: number | null;
+  fxRate?: number | null;
   numberOfFeatureListing: number;
   numberOfAgentVisibility: number;
   method?: CheckoutMethodId;
@@ -40,6 +42,14 @@ export interface CheckoutRequest {
   subscriptionType: PaidSubscriptionType;
   method?: CheckoutMethodId;
   recurring?: boolean;
+  currency?: string;
+}
+
+export interface FxQuote {
+  currency: string;
+  rate: number;
+  exponent: number;
+  updatedAt: string;
 }
 
 export interface CheckoutEnvelope {
@@ -66,6 +76,11 @@ export class PaymentsApiService {
 
   getCheckoutMethods(): Observable<SuccessResponseModel<CheckoutMethodsEnvelope>> {
     return this.http.get<SuccessResponseModel<CheckoutMethodsEnvelope>>(`${this.base}/methods`);
+  }
+
+  getFx(currency: string): Observable<SuccessResponseModel<FxQuote>> {
+    const params = new HttpParams().set('currency', currency);
+    return this.http.get<SuccessResponseModel<FxQuote>>(`${this.base}/fx`, { params });
   }
 
   getPaymentBySession(sessionId: string): Observable<SuccessResponseModel<PaymentEnvelope>> {

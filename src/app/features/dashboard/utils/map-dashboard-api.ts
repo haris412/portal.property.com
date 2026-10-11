@@ -51,13 +51,14 @@ function formatRenewalText(dateRaw: string | undefined): string {
 
 function formatPrice(
   monthlyPrice: number | undefined,
-  price: number | undefined
+  price: number | undefined,
+  formatAmount: (amount: number) => string,
 ): string {
   const amount = monthlyPrice ?? price;
   if (amount == null) {
     return PLAN_SUMMARY.price;
   }
-  return `${formatPkrAmount(amount)}/month`;
+  return `${formatAmount(amount)}/month`;
 }
 
 function isUnlimitedListingLimit(
@@ -86,7 +87,8 @@ function buildMonthlyHint(
 
 export function mapDashboardApiResponse(
   body: DashboardApiResponse | unknown,
-  fallbackDisplayName = 'there'
+  fallbackDisplayName = 'there',
+  formatAmount: (amount: number) => string = formatPkrAmount,
 ): DashboardViewModel | null {
   const dashboard = unwrapDashboardData(body);
   if (!dashboard) {
@@ -154,7 +156,7 @@ export function mapDashboardApiResponse(
     ],
     planSummary: {
       name: plan.planName ?? PLAN_SUMMARY.name,
-      price: formatPrice(plan.monthlyPrice, plan.price),
+      price: formatPrice(plan.monthlyPrice, plan.price, formatAmount),
       renewalText: formatRenewalText(plan.renewalDate),
       status: plan.status ?? PLAN_SUMMARY.status,
       listingLimit,

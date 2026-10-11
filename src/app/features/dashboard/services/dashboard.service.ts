@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, of, delay } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
+import { LocaleCurrencyService } from '../../../core/services/locale-currency.service';
 import { DashboardApiResponse, DashboardViewModel } from '../models/dashboard-api.model';
 import { DashboardData, StatCard, ActivityItem, ChartData } from '../models/stats.model';
 import { mapDashboardApiResponse } from '../utils/map-dashboard-api';
@@ -11,6 +12,7 @@ import type { PlanQuotaViewModel } from '../../subscription-usage/models/plan-qu
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
+  private readonly currency = inject(LocaleCurrencyService);
   private readonly refreshSubject = new Subject<void>();
 
   /** Emits when dashboard data should be reloaded (e.g. after subscription change). */
@@ -29,9 +31,15 @@ export class DashboardService {
       .set('userId', userId)
       .set('roleId', JSON.stringify(roleIds));
 
-    return this.http
-      .get<DashboardApiResponse>('/dashboard/dashboardData', { params })
-      .pipe(map((body) => mapDashboardApiResponse(body, displayName)));
+    return this.currency.ready().pipe(
+      switchMap(() =>
+        this.http.get<DashboardApiResponse>('/dashboard/dashboardData', { params }).pipe(
+          map((body) =>
+            mapDashboardApiResponse(body, displayName, (amount) => this.currency.formatFromPkr(amount)),
+          ),
+        ),
+      ),
+    );
   }
 
   getPlanQuotaData(roleIds: string[], userId: string): Observable<PlanQuotaViewModel | null> {
@@ -39,9 +47,13 @@ export class DashboardService {
       .set('userId', userId)
       .set('roleId', JSON.stringify(roleIds));
 
-    return this.http
-      .get<DashboardApiResponse>('/dashboard/dashboardData', { params })
-      .pipe(map((body) => mapPlanQuotaApiResponse(body)));
+    return this.currency.ready().pipe(
+      switchMap(() =>
+        this.http.get<DashboardApiResponse>('/dashboard/dashboardData', { params }).pipe(
+          map((body) => mapPlanQuotaApiResponse(body, (amount) => this.currency.formatFromPkr(amount))),
+        ),
+      ),
+    );
   }
 
   getDashboardData(): Observable<DashboardData> {

@@ -136,8 +136,11 @@
         <section class="subscription-plans-dialog__methods" aria-label="Payment methods">
           <h3 class="subscription-plans-dialog__methods-title">Pay with</h3>
           <p class="subscription-plans-dialog__methods-copy">
-            Card uses Stripe. JazzCash and EasyPaisa use Paymob’s hosted checkout and are pay-once only.
+            Card uses Stripe. JazzCash and EasyPaisa use Paymob’s hosted checkout, charge in PKR, and are pay-once only.
           </p>
+          @if (ratesUnavailableNote(); as ratesNote) {
+            <p class="subscription-plans-dialog__methods-copy">{{ ratesNote }}</p>
+          }
           <div class="subscription-plans-dialog__methods-grid">
             @for (method of checkoutMethods; track method.id) {
               <button
@@ -155,6 +158,8 @@
                   <small>Redirecting...</small>
                 } @else if (!method.enabled) {
                   <small>Not configured</small>
+                } @else if (methodChargeLabel(method); as chargeLabel) {
+                  <small>{{ chargeLabel }}</small>
                 }
               </button>
             }
