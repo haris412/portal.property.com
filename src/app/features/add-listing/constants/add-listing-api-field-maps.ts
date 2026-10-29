@@ -39,3 +39,18 @@ export const ADD_LISTING_CONTACT_API_MAP: ApiPathToControlMap = {
   phone:              'contactPhoneNumber',
   contactLocation:    'contactLocation',
 };
+
+// this will neeed to pick from backend
+
+export const ADD_LISTING_SHARED_API_MAP: ApiPathToControlMap = {
+  isShared:                          'isShared',
+  'sharedDetails.roomsAvailable':    'details.roomsAvailable',
+  'sharedDetails.bathroom':          'details.bathroom',
+  'sharedDetails.kitchen':           'details.kitchen',
+  'sharedDetails.livingRoom':        'details.livingRoom',
+  'sharedDetails.laundry':           'details.laundry',
+  'sharedDetails.entrance':          'details.entrance',
+  'sharedDetails.currentOccupants':  'details.currentOccupants',
+  'sharedDetails.tenantPreference':  'details.tenantPreference',
+  'sharedDetails.utilitiesIncluded': 'details.utilitiesIncluded',
+};

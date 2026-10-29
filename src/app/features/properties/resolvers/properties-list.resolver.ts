@@ -8,12 +8,13 @@ import {
   PROPERTIES_LIST_INITIAL_PAGE_SIZE,
   type PropertiesListResult,
 } from '../../../core/models/properties-list.model';
+import { propertiesListFiltersToQuery, readPropertiesListFilters } from '../properties-filters';
 
 /**
  * Loads the first page of the current user’s listings before `/properties` activates,
  * so the grid can render with data immediately (including after navigating from add-listing).
  */
-export const propertiesListResolver: ResolveFn<PropertiesListResult> = () => {
+export const propertiesListResolver: ResolveFn<PropertiesListResult> = (route) => {
   const addListing = inject(AddListingService);
   const auth = inject(AuthService);
 
@@ -24,6 +25,7 @@ export const propertiesListResolver: ResolveFn<PropertiesListResult> = () => {
       listedBy: auth.getUserId() ?? undefined,
       sortBy: 'createdAt',
       sortOrder: 'desc',
+      ...propertiesListFiltersToQuery(readPropertiesListFilters(route.queryParamMap)),
     })
     .pipe(
       catchError((err: unknown) =>

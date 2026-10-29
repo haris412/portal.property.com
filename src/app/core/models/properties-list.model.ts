@@ -1,4 +1,12 @@
 import type { LocationHierarchyItem } from './google-places.models';
+import {
+  formatSharedBadgeLabel,
+  isSharedProperty,
+  type SharedBathroom,
+  type SharedDetails,
+  type SharedKitchen,
+  type SharedTenantPreference,
+} from './shared-listing.model';
 
 /** First page size for the properties grid and route resolver (API max 50). */
 export const PROPERTIES_LIST_INITIAL_PAGE_SIZE = 20;
@@ -18,6 +26,14 @@ export interface PropertiesListQuery {
   minPrice?: number;
   maxPrice?: number;
   city?: string;
+  /** true → only shared listings, false → only whole properties. */
+  isShared?: boolean;
+  /** Any of these four limits results to shared listings server-side. */
+  bathroom?: SharedBathroom;
+  kitchen?: SharedKitchen;
+  /** Also returns listings whose preference is "Any". */
+  tenantPreference?: Exclude<SharedTenantPreference, 'Any'>;
+  minRoomsAvailable?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -47,6 +63,8 @@ export interface PropertyListDocument {
   userId?: PropertyListedByUser | string | null;
   createdAt?: string;
   propertyType?: string | null;
+  isShared?: boolean | null;
+  sharedDetails?: SharedDetails | null;
 }
 
 /** Raw JSON body from GET /api/properties. */
@@ -94,6 +112,8 @@ export interface PropertyListingRow {
   price: number | null;
   status: string;
   lister: string;
+  /** e.g. "Shared · 1 room"; null for whole-property listings. */
+  sharedBadge: string | null;
 }
 
 export function mapPropertyDocumentToGridRow(doc: PropertyListDocument): PropertyListingRow {
@@ -110,5 +130,6 @@ export function mapPropertyDocumentToGridRow(doc: PropertyListDocument): Propert
     price: doc.price ?? null,
     status: (doc.status ?? '').toString() || '—',
     lister: formatListedByLabel(doc.userId ?? doc.listedBy),
+    sharedBadge: isSharedProperty(doc) ? formatSharedBadgeLabel(doc.sharedDetails) : null,
   };
 }

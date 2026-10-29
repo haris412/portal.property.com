@@ -7,8 +7,13 @@
     <!-- Price -->
     <div class="col-12 col-md-6 col-xl-4">
       <label class="field-label">
-        {{ 'addListing.pricing.price.label' | translate }}
-        <span class="field-hint">{{ 'addListing.pricing.price.hint' | translate }}</span>
+        @if (isShared()) {
+          {{ 'addListing.pricing.price.sharedLabel' | translate }}
+          <span class="field-hint">{{ 'addListing.pricing.price.sharedHint' | translate }}</span>
+        } @else {
+          {{ 'addListing.pricing.price.label' | translate }}
+          <span class="field-hint">{{ 'addListing.pricing.price.hint' | translate }}</span>
+        }
       </label>
       <mat-form-field appearance="outline" class="w-100 number-stepper-field">
         <span matTextPrefix>Rs&nbsp;</span>
@@ -100,6 +105,10 @@
         @if (form.get(counter.id)?.hasError('server')) {
           <div class="field-validation-msg" role="alert">
             {{ form.get(counter.id)?.getError('server') }}
+          </div>
+        } @else if (form.get(counter.id)?.hasError('bedroomsNotMoreThanShared')) {
+          <div class="field-validation-msg" role="alert">
+            {{ 'addListing.pricing.bedrooms.moreThanShared' | translate: { rooms: sharedRoomsAvailable() } }}
           </div>
         }
       </div>

@@ -5,12 +5,15 @@ import {
   EventEmitter,
   OnInit,
   Output,
+  effect,
   inject,
+  input,
+  untracked,
 } from '@angular/core';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -41,6 +44,9 @@ export class PricingDetailsSectionComponent implements OnInit {
   private readonly fb          = inject(FormBuilder);
   private readonly destroyRef  = inject(DestroyRef);
 
+  /** Shared listing: rooms offered (Basic Info step). Total bedrooms must be strictly more. */
+  readonly sharedRoomsAvailable = input<number | null>(null);
+
   readonly form     = this.buildForm();
   readonly isValid  = toSignal(this.form.statusChanges.pipe(startWith(this.form.status), map(s => s === 'VALID')), { initialValue: this.form.valid });
 
@@ -51,8 +57,19 @@ export class PricingDetailsSectionComponent implements OnInit {
     { id: 'numFloors',        label: 'Floors'         },
   ];
 
+  /** Shared listing: price is the rent for the offered room(s), not the whole property. */
+  readonly isShared = input(false);
+
   // parent receives the form reference once, on init
   @Output() readonly formReady = new EventEmitter<FormGroup>();
+
+  constructor() {
+    // rooms available lives in another form — re-run the bedrooms check when it changes
+    effect(() => {
+      this.sharedRoomsAvailable();
+      untracked(() => this.form.controls.numBedrooms.updateValueAndValidity());
+    });
+  }
 
   ngOnInit(): void {
     this.formReady.emit(this.form);
@@ -85,12 +102,18 @@ export class PricingDetailsSectionComponent implements OnInit {
       event.preventDefault();
     }
   }
+  private moreThanSharedRooms(control: AbstractControl): ValidationErrors | null {
+    const rooms = this.sharedRoomsAvailable();
+    if (rooms == null) return null;
+    return Number(control.value) > rooms ? null : { bedroomsNotMoreThanShared: { rooms } };
+  }
+
   private buildForm() {
     const form = this.fb.nonNullable.group({
       price:            [75000,  [Validators.required, Validators.min(0)]],
       areaSize:         [1200,   [Validators.required, Validators.min(0)]],
       areaUnit:         ['sqft',  Validators.required],
-      numBedrooms:      [2,      [Validators.required, Validators.min(0)]],
+      numBedrooms:      [2,      [Validators.required, Validators.min(0), (c: AbstractControl) => this.moreThanSharedRooms(c)]],
       numBathrooms:     [2,      [Validators.required, Validators.min(0)]],
       numParkingSpaces: [0,      [Validators.required, Validators.min(0)]],
       numFloors:        [0,      [Validators.required, Validators.min(0)]],

@@ -1,6 +1,7 @@
 import type { CreateListingPayload } from '../../../core/models/add-listing.model';
 import type { ListingImagePayload } from '../../../core/services/media-upload.service';
 import type { LocationHierarchyItem } from '../../../core/models/google-places.models';
+import type { SharedDetails } from '../../../core/models/shared-listing.model';
 
 export interface UploadedMediaPayload {
   images:      ListingImagePayload[];
@@ -44,6 +45,20 @@ export interface ListingFormSnapshot {
     latitude:          number | null;
     longitude:         number | null;
   };
+  shared: {
+    isShared: boolean;
+    details: {
+      roomsAvailable:    number | null;
+      bathroom:          string;
+      kitchen:           string;
+      livingRoom:        string;
+      laundry:           string;
+      entrance:          string;
+      currentOccupants:  number | null;
+      tenantPreference:  string;
+      utilitiesIncluded: boolean;
+    };
+  };
 }
 
 export function buildListingPayload(
@@ -51,7 +66,8 @@ export function buildListingPayload(
   uploadedMedia: UploadedMediaPayload,
   isFeatured:    boolean
 ): CreateListingPayload {
-  const { basic, description, pricing, amenities, contact, location } = forms;
+  const { basic, description, pricing, amenities, contact, location, shared } = forms;
+  const sharedDetails = shared.isShared ? buildSharedDetails(shared.details) : null;
   console.log('Building listing payload with forms:', forms, 'and uploaded media:', uploadedMedia, 'isFeatured:', isFeatured);
   return {
     purpose:             basic.purpose === 'sale' ? 'For Sale' : 'For Rent',
@@ -82,5 +98,25 @@ export function buildListingPayload(
     contactPhoneNumber:  contact.contactPhoneNumber ?? null,
     contactLocation:     contact.contactLocation    ?? null,
     isFeatured,
+    // backend clears sharedDetails on isShared:false and rejects sharedDetails unless isShared is true
+    isShared:            sharedDetails != null,
+    ...(sharedDetails ? { sharedDetails } : {}),
   };
+}
+
+/** Full object every time — a PUT replaces sharedDetails wholesale. Empty optional fields are omitted. */
+function buildSharedDetails(details: ListingFormSnapshot['shared']['details']): SharedDetails {
+  const occupants = details.currentOccupants as number | string | null;
+  const out: SharedDetails = {
+    roomsAvailable:    Number(details.roomsAvailable),
+    bathroom:          details.bathroom as SharedDetails['bathroom'],
+    kitchen:           details.kitchen  as SharedDetails['kitchen'],
+    tenantPreference:  (details.tenantPreference || 'Any') as SharedDetails['tenantPreference'],
+    utilitiesIncluded: Boolean(details.utilitiesIncluded),
+  };
+  if (details.livingRoom) out.livingRoom = details.livingRoom as SharedDetails['livingRoom'];
+  if (details.laundry)    out.laundry    = details.laundry    as SharedDetails['laundry'];
+  if (details.entrance)   out.entrance   = details.entrance   as SharedDetails['entrance'];
+  if (occupants != null && occupants !== '') out.currentOccupants = Number(occupants);
+  return out;
 }

@@ -1,4 +1,5 @@
 import type { PropertyFeature } from './property-features.model';
+import type { SharedDetails } from './shared-listing.model';
 
 export interface PropertyDetailDocument {
   _id?:         string;
@@ -32,6 +33,8 @@ export interface PropertyDetailDocument {
   images?:       { url?: string }[] | null;
   videoTourUrl?: string | null;
   isFeatured?:   boolean | null;
+  isShared?:      boolean | null;
+  sharedDetails?: SharedDetails | null;
 }
 
 export interface PropertyDetailApiResponse {

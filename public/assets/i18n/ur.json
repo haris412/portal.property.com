@@ -534,9 +534,31 @@
     "pricing": {
       "title": "قیمت اور تفصیلات",
       "description": "خریداروں یا کرایہ داروں کے لیے قیمت، سائز اور پراپرٹی کی تفصیل درج کریں۔",
-      "price": { "label": "قیمت", "hint": "(کل)", "required": "قیمت ضروری ہے" },
+      "price": { "label": "قیمت", "hint": "(کل)", "required": "قیمت ضروری ہے", "sharedLabel": "پیش کردہ کمروں کا کرایہ", "sharedHint": "(صرف پیش کردہ کمرے)" },
       "areaSize": { "label": "رقبہ", "required": "رقبہ ضروری ہے" },
-      "areaUnit": { "label": "رقبے کی اکائی", "required": "رقبے کی اکائی ضروری ہے" }
+      "areaUnit": { "label": "رقبے کی اکائی", "required": "رقبے کی اکائی ضروری ہے" },
+      "bedrooms": { "moreThanShared": "شیئرنگ کے لیے دستیاب کمروں ({{rooms}}) سے زیادہ ہونا چاہیے" }
+    },
+    "shared": {
+      "title": "مشترکہ لسٹنگ",
+      "description": "اس پراپرٹی کا کچھ حصہ کرائے پر دیں اور بتائیں کہ کرایہ دار کیا شیئر کریں گے۔",
+      "toggle": { "label": "مشترکہ لسٹنگ", "hint": "اس پراپرٹی کا صرف ایک حصہ کرائے پر دے رہے ہیں (مثلاً ایک کمرہ)" },
+      "select": "منتخب کریں",
+      "notSpecified": "واضح نہیں",
+      "roomsAvailable": {
+        "label": "دستیاب کمرے",
+        "required": "دستیاب کمرے ضروری ہیں",
+        "min": "کم از کم 1 کا مکمل عدد درج کریں",
+        "hint": "کل بیڈرومز سے کم ہونا چاہیے (قیمت کے مرحلے میں درج کریں)"
+      },
+      "currentOccupants": { "label": "موجودہ رہائشی", "min": "0 یا اس سے زیادہ کا مکمل عدد درج کریں" },
+      "bathroom": { "label": "باتھ روم", "required": "باتھ روم ضروری ہے" },
+      "kitchen": { "label": "کچن", "required": "کچن ضروری ہے" },
+      "livingRoom": { "label": "لیونگ روم" },
+      "laundry": { "label": "لانڈری" },
+      "entrance": { "label": "داخلی راستہ" },
+      "tenantPreference": { "label": "ترجیحی کرایہ دار" },
+      "utilitiesIncluded": { "label": "یوٹیلیٹیز (بجلی، گیس، پانی) کرائے میں شامل ہیں" }
     },
     "contact": {
       "title": "رابطہ معلومات",
@@ -594,7 +616,19 @@
       "purpose": "مقصد",
       "price": "قیمت",
       "status": "حیثیت",
-      "listedBy": "درج کردہ از"
+      "listedBy": "درج کردہ از",
+      "listingType": "لسٹنگ کی قسم"
+    },
+    "filters": {
+      "listingType": "لسٹنگ کی قسم",
+      "any": "کوئی بھی",
+      "whole": "پوری پراپرٹی",
+      "shared": "مشترکہ",
+      "bathroom": "باتھ روم",
+      "kitchen": "کچن",
+      "tenantPreference": "ترجیحی کرایہ دار",
+      "minRoomsAvailable": "کم از کم دستیاب کمرے",
+      "clear": "فلٹرز صاف کریں"
     },
     "actions": {
       "addListing": "لسٹنگ شامل کریں",

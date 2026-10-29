@@ -1,0 +1,17 @@
+.field-label {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: var(--font-main);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+}
+
+.field-hint {
+  color: var(--font-secondary);
+  font-size: var(--font-size-body-sm);
+  font-weight: 500;
+}
+
+.shared-listing-form {
+  align-items: start;
+}

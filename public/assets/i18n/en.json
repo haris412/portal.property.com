@@ -539,9 +539,31 @@
     "pricing": {
       "title": "Pricing & Details",
       "description": "Set the pricing, size, and property breakdown for buyers or renters.",
-      "price": { "label": "Price", "hint": "(Total)", "required": "Price is required" },
+      "price": { "label": "Price", "hint": "(Total)", "required": "Price is required", "sharedLabel": "Rent for offered room(s)", "sharedHint": "(Rooms offered only)" },
       "areaSize": { "label": "Area Size", "required": "Area size is required" },
-      "areaUnit": { "label": "Area Unit", "required": "Area unit is required" }
+      "areaUnit": { "label": "Area Unit", "required": "Area unit is required" },
+      "bedrooms": { "moreThanShared": "Must be more than the rooms available for sharing ({{rooms}})" }
+    },
+    "shared": {
+      "title": "Shared listing",
+      "description": "Rent out part of this property and describe what tenants will share.",
+      "toggle": { "label": "Shared listing", "hint": "Renting out only part of this property (e.g. one room)" },
+      "select": "Select",
+      "notSpecified": "Not specified",
+      "roomsAvailable": {
+        "label": "Rooms available",
+        "required": "Rooms available is required",
+        "min": "Enter a whole number of at least 1",
+        "hint": "Must be less than the total bedrooms (set in Pricing)"
+      },
+      "currentOccupants": { "label": "Current occupants", "min": "Enter a whole number of 0 or more" },
+      "bathroom": { "label": "Bathroom", "required": "Bathroom is required" },
+      "kitchen": { "label": "Kitchen", "required": "Kitchen is required" },
+      "livingRoom": { "label": "Living room" },
+      "laundry": { "label": "Laundry" },
+      "entrance": { "label": "Entrance" },
+      "tenantPreference": { "label": "Preferred tenants" },
+      "utilitiesIncluded": { "label": "Utilities (electricity, gas, water) included in rent" }
     },
     "contact": {
       "title": "Contact Information",
@@ -599,7 +621,19 @@
       "purpose": "Purpose",
       "price": "Price",
       "status": "Status",
-      "listedBy": "Listed by"
+      "listedBy": "Listed by",
+      "listingType": "Listing type"
+    },
+    "filters": {
+      "listingType": "Listing type",
+      "any": "Any",
+      "whole": "Whole property",
+      "shared": "Shared",
+      "bathroom": "Bathroom",
+      "kitchen": "Kitchen",
+      "tenantPreference": "Preferred tenants",
+      "minRoomsAvailable": "Min. rooms available",
+      "clear": "Clear filters"
     },
     "actions": {
       "addListing": "Add Listing",
