@@ -51,8 +51,16 @@ interface StoredSession {
 }
 
 export interface LoginPayload {
-  email: string;
+  method: 'email' | 'phone';
+  email?: string;
+  phoneNumber?: string;
   password: string;
+}
+
+export interface PhoneVerificationChallenge {
+  challengeToken: string;
+  maskedDestination: string;
+  expiresInMinutes?: number;
 }
 
 interface AuthApiResponse {
@@ -293,6 +301,8 @@ export class AuthService {
           if (res.success === false)
             return throwError(() => ({ message: res.message ?? fallback }));
           const data = (res.data ?? res) as AuthApiResponse;
+          if (!data?.accessToken)
+            return throwError(() => ({ message: res.message ?? fallback }));
           this.storeAuthData(data);
           return of({ user: fromApiUser(data.user) });
         }),
@@ -302,18 +312,62 @@ export class AuthService {
       );
   }
 
-  register(payload: IAccountSignUp): Observable<{ user: User; message?: string }> {
+  verifyPhone(challengeToken: string, otp: string): Observable<void> {
+    const fallback = 'Invalid or expired code. Please try again.';
+    return this.http
+      .post<{ success?: boolean; message?: string }>(`/auth/verify-phone`, {
+        challengeToken,
+        otp: otp.trim(),
+      })
+      .pipe(
+        switchMap((res) => {
+          if (res.success === false)
+            return throwError(() => ({ message: res.message ?? fallback }));
+          return of(undefined);
+        }),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) })),
+        ),
+      );
+  }
+
+  resendPhoneOtp(challengeToken: string): Observable<{ maskedDestination?: string }> {
+    const fallback = 'Could not send a new code. Please try again.';
+    return this.http
+      .post<{ success?: boolean; message?: string; data?: { maskedDestination?: string } }>(
+        `/auth/resend-phone-otp`,
+        { challengeToken },
+      )
+      .pipe(
+        switchMap((res) => {
+          if (res.success === false)
+            return throwError(() => ({ message: res.message ?? fallback }));
+          return of({ maskedDestination: res.data?.maskedDestination });
+        }),
+        catchError((err: unknown) =>
+          throwError(() => ({ message: this.getAuthMessage(err, fallback) })),
+        ),
+      );
+  }
+
+  register(payload: IAccountSignUp): Observable<{ user: User; message?: string; challengeToken?: string; maskedDestination?: string }> {
     const fallback = 'Registration failed. Please try again.';
     return this.http
       .post<
-        { success?: boolean; message?: string; data?: AuthApiResponse } & AuthApiResponse
+        { success?: boolean; message?: string; data?: AuthApiResponse & PhoneVerificationChallenge } & AuthApiResponse
       >(`/auth/register`, payload)
       .pipe(
         switchMap((res) => {
           if (res.success === false)
             return throwError(() => ({ message: res.message ?? fallback }));
-          const user = fromApiUser(((res.data ?? res).user ?? {}) as Record<string, unknown>);
-          return of({ user, message: res.message });
+          const data = (res.data ?? res) as AuthApiResponse & PhoneVerificationChallenge;
+          const user = fromApiUser((data.user ?? {}) as Record<string, unknown>);
+          return of({
+            user,
+            message: res.message,
+            challengeToken: data.challengeToken,
+            maskedDestination: data.maskedDestination,
+          });
         }),
         catchError((err: unknown) =>
           throwError(() => ({ message: this.getAuthMessage(err, fallback) })),

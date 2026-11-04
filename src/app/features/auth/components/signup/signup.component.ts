@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  AbstractControl,
   FormBuilder,
   ReactiveFormsModule,
   Validators
@@ -68,6 +69,10 @@ export class SignupComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly loading = signal(false);
+  readonly phoneOtpStep = signal(false);
+  readonly challengeToken = signal<string | null>(null);
+  readonly maskedDestination = signal('');
+  readonly resending = signal(false);
   readonly rolesLoading = signal(true);
   readonly showAgencyName = signal(false);
   readonly lockUserType = signal(false);
@@ -103,6 +108,10 @@ export class SignupComponent implements OnInit {
   
 
   onSubmit(): void {
+    if (this.phoneOtpStep()) {
+      this.verifyPhone();
+      return;
+    }
     if (!this.form.valid) {
       this.form.markAllAsTouched();
       return;
@@ -110,12 +119,34 @@ export class SignupComponent implements OnInit {
     this.error.set(null);
     this.successMessage.set(null);
     this.loading.set(true);
-    this.auth.register(this.form.getRawValue() as IAccountSignUp).subscribe({
+    const raw = this.form.getRawValue();
+    const payload: IAccountSignUp = {
+      signupMethod: raw.signupMethod,
+      password: raw.password,
+      agree: raw.agree,
+      role: raw.role,
+      ...(raw.agencyName.trim() ? { agencyName: raw.agencyName.trim() } : {}),
+      ...(raw.signupMethod === 'phone'
+        ? { phoneNumber: raw.phoneNumber.trim() }
+        : { email: raw.email.trim() }),
+    };
+    this.auth.register(payload).subscribe({
       next: (res) => {
+        if (res.challengeToken) {
+          this.challengeToken.set(res.challengeToken);
+          this.maskedDestination.set(res.maskedDestination ?? '');
+          this.form.controls.otp.setValidators([Validators.required, Validators.pattern(/^\d{6}$/)]);
+          this.form.controls.otp.updateValueAndValidity();
+          this.phoneOtpStep.set(true);
+          this.loading.set(false);
+          return;
+        }
         this.successMessage.set(res.message ?? 'User registered successfully. Please verify your email.');
         this.form.reset();
-        this.auth.activeSegment.set('login');
-        setTimeout(() => this.router.navigate(['/auth'], { replaceUrl: true }), 2500);
+        setTimeout(() => {
+          this.auth.activeSegment.set('login');
+          this.router.navigate(['/auth'], { replaceUrl: true });
+        }, 2500);
       },
       error: (err: unknown) => {
         this.loading.set(false);
@@ -129,14 +160,20 @@ export class SignupComponent implements OnInit {
   private buildForm() {
     const f = this.fb;
     const form = f.nonNullable.group({
+      signupMethod: ['email' as 'email' | 'phone', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      phoneNumber: ['', [Validators.required]],
+      phoneNumber: [''],
       // location: f.control<string | ICountry | null>('', [Validators.required]),
       role: ['Seller', [Validators.required]],
       agencyName: f.nonNullable.control('', { updateOn: 'blur' }),
       password: ['', [Validators.required]],
       agree: [false, [Validators.requiredTrue]],
+      otp: [''],
     });
+
+    form.controls.signupMethod.valueChanges
+      .pipe(startWith(form.controls.signupMethod.value), takeUntilDestroyed(this.destroyRef))
+      .subscribe((method) => this.applyIdentifierValidators(form, method));
 
     // Show/hide agency name field and toggle its validators based on user type
     form.controls.role.valueChanges
@@ -156,6 +193,78 @@ export class SignupComponent implements OnInit {
         form.controls.agencyName.updateValueAndValidity({ emitEvent: false });
       });
     return form;
+  }
+
+  setSignupMethod(method: 'email' | 'phone'): void {
+    if (this.phoneOtpStep()) return;
+    this.form.controls.signupMethod.setValue(method);
+  }
+
+  resendPhoneOtp(): void {
+    const token = this.challengeToken();
+    if (!token || this.resending()) return;
+    this.error.set(null);
+    this.resending.set(true);
+    this.auth.resendPhoneOtp(token).subscribe({
+      next: (result) => {
+        this.resending.set(false);
+        if (result.maskedDestination) this.maskedDestination.set(result.maskedDestination);
+      },
+      error: (err: unknown) => {
+        this.resending.set(false);
+        this.error.set((err as { message?: string })?.message ?? 'Could not send a new code. Please try again.');
+      },
+    });
+  }
+
+  private verifyPhone(): void {
+    const otp = this.form.controls.otp;
+    if (otp.invalid) {
+      otp.markAsTouched();
+      return;
+    }
+    const token = this.challengeToken();
+    if (!token) return;
+    this.error.set(null);
+    this.loading.set(true);
+    this.auth.verifyPhone(token, otp.value).subscribe({
+      next: () => {
+        this.successMessage.set('Phone number verified. You can sign in.');
+        this.phoneOtpStep.set(false);
+        this.challengeToken.set(null);
+        this.form.controls.otp.clearValidators();
+        this.form.controls.otp.updateValueAndValidity();
+        this.form.reset();
+        this.loading.set(false);
+        setTimeout(() => {
+          this.auth.activeSegment.set('login');
+          this.router.navigate(['/auth'], { replaceUrl: true });
+        }, 2500);
+      },
+      error: (err: unknown) => {
+        this.loading.set(false);
+        this.error.set((err as { message?: string })?.message ?? 'Invalid or expired code. Please try again.');
+      },
+    });
+  }
+
+  private applyIdentifierValidators(
+    form: { controls: { email: AbstractControl; phoneNumber: AbstractControl } },
+    method: 'email' | 'phone',
+  ): void {
+    const email = form.controls.email;
+    const phone = form.controls.phoneNumber;
+    if (method === 'phone') {
+      phone.setValidators([Validators.required]);
+      email.clearValidators();
+      email.setValue('');
+    } else {
+      email.setValidators([Validators.required, Validators.email]);
+      phone.clearValidators();
+      phone.setValue('');
+    }
+    email.updateValueAndValidity({ emitEvent: false });
+    phone.updateValueAndValidity({ emitEvent: false });
   }
 
 }

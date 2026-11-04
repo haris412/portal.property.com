@@ -23,33 +23,61 @@
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
       <div class="row g-3">
 
+        @if (!phoneOtpStep()) {
         <div class="col-12">
-          <label class="form-label-auth" for="signup-email">{{ 'public.signUp.email' | translate }}</label>
-          <mat-form-field appearance="outline">
-            <input
-              id="signup-email"
-              matInput
-              formControlName="email"
-              placeholder="jane@example.com"
-              autocomplete="email"
-            />
-          </mat-form-field>
-          <app-form-field-error
-            [control]="form.controls.email"
-            [label]="'public.signUp.email' | translate"
-          />
+          <fieldset class="border-0 p-0 m-0">
+            <legend class="form-label-auth mb-2">{{ 'public.signUp.methodLabel' | translate }}</legend>
+            <div class="row gap-2 m-0">
+              <button
+                type="button"
+                class="user-type-pill col-auto"
+                [class.user-type-pill--active]="form.controls.signupMethod.value === 'email'"
+                (click)="setSignupMethod('email')"
+                [attr.aria-pressed]="form.controls.signupMethod.value === 'email'"
+              >
+                {{ 'public.signUp.methodEmail' | translate }}
+              </button>
+              <button
+                type="button"
+                class="user-type-pill col-auto"
+                [class.user-type-pill--active]="form.controls.signupMethod.value === 'phone'"
+                (click)="setSignupMethod('phone')"
+                [attr.aria-pressed]="form.controls.signupMethod.value === 'phone'"
+              >
+                {{ 'public.signUp.methodPhone' | translate }}
+              </button>
+            </div>
+          </fieldset>
         </div>
 
-        <div class="col-12">
-          <!-- <label class="form-label-auth" for="signup-phone">{{ 'public.signUp.mobile' | translate }}</label> -->
-          <ngx-material-intl-tel-input
-            [preferredCountries]="['sa', 'us']"
-            [enablePlaceholder]="true"
-            [enableSearch]="true"
-            [mainLabel] = "'Mobile number'"
-            [fieldControlName]="'phoneNumber'"
-          />
-        </div>
+        @if (form.controls.signupMethod.value === 'email') {
+          <div class="col-12">
+            <label class="form-label-auth" for="signup-email">{{ 'public.signUp.email' | translate }}</label>
+            <mat-form-field appearance="outline">
+              <input
+                id="signup-email"
+                matInput
+                formControlName="email"
+                placeholder="jane@example.com"
+                autocomplete="email"
+              />
+            </mat-form-field>
+            <app-form-field-error
+              [control]="form.controls.email"
+              [label]="'public.signUp.email' | translate"
+            />
+          </div>
+        } @else {
+          <div class="col-12">
+            <ngx-material-intl-tel-input
+              [preferredCountries]="['sa', 'us']"
+              [enablePlaceholder]="true"
+              [enableSearch]="true"
+              [mainLabel]="'public.signUp.mobile' | translate"
+              [fieldControlName]="'phoneNumber'"
+            />
+          </div>
+        }
 
         <!-- <div class="col-12">
           <label class="form-label-auth" for="signup-location">{{ 'public.signUp.location' | translate }}</label>
@@ -174,18 +202,50 @@
           </mat-checkbox>
           <app-form-field-error [control]="form.controls.agree" />
         </div>
+        } @else {
+          <div class="col-12">
+            <p class="text-muted-auth mb-0" role="status">
+              {{ 'public.signUp.otpSent' | translate: { destination: maskedDestination() } }}
+            </p>
+          </div>
+          <div class="col-12">
+            <label class="form-label-auth" for="signup-otp">{{ 'public.signUp.otpLabel' | translate }}</label>
+            <mat-form-field appearance="outline">
+              <input
+                id="signup-otp"
+                matInput
+                formControlName="otp"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                placeholder="000000"
+              />
+            </mat-form-field>
+            <app-form-field-error [control]="form.controls.otp" [label]="'public.signUp.otpLabel' | translate" />
+          </div>
+          <div class="col-12 d-flex flex-column gap-2">
+            <button type="button" mat-button class="auth-link" [disabled]="resending() || loading()" (click)="resendPhoneOtp()">
+              {{ resending() ? ('public.signUp.resending' | translate) : ('public.signUp.resend' | translate) }}
+            </button>
+          </div>
+        }
 
         <div class="col-12">
           <button
             type="submit"
             mat-raised-button
             class="auth-primary-btn w-100"
-            [disabled]="!this.form.valid"
+            [disabled]="loading() || (phoneOtpStep() ? form.controls.otp.invalid : !form.valid)"
           >
-            {{ loading() ? ('public.signUp.ctaLoading' | translate) : ('public.signUp.cta' | translate) }}
+            @if (phoneOtpStep()) {
+              {{ loading() ? ('public.signUp.verifying' | translate) : ('public.signUp.verifyPhone' | translate) }}
+            } @else {
+              {{ loading() ? ('public.signUp.ctaLoading' | translate) : ('public.signUp.cta' | translate) }}
+            }
           </button>
         </div>
 
+        @if (!phoneOtpStep()) {
         <div class="col-12">
           <div class="visually-divider">{{ 'public.signUp.orContinueWith' | translate }}</div>
         </div>
@@ -197,6 +257,7 @@
         <div class="col-12 col-sm-6">
           <app-social-button label="Microsoft" icon="microsoft" />
         </div>
+        }
       </div>
     </form>
   </div>

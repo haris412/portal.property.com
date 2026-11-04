@@ -15,11 +15,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { NgxMaterialIntlTelInputComponent } from 'ngx-material-intl-tel-input';
 import { SocialButtonComponent } from '../../../../shared/ui/social-button/social-button.component';
 import { FormFieldErrorComponent } from '../../../../shared/ui/form-field-error/form-field-error.component';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -35,13 +35,14 @@ import { HttpErrorResponse } from '@angular/common/http';
     MatButtonModule,
     SocialButtonComponent,
     FormFieldErrorComponent,
+    NgxMaterialIntlTelInputComponent,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
-  /** Pass true from admin portal — enables OTP flow via AdminAuthService */
+  /** Admin portal hides forgot-password and social buttons. */
   @Input() isAdmin = false;
   readonly showIntro = input(true);
 
@@ -54,24 +55,37 @@ export class LoginComponent {
   readonly error = signal<string | null>(null);
   readonly loading = signal(false);
 
-  /** Admin only: flips to true after credentials are verified, shows OTP field */
-  readonly otpStep = signal(false);
-
   readonly form = this.fb.nonNullable.group({
+    method: ['email' as 'email' | 'phone', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
+    phoneNumber: [''],
     password: ['', [Validators.required, Validators.minLength(8)]],
     rememberMe: [false],
-    otp: [''], // admin only — validator added dynamically on OTP step
   });
 
   constructor() {}
 
   readonly primaryActionLabel = computed(() => {
     const t = (k: string) => this.translate.instant(k);
-    if (!this.isAdmin)
-      return this.loading() ? t('public.signIn.ctaLoading') : t('public.signIn.cta');
-    return t('public.signIn.cta');
+    return this.loading() ? t('public.signIn.ctaLoading') : t('public.signIn.cta');
   });
+
+  setIdentifierMethod(method: 'email' | 'phone'): void {
+    this.form.controls.method.setValue(method);
+    const email = this.form.controls.email;
+    const phone = this.form.controls.phoneNumber;
+    if (method === 'phone') {
+      phone.setValidators([Validators.required]);
+      email.clearValidators();
+      email.setValue('');
+    } else {
+      email.setValidators([Validators.required, Validators.email]);
+      phone.clearValidators();
+      phone.setValue('');
+    }
+    email.updateValueAndValidity();
+    phone.updateValueAndValidity();
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -80,18 +94,21 @@ export class LoginComponent {
     }
     this.error.set(null);
     this.loading.set(true);
-    const { email, password } = this.form.getRawValue();
+    const { method, email, phoneNumber, password } = this.form.getRawValue();
+    const payload = method === 'phone'
+      ? { method: 'phone' as const, phoneNumber: phoneNumber.trim(), password }
+      : { method: 'email' as const, email: email.trim(), password };
     this.auth
-      .login({ email: email.trim(), password })
+      .login(payload)
       .pipe(
-        catchError((err: HttpErrorResponse) => {
-          console.log(err);
+        catchError((err: { message?: string }) => {
           this.error.set(err?.message ?? 'Login failed. Please try again.');
           return throwError(() => err);
         }),
         finalize(() => this.loading.set(false)),
       )
       .subscribe({
+        error: () => undefined,
         next: ({ user }) => {
           this.router.navigate([this.postLoginRoute(user.roles)]);
         },

@@ -28,14 +28,15 @@
 // }
 
 export interface IAccountSignUp {
-  email: string;
+  signupMethod: 'email' | 'phone';
+  email?: string;
   password: string;
-  phoneNumber:string;
-  location:string;
-  name:string;
-  agencyName?:string;
-  agree:boolean;
-  role:string;
+  phoneNumber?: string;
+  location?: string;
+  name?: string;
+  agencyName?: string;
+  agree: boolean;
+  role: string;
 }
 
 // export interface IInvitationTokenVerification {

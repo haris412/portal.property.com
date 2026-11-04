@@ -15,41 +15,70 @@
       </div>
     }
 
-    @if (isAdmin && otpStep()) {
-      <p class="text-muted-auth mb-3" role="status">
-        {{ 'public.signIn.admin.otpSent' | translate: { email: form.controls.email.value } }}
-      </p>
-    }
-
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="row g-3">
-        <div class="col-12">
-          <label class="form-label-auth" for="login-identifier">{{ 'public.signIn.email' | translate }}</label>
-          <mat-form-field appearance="outline">
-            <input
-              id="login-identifier"
-              matInput
-              formControlName="email"
-              placeholder="jane@example.com"
-              autocomplete="username"
-              [readonly]="isAdmin && otpStep()"
-            />
-          </mat-form-field>
-          <app-form-field-error [control]="form.controls.email" [label]="'public.signIn.email' | translate" />
-        </div>
+          <div class="col-12">
+            <fieldset class="border-0 p-0 m-0">
+              <legend class="form-label-auth mb-2">{{ 'public.signIn.methodLabel' | translate }}</legend>
+              <div class="row gap-2 m-0">
+                <button
+                  type="button"
+                  class="user-type-pill col-auto"
+                  [class.user-type-pill--active]="form.controls.method.value === 'email'"
+                  (click)="setIdentifierMethod('email')"
+                  [attr.aria-pressed]="form.controls.method.value === 'email'"
+                >
+                  {{ 'public.signIn.methodEmail' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="user-type-pill col-auto"
+                  [class.user-type-pill--active]="form.controls.method.value === 'phone'"
+                  (click)="setIdentifierMethod('phone')"
+                  [attr.aria-pressed]="form.controls.method.value === 'phone'"
+                >
+                  {{ 'public.signIn.methodPhone' | translate }}
+                </button>
+              </div>
+            </fieldset>
+          </div>
 
-        <div class="col-12">
-          <label class="form-label-auth" for="login-password">{{ 'public.signIn.password' | translate }}</label>
-          <mat-form-field appearance="outline">
-            <input
-              id="login-password"
-              matInput
-              [type]="hidePassword() ? 'password' : 'text'"
-              formControlName="password"
-              autocomplete="current-password"
-              [readonly]="isAdmin && otpStep()"
-            />
-            @if (!(isAdmin && otpStep())) {
+          @if (form.controls.method.value === 'email') {
+            <div class="col-12">
+              <label class="form-label-auth" for="login-identifier">{{ 'public.signIn.email' | translate }}</label>
+              <mat-form-field appearance="outline">
+                <input
+                  id="login-identifier"
+                  matInput
+                  formControlName="email"
+                  placeholder="jane@example.com"
+                  autocomplete="username"
+                />
+              </mat-form-field>
+              <app-form-field-error [control]="form.controls.email" [label]="'public.signIn.email' | translate" />
+            </div>
+          } @else {
+            <div class="col-12">
+              <ngx-material-intl-tel-input
+                [preferredCountries]="['sa', 'us']"
+                [enablePlaceholder]="true"
+                [enableSearch]="true"
+                [mainLabel]="'public.signIn.phone' | translate"
+                [fieldControlName]="'phoneNumber'"
+              />
+            </div>
+          }
+
+          <div class="col-12">
+            <label class="form-label-auth" for="login-password">{{ 'public.signIn.password' | translate }}</label>
+            <mat-form-field appearance="outline">
+              <input
+                id="login-password"
+                matInput
+                [type]="hidePassword() ? 'password' : 'text'"
+                formControlName="password"
+                autocomplete="current-password"
+              />
               <button
                 type="button"
                 mat-icon-button
@@ -59,44 +88,23 @@
               >
                 <mat-icon [fontIcon]="hidePassword() ? 'visibility_off' : 'visibility'"></mat-icon>
               </button>
-            }
-          </mat-form-field>
-          <app-form-field-error [control]="form.controls.password" [label]="'public.signIn.password' | translate" />
-        </div>
-
-        @if (isAdmin && otpStep()) {
-          <div class="col-12">
-            <label class="form-label-auth" for="login-otp">{{ 'public.signIn.admin.otpLabel' | translate }}</label>
-            <mat-form-field appearance="outline">
-              <input
-                id="login-otp"
-                matInput
-                formControlName="otp"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                maxlength="32"
-                placeholder="00000"
-              />
             </mat-form-field>
-            <app-form-field-error [control]="form.controls.otp" [label]="'public.signIn.admin.otpLabel' | translate" />
+            <app-form-field-error [control]="form.controls.password" [label]="'public.signIn.password' | translate" />
           </div>
-        }
 
-        @if (!(isAdmin && otpStep())) {
           <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
             <mat-checkbox formControlName="rememberMe">{{ 'public.signIn.rememberMe' | translate }}</mat-checkbox>
             @if (!isAdmin) {
               <a routerLink="/forgot-password" class="auth-link">{{ 'public.signIn.forgotPassword' | translate }}</a>
             }
           </div>
-        }
 
         <div class="col-12 d-flex flex-column gap-2">
           <button
             type="submit"
             mat-raised-button
             class="auth-primary-btn w-100"
-            [disabled]="!form.valid"
+            [disabled]="loading() || form.invalid"
           >
             {{ primaryActionLabel() }}
           </button>

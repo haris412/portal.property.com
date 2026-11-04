@@ -11,7 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,6 +26,12 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { UserService, UpdateUserPayload } from '../../../../core/services/user.service';
 import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button';
 import { TranslateModule } from '@ngx-translate/core';
+
+function optionalPhone(control: AbstractControl): ValidationErrors | null {
+  const value = String(control.value ?? '').trim();
+  if (!value) return null;
+  return /^\+?[0-9]{10,15}$/.test(value) ? null : { pattern: true };
+}
 
 @Component({
   selector: 'app-profile-account-section',
@@ -65,7 +71,7 @@ export class ProfileAccountSection implements OnDestroy {
   readonly form = this.fb.nonNullable.group({
     firstName:   ['', [Validators.required, Validators.maxLength(60)]],
     lastName:    ['', [Validators.required, Validators.maxLength(60)]],
-    phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9]{10,15}$/)]],
+    phoneNumber: ['', [optionalPhone]],
     location:    ['', Validators.maxLength(200)],
   });
 
@@ -114,11 +120,12 @@ export class ProfileAccountSection implements OnDestroy {
     if (!id) return;
 
     const { firstName, lastName, phoneNumber, location } = this.form.getRawValue();
+    const phone = phoneNumber.trim();
     const payload: UpdateUserPayload = {
       firstName:   firstName.trim(),
       lastName:    lastName.trim(),
-      phoneNumber: phoneNumber.trim(),
       location:    location.trim() || undefined,
+      ...(phone ? { phoneNumber: phone } : {}),
     };
 
     this.saving.set(true);

@@ -46,7 +46,7 @@ export interface ListUsersResult {
 export interface UpdateUserPayload {
   firstName: string;
   lastName: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   location?: string;
 }
 
