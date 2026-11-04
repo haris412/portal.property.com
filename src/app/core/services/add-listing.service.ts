@@ -90,6 +90,12 @@ export class AddListingService {
       ?.subtypes.find(s => s._id === subtypeId)?.name ?? '';
   }
 
+  getSubtypeSlugById(categoryId: string, subtypeId: string): string {
+    return this.listingConfigCache?.catalog.categories
+      .find(c => c._id === categoryId)
+      ?.subtypes.find(s => s._id === subtypeId)?.slug ?? '';
+  }
+
   createListing(payload: CreateListingPayload): Observable<ApiResponse<AddListingResponse>> {
     return this.http.post<ApiResponse<AddListingResponse>>(this.baseUrl, { ...payload, status: 'Published' });
   }
@@ -152,6 +158,11 @@ export class AddListingService {
     if (query.minPrice != null) setParam('minPrice', query.minPrice);
     if (query.maxPrice != null) setParam('maxPrice', query.maxPrice);
     setParam('city',         query.city);
+    if (query.isShared != null) setParam('isShared', String(query.isShared));
+    setParam('bathroom',         query.bathroom);
+    setParam('kitchen',          query.kitchen);
+    setParam('tenantPreference', query.tenantPreference);
+    if (query.minRoomsAvailable != null) setParam('minRoomsAvailable', query.minRoomsAvailable);
     setParam('sortBy',       query.sortBy);
     setParam('sortOrder',    query.sortOrder);
 

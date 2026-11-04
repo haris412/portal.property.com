@@ -1,5 +1,6 @@
 import type { LocationHierarchyItem } from './google-places.models';
 import type { ListingImagePayload } from '../services/media-upload.service';
+import type { SharedDetails } from './shared-listing.model';
 
 export interface CreateListingPayload {
   purpose:             string;
@@ -29,5 +30,8 @@ export interface CreateListingPayload {
   contactPhoneNumber:  string | null;
   contactLocation:     string | null;
   isFeatured:          boolean;
+  isShared:            boolean;
+  /** Only sent when `isShared` is true; a PUT replaces the whole object. */
+  sharedDetails?:      SharedDetails;
   status?:             string;
 }

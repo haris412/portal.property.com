@@ -31,6 +31,7 @@ import { PropertyMediaSectionComponent } from '../../components/property-media-s
 import { PropertyLocationStepComponent } from '../../components/property-location-step/property-location-step';
 import { ContactInformationStepComponent } from '../../components/contact-information-step/contact-information-step';
 import { PropertyDescriptionStepComponent } from '../../components/property-description-step/property-description-step';
+import { SharedListingSectionComponent } from '../../components/shared-listing-section/shared-listing-section';
 import {
   AddListingService,
   GenerateListingDescriptionRequest,
@@ -43,6 +44,11 @@ import {
 } from '../../mappers/listing-payload.mapper';
 import type { LocationHierarchyItem } from '../../../../core/models/google-places.models';
 import type { PropertyDetailDocument } from '../../../../core/models/property-detail.model';
+import {
+  formatSharedDetailLines,
+  isShareableSubtypeSlug,
+  type SharedDetails,
+} from '../../../../core/models/shared-listing.model';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ADD_LISTING_HEADER_ACTIONS } from '../../constants/add-listing.constants';
 import type { ListingImagePayload } from '../../../../core/services/media-upload.service';
@@ -61,6 +67,7 @@ import {
   ADD_LISTING_DESCRIPTION_API_MAP,
   ADD_LISTING_LOCATION_API_MAP,
   ADD_LISTING_PRICING_API_MAP,
+  ADD_LISTING_SHARED_API_MAP,
 } from '../../constants/add-listing-api-field-maps';
 import { firstValueFrom } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
@@ -103,6 +110,7 @@ interface ReviewSummarySection  { title: string; icon: string; items: readonly R
     PropertyLocationStepComponent,
     ContactInformationStepComponent,
     PropertyDescriptionStepComponent,
+    SharedListingSectionComponent,
   ],
   templateUrl: './add-listing-page.html',
   styleUrl: './add-listing-page.scss',
@@ -126,6 +134,7 @@ export class AddListingPageComponent implements AfterViewInit {
   @ViewChild(PropertyMediaSectionComponent)     private readonly mediaStep?:       PropertyMediaSectionComponent;
   @ViewChild(ContactInformationStepComponent)   private readonly contactStep?:     ContactInformationStepComponent;
   @ViewChild(PropertyDescriptionStepComponent)  private readonly descriptionStep?: PropertyDescriptionStepComponent;
+  @ViewChild(SharedListingSectionComponent)     private readonly sharedStep?:      SharedListingSectionComponent;
 
   basicInfoForm!:   FormGroup;
   pricingForm!:     FormGroup;
@@ -134,6 +143,7 @@ export class AddListingPageComponent implements AfterViewInit {
   descriptionForm!: FormGroup;
   amenitiesForm!:   FormGroup;
   mediaForm!:       FormGroup;
+  sharedForm!:      FormGroup;
 
   readonly activeStepKey = signal<AddListingStepKey>('basic-info');
 
@@ -187,7 +197,7 @@ export class AddListingPageComponent implements AfterViewInit {
   private readonly stepValidityMap = computed(() => {
     this.listingFormsTick();
     return {
-      'basic-info':          this.basicStep?.isValid()    ?? false,
+      'basic-info':         (this.basicStep?.isValid()    ?? false) && (this.sharedStep?.isValid() ?? true),
       'pricing':             this.pricingStep?.isValid()  ?? false,
       'location':            this.locationStep?.isValid() ?? false,
       // mediaStep.isValid() only sees new File objects; existing server images also satisfy the requirement.
@@ -267,7 +277,24 @@ export class AddListingPageComponent implements AfterViewInit {
       media:       this.mediaForm?.getRawValue()       ?? { images: [], videoFiles: [] },
       contact:     this.contactForm?.getRawValue()     ?? {},
       description: this.descriptionForm?.getRawValue() ?? {},
+      shared:      this.sharedForm?.getRawValue()      ?? { isShared: false, details: {} },
     };
+  });
+
+  /** null while the catalog is loading: slugs are unknown, so nothing should be auto-cleared yet. */
+  readonly sharedEligible = computed<boolean | null>(() => {
+    const { basic } = this.formSnapshot();
+    if (this.basicStep?.catalogStatus() !== 'ready') return null;
+    if (basic.purpose !== 'rent') return false;
+    return isShareableSubtypeSlug(this.addListingService.getSubtypeSlugById(basic.propertyTypeId, basic.subtypeId));
+  });
+
+  // unknown eligibility keeps the loaded value so an edit can't silently wipe sharedDetails
+  readonly sharedIsOn    = computed(() => this.sharedEligible() !== false && this.formSnapshot().shared.isShared === true);
+  readonly sharedRoomsAvailable = computed<number | null>(() => {
+    if (!this.sharedIsOn()) return null;
+    const n = this.formSnapshot().shared.details?.roomsAvailable;
+    return n == null || n === '' || !Number.isFinite(Number(n)) ? null : Number(n);
   });
 
   readonly reviewSummarySections = computed<readonly ReviewSummarySection[]>(() => {
@@ -283,6 +310,7 @@ export class AddListingPageComponent implements AfterViewInit {
     const photoCount       = ((media.images    ?? []) as File[]).length;
     const videoName        = ((media.videoFiles ?? []) as File[])[0]?.name ?? 'Not selected';
     const descriptionValue = this.formatDescriptionValue(description.propertyDescription);
+    const sharedLines      = this.sharedIsOn() ? formatSharedDetailLines(this.sharedDetailsForReview()) : [];
 
     return [
       {
@@ -297,7 +325,7 @@ export class AddListingPageComponent implements AfterViewInit {
       {
         title: 'Pricing and details', icon: 'payments',
         items: [
-          { label: 'Price',          value: this.formatCurrencyValue(pricing.price)          },
+          { label: this.sharedIsOn() ? 'Rent for offered room(s)' : 'Price', value: this.formatCurrencyValue(pricing.price) },
           { label: 'Area size',      value: areaLabel                                        },
           { label: 'Bedrooms',       value: this.formatReviewValue(pricing.numBedrooms)      },
           { label: 'Bathrooms',      value: this.formatReviewValue(pricing.numBathrooms)     },
@@ -305,6 +333,7 @@ export class AddListingPageComponent implements AfterViewInit {
           { label: 'Floors',         value: this.formatReviewValue(pricing.numFloors)        },
         ],
       },
+      ...(sharedLines.length ? [{ title: 'Sharing details', icon: 'meeting_room', items: sharedLines }] : []),
       {
         title: 'Location', icon: 'location_on',
         items: [
@@ -401,7 +430,7 @@ export class AddListingPageComponent implements AfterViewInit {
     }
   }
 
-  onFormReady(key: 'basicInfo' | 'pricing' | 'contact' | 'description' | 'amenities' | 'media' | 'location', form: FormGroup): void {
+  onFormReady(key: 'basicInfo' | 'pricing' | 'contact' | 'description' | 'amenities' | 'media' | 'location' | 'shared', form: FormGroup): void {
     const assign: Record<typeof key, (f: FormGroup) => void> = {
       basicInfo:   f => this.basicInfoForm   = f,
       pricing:     f => this.pricingForm     = f,
@@ -410,6 +439,7 @@ export class AddListingPageComponent implements AfterViewInit {
       amenities:   f => this.amenitiesForm   = f,
       media:       f => this.mediaForm       = f,
       location:    f => this.locationForm    = f,
+      shared:      f => this.sharedForm      = f,
     };
     assign[key](form);
     this.wireFormToTicks(form);
@@ -572,6 +602,8 @@ export class AddListingPageComponent implements AfterViewInit {
       amenities:   this.amenitiesForm.getRawValue(),
       contact:     this.contactForm.getRawValue(),
       location:    this.locationForm.getRawValue(),
+      // only trust the toggle while the purpose/subtype still allow sharing
+      shared:      { ...this.sharedForm.getRawValue(), isShared: this.sharedIsOn() },
     };
     return buildListingPayload(forms, uploadedMedia, this.isFeatured());
   }
@@ -588,6 +620,7 @@ export class AddListingPageComponent implements AfterViewInit {
         { form: this.pricingForm,     map: ADD_LISTING_PRICING_API_MAP     },
         { form: this.locationForm,    map: ADD_LISTING_LOCATION_API_MAP    },
         { form: this.contactForm,     map: ADD_LISTING_CONTACT_API_MAP     },
+        { form: this.sharedForm,      map: ADD_LISTING_SHARED_API_MAP      },
       ],
       this.destroyRef
     );
@@ -615,13 +648,14 @@ export class AddListingPageComponent implements AfterViewInit {
     this.descriptionStep?.patchFromProperty(doc);
     this.amenitiesStep?.patchFromProperty(doc);
     this.locationStep?.patchFromProperty(doc);
+    this.sharedStep?.patchFromProperty(doc);
 
     this.wasFeaturedWhenLoaded.set(doc.isFeatured === true);
     this.isFeatured.set(doc.isFeatured === true);
     this.existingPropertyImages.set((doc.images ?? []) as ListingImagePayload[]);
 
     this.refreshListingFormValidity();
-    [this.basicInfoForm, this.pricingForm, this.contactForm, this.descriptionForm, this.locationForm]
+    [this.basicInfoForm, this.pricingForm, this.contactForm, this.descriptionForm, this.locationForm, this.sharedForm]
       .forEach(form => form?.markAsUntouched());
   }
 
@@ -632,13 +666,14 @@ export class AddListingPageComponent implements AfterViewInit {
       this.contactForm.valid     &&
       this.descriptionForm.valid &&
       this.locationForm.valid    &&
+      this.sharedForm.valid      &&
       (this.locationStep?.hasLocation() ?? false) &&
       (!includeMedia || this.mediaForm.valid)
     );
   }
 
   private markAllListingFormsTouched(): void {
-    [this.basicInfoForm, this.pricingForm, this.mediaForm, this.contactForm, this.descriptionForm, this.locationForm]
+    [this.basicInfoForm, this.pricingForm, this.mediaForm, this.contactForm, this.descriptionForm, this.locationForm, this.sharedForm]
       .forEach(form => form?.markAllAsTouched());
   }
 
@@ -655,6 +690,7 @@ export class AddListingPageComponent implements AfterViewInit {
     const invalid: string[] = [];
     if (this.basicInfoForm.invalid)                                                   invalid.push('Basic information');
     if (this.pricingForm.invalid)                                                     invalid.push('Pricing');
+    if (this.sharedForm.invalid)                                                      invalid.push('Shared listing (Basic information)');
     if (this.locationForm.invalid || !(this.locationStep?.hasLocation() ?? false))    invalid.push('Location (map pin)');
     if (this.contactForm.invalid)                                                     invalid.push('Contact');
     if (this.descriptionForm.invalid)                                                 invalid.push('Description');
@@ -663,7 +699,7 @@ export class AddListingPageComponent implements AfterViewInit {
   }
 
   private refreshListingFormValidity(): void {
-    for (const form of [this.basicInfoForm, this.pricingForm, this.locationForm, this.contactForm, this.descriptionForm]) {
+    for (const form of [this.basicInfoForm, this.pricingForm, this.locationForm, this.contactForm, this.descriptionForm, this.sharedForm]) {
       form?.updateValueAndValidity({ emitEvent: true });
     }
     this.listingFormsTick.update(n => n + 1);
@@ -726,6 +762,12 @@ export class AddListingPageComponent implements AfterViewInit {
     const leaf  = items[items.length - 1];
     const city  = items.find(i => i.level === 2);
     return city && city.name !== leaf.name ? `${leaf.name}, ${city.name}` : leaf.name;
+  }
+
+  private sharedDetailsForReview(): SharedDetails {
+    const d = this.formSnapshot().shared.details ?? {};
+    const toNumber = (v: unknown) => (v == null || v === '' ? undefined : Number(v));
+    return { ...d, roomsAvailable: toNumber(d.roomsAvailable), currentOccupants: toNumber(d.currentOccupants) } as SharedDetails;
   }
 
   private formatDescriptionValue(value: unknown): string {

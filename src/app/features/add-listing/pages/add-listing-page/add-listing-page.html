@@ -40,11 +40,15 @@
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'basic-info'">
           <app-basic-information-section (formReady)="onFormReady('basicInfo', $event)" />
+          <app-shared-listing-section (formReady)="onFormReady('shared', $event)"
+                                      [eligible]="sharedEligible()" />
         </div>
 
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"
              [hidden]="activeStepKey() !== 'pricing'">
-          <app-pricing-details-section (formReady)="onFormReady('pricing', $event)" />
+          <app-pricing-details-section (formReady)="onFormReady('pricing', $event)"
+                                       [isShared]="sharedIsOn()"
+                                       [sharedRoomsAvailable]="sharedRoomsAvailable()" />
         </div>
 
         <div class="add-listing-page__step-grid add-listing-page__step-grid--single"

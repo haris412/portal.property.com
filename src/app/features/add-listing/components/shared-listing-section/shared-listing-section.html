@@ -1,0 +1,164 @@
+@if (eligible()) {
+<app-section-card [title]="'addListing.shared.title' | translate"
+                  [description]="'addListing.shared.description' | translate"
+                  icon="meeting_room"
+                  variant="dashboard">
+  <div class="row g-4 shared-listing-form" [formGroup]="form">
+
+    <div class="col-12">
+      <mat-slide-toggle formControlName="isShared">
+        {{ 'addListing.shared.toggle.label' | translate }}
+      </mat-slide-toggle>
+      <div class="field-hint mt-1">{{ 'addListing.shared.toggle.hint' | translate }}</div>
+    </div>
+
+    @if (form.controls.isShared.value) {
+    <ng-container formGroupName="details">
+
+      <!-- Rooms available -->
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ 'addListing.shared.roomsAvailable.label' | translate }} *</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput
+                 type="number"
+                 formControlName="roomsAvailable"
+                 min="1"
+                 step="1"
+                 placeholder="1"
+                 (keydown)="blockMinus($event)" />
+          <mat-error>
+            @if (form.controls.details.controls.roomsAvailable.hasError('server')) {
+              {{ form.controls.details.controls.roomsAvailable.getError('server') }}
+            } @else if (form.controls.details.controls.roomsAvailable.hasError('required')) {
+              {{ 'addListing.shared.roomsAvailable.required' | translate }}
+            } @else if (form.controls.details.controls.roomsAvailable.hasError('min') || form.controls.details.controls.roomsAvailable.hasError('pattern')) {
+              {{ 'addListing.shared.roomsAvailable.min' | translate }}
+            }
+          </mat-error>
+          <mat-hint>{{ 'addListing.shared.roomsAvailable.hint' | translate }}</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Current occupants -->
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ 'addListing.shared.currentOccupants.label' | translate }}</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput
+                 type="number"
+                 formControlName="currentOccupants"
+                 min="0"
+                 step="1"
+                 placeholder="0"
+                 (keydown)="blockMinus($event)" />
+          <mat-error>
+            @if (form.controls.details.controls.currentOccupants.hasError('server')) {
+              {{ form.controls.details.controls.currentOccupants.getError('server') }}
+            } @else {
+              {{ 'addListing.shared.currentOccupants.min' | translate }}
+            }
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Bathroom -->
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ 'addListing.shared.bathroom.label' | translate }} *</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="bathroom" [placeholder]="'addListing.shared.select' | translate">
+            @for (opt of bathroomOptions; track opt) {
+              <mat-option [value]="opt">{{ opt === 'Attached' ? 'Attached (private)' : opt }}</mat-option>
+            }
+          </mat-select>
+          <mat-error>
+            @if (form.controls.details.controls.bathroom.hasError('server')) {
+              {{ form.controls.details.controls.bathroom.getError('server') }}
+            } @else {
+              {{ 'addListing.shared.bathroom.required' | translate }}
+            }
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Kitchen -->
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ 'addListing.shared.kitchen.label' | translate }} *</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="kitchen" [placeholder]="'addListing.shared.select' | translate">
+            @for (opt of kitchenOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+          <mat-error>
+            @if (form.controls.details.controls.kitchen.hasError('server')) {
+              {{ form.controls.details.controls.kitchen.getError('server') }}
+            } @else {
+              {{ 'addListing.shared.kitchen.required' | translate }}
+            }
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Living room -->
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ 'addListing.shared.livingRoom.label' | translate }}</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="livingRoom" [placeholder]="'addListing.shared.notSpecified' | translate">
+            <mat-option value="">{{ 'addListing.shared.notSpecified' | translate }}</mat-option>
+            @for (opt of livingRoomOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Laundry -->
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ 'addListing.shared.laundry.label' | translate }}</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="laundry" [placeholder]="'addListing.shared.notSpecified' | translate">
+            <mat-option value="">{{ 'addListing.shared.notSpecified' | translate }}</mat-option>
+            @for (opt of laundryOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Entrance -->
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ 'addListing.shared.entrance.label' | translate }}</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="entrance" [placeholder]="'addListing.shared.notSpecified' | translate">
+            <mat-option value="">{{ 'addListing.shared.notSpecified' | translate }}</mat-option>
+            @for (opt of entranceOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Tenant preference -->
+      <div class="col-12 col-md-6">
+        <label class="field-label">{{ 'addListing.shared.tenantPreference.label' | translate }}</label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="tenantPreference">
+            @for (opt of tenantPreferenceOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Utilities included -->
+      <div class="col-12">
+        <mat-checkbox formControlName="utilitiesIncluded">
+          {{ 'addListing.shared.utilitiesIncluded.label' | translate }}
+        </mat-checkbox>
+      </div>
+
+    </ng-container>
+    }
+
+  </div>
+</app-section-card>
+}

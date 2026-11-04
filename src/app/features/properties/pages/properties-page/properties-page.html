@@ -10,6 +10,74 @@
     [title]="'properties.listings.title' | translate"
     [description]="'properties.listings.description' | translate"
   >
+    <div class="properties-page__filters row g-3 mb-1" role="search">
+      <div class="col-12 col-sm-6 col-lg-3">
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>{{ 'properties.filters.listingType' | translate }}</mat-label>
+          <mat-select [value]="filters().listingType" (selectionChange)="onListingTypeChange($event.value)">
+            @for (opt of listingTypeOptions; track opt.value) {
+              <mat-option [value]="opt.value">{{ opt.labelKey | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (filters().listingType === 'shared') {
+        <div class="col-12 col-sm-6 col-lg-2">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>{{ 'properties.filters.bathroom' | translate }}</mat-label>
+            <mat-select [value]="filters().bathroom ?? ''" (selectionChange)="onSharedFilterChange('bathroom', $event.value)">
+              <mat-option value="">{{ 'properties.filters.any' | translate }}</mat-option>
+              @for (opt of bathroomOptions; track opt) {
+                <mat-option [value]="opt">{{ opt === 'Attached' ? 'Attached (private)' : opt }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>{{ 'properties.filters.kitchen' | translate }}</mat-label>
+            <mat-select [value]="filters().kitchen ?? ''" (selectionChange)="onSharedFilterChange('kitchen', $event.value)">
+              <mat-option value="">{{ 'properties.filters.any' | translate }}</mat-option>
+              @for (opt of kitchenOptions; track opt) {
+                <mat-option [value]="opt">{{ opt }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>{{ 'properties.filters.tenantPreference' | translate }}</mat-label>
+            <mat-select [value]="filters().tenantPreference ?? ''" (selectionChange)="onSharedFilterChange('tenantPreference', $event.value)">
+              <mat-option value="">{{ 'properties.filters.any' | translate }}</mat-option>
+              @for (opt of tenantPreferenceOptions; track opt) {
+                <mat-option [value]="opt">{{ opt }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>{{ 'properties.filters.minRoomsAvailable' | translate }}</mat-label>
+            <input matInput
+                   type="number"
+                   min="1"
+                   step="1"
+                   [value]="filters().minRoomsAvailable ?? ''"
+                   (change)="onMinRoomsChange($any($event.target).value)" />
+          </mat-form-field>
+        </div>
+      }
+
+      @if (filters().listingType !== 'any') {
+        <div class="col-12 col-lg-auto d-flex align-items-start">
+          <button type="button" class="btn btn-outline-secondary btn-sm mt-2" [disabled]="loading()" (click)="clearFilters()">
+            {{ 'properties.filters.clear' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+
     @if (loadError(); as err) {
       <app-info-banner class="d-block mb-3" icon="error_outline" [text]="err" />
     }
