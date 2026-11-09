@@ -1,0 +1,115 @@
+<app-page-shell>
+  <section class="notifications-page" aria-labelledby="notifications-title">
+    <header class="notifications-page__header">
+      <div>
+        <p class="notifications-page__eyebrow">Activity</p>
+        <h1 id="notifications-title">Notifications</h1>
+        <p class="notifications-page__summary">
+          @if (unreadCount() === 0) {
+            You're all caught up.
+          } @else {
+            {{ unreadCount() }} unread {{ unreadCount() === 1 ? 'notification' : 'notifications' }}
+          }
+        </p>
+      </div>
+
+      <div class="notifications-page__actions">
+        @if (unreadCount() > 0) {
+          <button
+            type="button"
+            class="notifications-page__mark-read"
+            [disabled]="markingAllRead()"
+            (click)="markAllRead()"
+          >
+            <mat-icon fontIcon="done_all" aria-hidden="true" />
+            {{ markingAllRead() ? 'Marking...' : 'Mark all as read' }}
+          </button>
+        }
+        <button
+          type="button"
+          class="notifications-page__refresh"
+          aria-label="Refresh notifications"
+          title="Refresh notifications"
+          [disabled]="loading()"
+          (click)="refresh()"
+        >
+          <mat-icon fontIcon="refresh" aria-hidden="true" />
+        </button>
+      </div>
+    </header>
+
+    <div class="notifications-page__toolbar">
+      <div class="notifications-page__filters" role="group" aria-label="Filter notifications">
+        <button
+          type="button"
+          [class.notifications-page__filter--active]="filter() === 'all'"
+          [attr.aria-pressed]="filter() === 'all'"
+          (click)="setFilter('all')"
+        >
+          All <span>{{ items().length }}</span>
+        </button>
+        <button
+          type="button"
+          [class.notifications-page__filter--active]="filter() === 'unread'"
+          [attr.aria-pressed]="filter() === 'unread'"
+          (click)="setFilter('unread')"
+        >
+          Unread <span>{{ unreadCount() }}</span>
+        </button>
+      </div>
+    </div>
+
+    @if (loading() && items().length === 0) {
+      <p class="notifications-page__state" role="status">Loading notifications...</p>
+    } @else if (loadError() && items().length === 0) {
+      <div class="notifications-page__state notifications-page__state--error" role="alert">
+        <p>Notifications could not be loaded.</p>
+        <button type="button" (click)="refresh()">Try again</button>
+      </div>
+    } @else if (visibleItems().length === 0) {
+      <div class="notifications-page__empty">
+        <span class="notifications-page__empty-icon" aria-hidden="true">
+          <mat-icon fontIcon="notifications_none" />
+        </span>
+        <h2>{{ filter() === 'unread' ? 'No unread notifications' : 'No notifications yet' }}</h2>
+        <p>New updates will appear here.</p>
+      </div>
+    } @else {
+      <ul class="notifications-page__list" aria-label="Notifications">
+        @for (item of visibleItems(); track item.id) {
+          <li class="notifications-page__list-item">
+            <article
+              class="notifications-page__item"
+              [class.notifications-page__item--unread]="!item.isRead"
+            >
+              <span class="notifications-page__item-icon" aria-hidden="true">
+                <mat-icon fontIcon="notifications" />
+              </span>
+              <div class="notifications-page__item-copy">
+                <h2>{{ item.title }}</h2>
+                @if (item.message) {
+                  <p>{{ item.message }}</p>
+                }
+                <time [attr.datetime]="item.createdAt">
+                  {{ item.createdAt ? (item.createdAt | date: 'medium') : 'Recently' }}
+                </time>
+              </div>
+              @if (!item.isRead) {
+                <button
+                  type="button"
+                  class="notifications-page__mark-item"
+                  [attr.aria-label]="'Mark ' + item.title + ' as read'"
+                  title="Mark as read"
+                  [disabled]="markingAllRead() || markingNotificationIds().has(item.id)"
+                  (click)="markNotificationRead(item.id)"
+                >
+                  <mat-icon fontIcon="drafts" aria-hidden="true" />
+                </button>
+              }
+            </article>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</app-page-shell>

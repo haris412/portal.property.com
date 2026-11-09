@@ -28,6 +28,7 @@
     "bootstrap": "^5.3.8",
     "country-state-city": "^3.2.1",
     "echarts": "^6.0.0",
+    "firebase": "^13.2.0",
     "leaflet": "^1.9.4",
     "mediasoup-client": "^3.19.0",
     "ngx-echarts": "^21.0.0",

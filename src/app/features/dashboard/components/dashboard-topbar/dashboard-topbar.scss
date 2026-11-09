@@ -31,12 +31,15 @@
 }
 
 .dashboard-topbar__icon-btn {
+  display: inline-grid;
+  place-items: center;
   width: 48px;
   height: 48px;
   border: 1px solid var(--border-soft);
   background: var(--surface);
   border-radius: 12px;
   color: var(--font-main);
+  text-decoration: none;
 }
 
 @media (max-width: 991.98px) {

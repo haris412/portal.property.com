@@ -12,9 +12,14 @@
 
   <div class="col-12 col-lg-auto">
     <div class="dashboard-topbar__actions">
-      <button type="button" class="dashboard-topbar__icon-btn" aria-label="Notifications">
+      <a
+        routerLink="/notifications"
+        class="dashboard-topbar__icon-btn"
+        aria-label="Notifications"
+        title="Notifications"
+      >
         <mat-icon fontSet="material-symbols-outlined" inline>notifications</mat-icon>
-      </button>
+      </a>
 
       <app-action-button label="Quick Add" icon="add" (clicked)="goToAddListing()" />
     </div>

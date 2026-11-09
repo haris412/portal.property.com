@@ -41,6 +41,11 @@
                 "glob": "web.config",
                 "input": "public",
                 "output": "/"
+              },
+              {
+                "glob": "firebase-messaging-sw.js",
+                "input": "public",
+                "output": "/"
               }
             ],
             "styles": [

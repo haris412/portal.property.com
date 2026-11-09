@@ -25,14 +25,19 @@
         />
       </div> -->
 
-      <button
-        type="button"
+      <a
+        routerLink="/notifications"
         class="header__icon-button"
         aria-label="Notifications"
+        title="Notifications"
       >
         <mat-icon fontIcon="notifications_none" aria-hidden="true"></mat-icon>
-        <span class="header__badge">3</span>
-      </button>
+        @if (unreadNotificationCount() > 0) {
+          <span class="header__badge" aria-hidden="true">
+            {{ unreadNotificationCount() > 99 ? '99+' : unreadNotificationCount() }}
+          </span>
+        }
+      </a>
 
       <app-language-switcher />
 

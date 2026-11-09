@@ -108,6 +108,14 @@ export const routes: Routes = [
         title: 'Inbox',
       },
       {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/notifications/pages/notifications-page/notifications-page').then(
+            (m) => m.NotificationsPageComponent,
+          ),
+        title: 'Notifications',
+      },
+      {
         path: 'appointments',
         loadChildren: () =>
           import('./features/appointments/appointments.routes').then((m) => m.APPOINTMENTS_ROUTES),

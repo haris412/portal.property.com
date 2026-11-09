@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button';
@@ -7,7 +7,7 @@ import { ActionButtonComponent } from '../../../../shared/ui/action-button/actio
 @Component({
   selector: 'app-dashboard-topbar',
   standalone: true,
-  imports: [FormsModule, MatIconModule, ActionButtonComponent],
+  imports: [FormsModule, MatIconModule, RouterLink, ActionButtonComponent],
   templateUrl: './dashboard-topbar.html',
   styleUrl: './dashboard-topbar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

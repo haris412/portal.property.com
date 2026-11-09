@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { AppNotificationsService } from '../../core/services/app-notifications.service';
 import { SubscriptionPlansGateService } from '../../core/services/subscription-plans-gate.service';
 import { isAdminRole, isBuyerRole, isSubscriptionPlansGateExcluded } from '../../core/models/role.models';
 import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher/language-switcher.component';
@@ -28,10 +29,16 @@ export class HeaderComponent {
   readonly menuToggle = output<void>();
 
   readonly authService = inject(AuthService);
+  private readonly notifications = inject(AppNotificationsService);
   private readonly subscriptionPlansGate = inject(SubscriptionPlansGateService);
   private readonly currentUser = toSignal(this.authService.currentUser$, { initialValue: null });
 
   readonly userMenuOpen = signal(false);
+  readonly unreadNotificationCount = this.notifications.unreadCount;
+
+  constructor() {
+    this.notifications.refreshUnreadCount().subscribe({ error: () => {} });
+  }
 
   readonly userName = computed(() => this.currentUser()?.name || 'Admin');
   readonly canOpenSubscriptionPlans = computed(() => {

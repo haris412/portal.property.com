@@ -17,6 +17,7 @@ import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/fo
 import { hasPrimaryAgencyAdminRole } from '../models/role.models';
 import { IUser } from '../interfaces/user.interface';
 import { IAccountSignUp } from '../interfaces/account.interface';
+import { FirebaseMessagingService } from './firebase-messaging.service';
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -219,6 +220,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly firebaseMessaging = inject(FirebaseMessagingService);
   readonly userData = signal<IUser | null>(null);
   readonly activeSegment  = signal<'signup' | 'login'>('login');
   private accessToken: string | null = null;
@@ -304,6 +306,7 @@ export class AuthService {
           if (!data?.accessToken)
             return throwError(() => ({ message: res.message ?? fallback }));
           this.storeAuthData(data);
+          this.firebaseMessaging.registerAfterLogin();
           return of({ user: fromApiUser(data.user) });
         }),
         catchError((err: unknown) =>
@@ -377,6 +380,7 @@ export class AuthService {
 
   logout(): void {
     if (this.accessToken) {
+      this.firebaseMessaging.unregisterOnLogout(this.accessToken);
       this.http
         .post(
           `/auth/logout`,
@@ -415,7 +419,13 @@ export class AuthService {
   tryRestoreSession(): Promise<void> {
     if (this.accessToken || !this.storage?.getItem(REFRESH_KEY)) return Promise.resolve();
     return new Promise((resolve) => {
-      this.refreshAccessToken().subscribe({ next: () => resolve(), error: () => resolve() });
+      this.refreshAccessToken().subscribe({
+        next: (accessToken) => {
+          if (accessToken) this.firebaseMessaging.resumeAfterSessionRestore();
+          resolve();
+        },
+        error: () => resolve(),
+      });
     });
   }
 
@@ -639,6 +649,7 @@ export class AuthService {
   }
 
   private clearSession(): void {
+    this.firebaseMessaging.stopListening();
     this.accessToken = null;
     this.userSubject.next(null);
     this.userData.set(null);

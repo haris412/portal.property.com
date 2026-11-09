@@ -19,6 +19,7 @@ import { AdminAuthService } from './core/services/admin-auth.service';
 import { environment } from '../environments/environment';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { urlInterceptor } from './core/interceptors/url.interceptor';
+import { initializeFirebaseApp } from './core/firebase/firebase-initializer';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -55,6 +56,11 @@ export const appConfig: ApplicationConfig = {
       provide: APP_INITIALIZER,
       useFactory: restoreSessionFactory,
       deps: [AuthService, AdminAuthService],
+      multi: true,
+    },
+    {
+      provide: APP_INITIALIZER,
+      useValue: initializeFirebaseApp,
       multi: true,
     },
   ],
