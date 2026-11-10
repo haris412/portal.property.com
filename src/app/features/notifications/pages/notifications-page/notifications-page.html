@@ -1,16 +1,22 @@
 <app-page-shell>
   <section class="notifications-page" aria-labelledby="notifications-title">
     <header class="notifications-page__header">
-      <div>
-        <p class="notifications-page__eyebrow">Activity</p>
-        <h1 id="notifications-title">Notifications</h1>
-        <p class="notifications-page__summary">
-          @if (unreadCount() === 0) {
-            You're all caught up.
-          } @else {
-            {{ unreadCount() }} unread {{ unreadCount() === 1 ? 'notification' : 'notifications' }}
-          }
-        </p>
+      <div class="notifications-page__heading">
+        <span class="notifications-page__heading-icon" aria-hidden="true">
+          <mat-icon fontIcon="notifications_none" />
+        </span>
+        <div>
+          <p class="notifications-page__eyebrow">Your activity</p>
+          <h1 id="notifications-title" class="notifications-page__title">Notifications</h1>
+          <p class="notifications-page__summary">
+            @if (unreadCount() === 0) {
+              You're all caught up.
+            } @else {
+              {{ unreadCount() }} unread
+              {{ unreadCount() === 1 ? 'notification' : 'notifications' }}
+            }
+          </p>
+        </div>
       </div>
 
       <div class="notifications-page__actions">
@@ -39,6 +45,9 @@
     </header>
 
     <div class="notifications-page__toolbar">
+      <div class="notifications-page__toolbar-label">
+        <span>Updates</span>
+      </div>
       <div class="notifications-page__filters" role="group" aria-label="Filter notifications">
         <button
           type="button"
@@ -71,45 +80,49 @@
         <span class="notifications-page__empty-icon" aria-hidden="true">
           <mat-icon fontIcon="notifications_none" />
         </span>
-        <h2>{{ filter() === 'unread' ? 'No unread notifications' : 'No notifications yet' }}</h2>
-        <p>New updates will appear here.</p>
+        <h2 class="notifications-page__empty-title">
+          {{ filter() === 'unread' ? 'No unread notifications' : 'No notifications yet' }}
+        </h2>
+        <p class="notifications-page__empty-description">New updates will appear here.</p>
       </div>
     } @else {
-      <ul class="notifications-page__list" aria-label="Notifications">
-        @for (item of visibleItems(); track item.id) {
-          <li class="notifications-page__list-item">
-            <article
-              class="notifications-page__item"
-              [class.notifications-page__item--unread]="!item.isRead"
-            >
-              <span class="notifications-page__item-icon" aria-hidden="true">
-                <mat-icon fontIcon="notifications" />
-              </span>
-              <div class="notifications-page__item-copy">
-                <h2>{{ item.title }}</h2>
-                @if (item.message) {
-                  <p>{{ item.message }}</p>
+      <div class="notifications-page__list-card">
+        <ul class="notifications-page__list" aria-label="Notifications">
+          @for (item of visibleItems(); track item.id) {
+            <li class="notifications-page__list-item">
+              <article
+                class="notifications-page__item"
+                [class.notifications-page__item--unread]="!item.isRead"
+              >
+                <span class="notifications-page__item-icon" aria-hidden="true">
+                  <mat-icon fontIcon="notifications" />
+                </span>
+                <div class="notifications-page__item-copy">
+                  <h2 class="notifications-page__item-title">{{ item.title }}</h2>
+                  @if (item.message) {
+                    <p class="notifications-page__item-message">{{ item.message }}</p>
+                  }
+                  <time class="notifications-page__item-time" [attr.datetime]="item.createdAt">
+                    {{ item.createdAt ? (item.createdAt | date: 'medium') : 'Recently' }}
+                  </time>
+                </div>
+                @if (!item.isRead) {
+                  <button
+                    type="button"
+                    class="notifications-page__mark-item"
+                    [attr.aria-label]="'Mark ' + item.title + ' as read'"
+                    title="Mark as read"
+                    [disabled]="markingAllRead() || markingNotificationIds().has(item.id)"
+                    (click)="markNotificationRead(item.id)"
+                  >
+                    <mat-icon fontIcon="drafts" aria-hidden="true" />
+                  </button>
                 }
-                <time [attr.datetime]="item.createdAt">
-                  {{ item.createdAt ? (item.createdAt | date: 'medium') : 'Recently' }}
-                </time>
-              </div>
-              @if (!item.isRead) {
-                <button
-                  type="button"
-                  class="notifications-page__mark-item"
-                  [attr.aria-label]="'Mark ' + item.title + ' as read'"
-                  title="Mark as read"
-                  [disabled]="markingAllRead() || markingNotificationIds().has(item.id)"
-                  (click)="markNotificationRead(item.id)"
-                >
-                  <mat-icon fontIcon="drafts" aria-hidden="true" />
-                </button>
-              }
-            </article>
-          </li>
-        }
-      </ul>
+              </article>
+            </li>
+          }
+        </ul>
+      </div>
     }
   </section>
 </app-page-shell>

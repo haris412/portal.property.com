@@ -15,8 +15,39 @@ html {
       ),
       typography: 'Plus Jakarta Sans',
       density: 0,
+    ),
+    $overrides: (
+      primary: #124076,
+      secondary: #5c6370,
+      on-secondary: #ffffff,
+      secondary-container: #cfd5de,
+      on-secondary-container: #4b5563,
+      tertiary: #1c5390,
+      on-tertiary: #ffffff,
+      tertiary-container: #dbe6f3,
+      on-tertiary-container: #0b294e,
+      surface-container: #f4f6f9,
+      on-surface: #374151,
+      error: #b82026,
+      on-error: #ffffff,
+      error-container: #f8d9d9,
+      on-error-container: #5f1114,
     )
   );
+
+  --mat-form-field-error-text-color: var(--error-strong);
+  --mat-form-field-outlined-error-focus-label-text-color: var(--error-strong);
+  --mat-form-field-outlined-error-label-text-color: var(--error-strong);
+  --mat-form-field-outlined-error-hover-label-text-color: var(--error-strong);
+  --mat-form-field-outlined-error-focus-outline-color: var(--error-strong);
+  --mat-form-field-outlined-error-hover-outline-color: var(--error-strong);
+  --mat-form-field-outlined-error-outline-color: var(--error-strong);
+  --mat-form-field-outlined-label-text-color: var(--font-main);
+  --mat-form-field-outlined-hover-label-text-color: var(--font-main);
+  --mat-form-field-outlined-focus-label-text-color: var(--primary);
+  --mat-form-field-filled-label-text-color: var(--font-main);
+  --mat-form-field-filled-hover-label-text-color: var(--font-main);
+  --mat-form-field-filled-focus-label-text-color: var(--primary);
 }
 
 :root {
@@ -110,6 +141,10 @@ html {
   --mat-form-field-outlined-focus-outline-color: var(--primary);
   --mat-option-selected-state-label-text-color: var(--primary);
   --mat-form-field-outlined-container-shape: var(--radius-field);
+  --mat-filled-tel-form-outline-color: var(--border-field);
+  --mat-filled-tel-form-container-shape: var(--radius-field);
+  --mat-filled-tel-form-focus-outline-color: var(--primary);
+  --mat-filled-tel-form-hover-background: var(--surface);
   --mat-button-filled-label-text-font: 'Plus Jakarta Sans';
   --mat-button-outlined-container-shape: var(--radius-field);
   --mat-form-field-container-vertical-padding: 11px;
@@ -271,6 +306,71 @@ textarea,
   justify-content: center;
 }
 
+/* Material controls use their own MDC color tokens. Keep them on the brand
+   palette so selected, hover, and focus states do not fall back to pink. */
+.mat-mdc-checkbox,
+mat-checkbox {
+  --mdc-checkbox-unselected-icon-color: var(--border-field-strong, var(--border-soft-strong));
+  --mdc-checkbox-unselected-hover-icon-color: var(--primary);
+  --mdc-checkbox-unselected-focus-icon-color: var(--primary);
+  --mdc-checkbox-unselected-pressed-icon-color: var(--primary);
+  --mdc-checkbox-selected-icon-color: var(--primary);
+  --mdc-checkbox-selected-hover-icon-color: var(--primary-hover);
+  --mdc-checkbox-selected-focus-icon-color: var(--primary-hover);
+  --mdc-checkbox-selected-pressed-icon-color: var(--primary-strong);
+  --mdc-checkbox-selected-checkmark-color: var(--surface);
+  --mdc-checkbox-disabled-selected-icon-color: var(--surface-disabled);
+  --mdc-checkbox-disabled-unselected-icon-color: var(--surface-disabled);
+}
+
+.mat-mdc-checkbox .mdc-checkbox__checkmark-path,
+mat-checkbox .mdc-checkbox__checkmark-path {
+  stroke: var(--surface) !important;
+}
+
+.mat-mdc-slide-toggle,
+mat-slide-toggle {
+  --mdc-switch-selected-track-color: var(--primary);
+  --mdc-switch-selected-hover-track-color: var(--primary-hover);
+  --mdc-switch-selected-focus-track-color: var(--primary-hover);
+  --mdc-switch-selected-pressed-track-color: var(--primary-strong);
+  --mdc-switch-selected-handle-color: var(--surface);
+  --mdc-switch-selected-hover-handle-color: var(--surface);
+  --mdc-switch-selected-focus-handle-color: var(--surface);
+  --mdc-switch-selected-pressed-handle-color: var(--surface);
+  --mdc-switch-unselected-track-color: var(--border-soft-strong);
+  --mdc-switch-unselected-hover-track-color: var(--border-field-hover);
+  --mdc-switch-unselected-focus-track-color: var(--border-field-hover);
+  --mdc-switch-unselected-pressed-track-color: var(--border-field-hover);
+  --mdc-switch-unselected-handle-color: var(--surface);
+  --mdc-switch-unselected-hover-handle-color: var(--surface);
+  --mdc-switch-unselected-focus-handle-color: var(--surface);
+  --mdc-switch-unselected-pressed-handle-color: var(--surface);
+}
+
+.mat-mdc-form-field-error,
+mat-error {
+  color: var(--error-strong) !important;
+}
+
+.mat-mdc-form-field.mat-form-field-invalid {
+  --mdc-outlined-text-field-error-outline-color: var(--error-strong);
+  --mdc-outlined-text-field-error-focus-outline-color: var(--error-strong);
+  --mdc-outlined-text-field-error-hover-outline-color: var(--error-strong);
+}
+
+.mat-mdc-form-field .mdc-floating-label {
+  color: var(--font-main) !important;
+}
+
+.mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: var(--primary) !important;
+}
+
+.mat-mdc-form-field.mat-form-field-invalid .mdc-floating-label {
+  color: var(--error-strong) !important;
+}
+
 ::-webkit-scrollbar-button,
 ::-webkit-scrollbar-button:single-button,
 ::-webkit-scrollbar-button:start,
@@ -291,7 +391,8 @@ textarea,
   border-radius: var(--radius-lg);
 }
 
-.sort-select {
+.sort-select,
+.listing-page-fields {
   .mat-mdc-form-field-subscript-wrapper {
     display: none;
   }
