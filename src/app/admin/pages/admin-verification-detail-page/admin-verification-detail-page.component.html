@@ -1,0 +1,86 @@
+<div class="admin-verification-detail">
+  <div class="container-fluid admin-verification-detail__container">
+    <a class="admin-verification-detail__back" routerLink="..">
+      <mat-icon fontIcon="arrow_back" aria-hidden="true" />
+      {{ 'verification.admin.backToList' | translate }}
+    </a>
+
+    @if (loading()) {
+      <div class="admin-verification-detail__loading">
+        <mat-progress-spinner mode="indeterminate" diameter="40" />
+      </div>
+    } @else if (loadError()) {
+      <app-info-banner icon="error_outline" [text]="loadError()!" />
+    } @else if (detail(); as item) {
+      <app-page-header
+        [title]="item.displayName"
+        [subtitle]="item.email"
+      />
+
+      <section class="section-card admin-verification-detail__meta">
+        <div>
+          <span>{{ 'base.phone' | translate }}</span>
+          <strong>{{ item.phoneNumber || '—' }}</strong>
+        </div>
+        <div>
+          <span>{{ 'base.agency' | translate }}</span>
+          <strong>{{ item.agency?.name || '—' }}</strong>
+        </div>
+        <div>
+          <span>{{ 'verification.cnic.number' | translate }}</span>
+          <strong>{{ item.cnicNumber || '—' }}</strong>
+        </div>
+        <div>
+          <span>{{ 'base.status' | translate }}</span>
+          <strong>{{ 'verification.status.' + item.status | translate }}</strong>
+        </div>
+        <div>
+          <span>{{ 'verification.admin.columns.submitted' | translate }}</span>
+          <strong>{{ item.submittedAt ? (item.submittedAt | date: 'medium') : '—' }}</strong>
+        </div>
+      </section>
+
+      @if (item.rejectionReason) {
+        <app-info-banner class="d-block" icon="error_outline" [text]="item.rejectionReason" />
+      }
+
+      <section class="admin-verification-detail__images">
+        <figure class="section-card">
+          <figcaption>{{ 'verification.cnic.front' | translate }}</figcaption>
+          @if (item.images.cnicFrontUrl) {
+            <img [src]="item.images.cnicFrontUrl" alt="" />
+          } @else {
+            <p>{{ 'verification.admin.imageMissing' | translate }}</p>
+          }
+        </figure>
+        <figure class="section-card">
+          <figcaption>{{ 'verification.cnic.back' | translate }}</figcaption>
+          @if (item.images.cnicBackUrl) {
+            <img [src]="item.images.cnicBackUrl" alt="" />
+          } @else {
+            <p>{{ 'verification.admin.imageMissing' | translate }}</p>
+          }
+        </figure>
+        <figure class="section-card">
+          <figcaption>{{ 'verification.face.title' | translate }}</figcaption>
+          @if (item.images.facePhotoUrl) {
+            <img [src]="item.images.facePhotoUrl" alt="" />
+          } @else {
+            <p>{{ 'verification.admin.imageMissing' | translate }}</p>
+          }
+        </figure>
+      </section>
+
+      @if (item.status === 'pending') {
+        <div class="admin-verification-detail__actions">
+          <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="verify()">
+            {{ 'verification.admin.verify' | translate }}
+          </button>
+          <button mat-stroked-button color="warn" type="button" [disabled]="saving()" (click)="reject()">
+            {{ 'verification.admin.reject' | translate }}
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

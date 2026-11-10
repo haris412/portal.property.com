@@ -23,8 +23,9 @@ export class AdminLayoutComponent {
 
   readonly navItems: readonly SidebarNavItem[] = [
     { label: 'adminSidebar.nav.dashboard', route: '/admin/dashboard', icon: 'dashboard', exact: true },
+    { label: 'adminSidebar.nav.verifications', route: '/admin/verifications', icon: 'fact_check', exact: false },
     { label: 'adminSidebar.nav.agencies',  route: '/admin/agencies',  icon: 'apartment', exact: true },
-    { label: 'adminSidebar.nav.users',     route: '/admin/users',     icon: 'people',    exact: true },
+    { label: 'adminSidebar.nav.users',         route: '/admin/users',         icon: 'people',     exact: true },
   ];
 
   toggleSidebar(): void {

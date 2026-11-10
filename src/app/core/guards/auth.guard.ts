@@ -1,5 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { isAdminRole } from '../models/role.models';
 import { AuthService } from '../services/auth.service';
 
 export const authGuard: CanActivateFn = async () => {
@@ -31,6 +32,17 @@ export const dashboardGuard: CanActivateFn = () => {
   }
 
   return true;
+};
+
+/** Identity review inside the signed-in portal. Admin role only. */
+export const portalAdminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  const roles = auth.getCurrentUser()?.roles ?? [];
+  if (roles.some((role) => isAdminRole(role))) {
+    return true;
+  }
+  return router.createUrlTree(['/dashboard']);
 };
 
 /** Agency agent management — Primary Agency Admin only. */

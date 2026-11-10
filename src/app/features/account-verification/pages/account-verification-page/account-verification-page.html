@@ -1,0 +1,198 @@
+<app-page-shell>
+  <div class="account-verification-page">
+    <a class="account-verification-page__back" routerLink="/dashboard">
+      <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">arrow_back</mat-icon>
+      {{ 'verification.back' | translate }}
+    </a>
+
+    <header class="account-verification-page__header">
+      <p class="account-verification-page__eyebrow">{{ 'verification.eyebrow' | translate }}</p>
+      <h1 class="account-verification-page__title">{{ 'verification.title' | translate }}</h1>
+      <p class="account-verification-page__subtitle">{{ 'verification.subtitle' | translate }}</p>
+    </header>
+
+    @if (loading()) {
+      <div class="account-verification-page__loading">
+        <mat-progress-spinner mode="indeterminate" diameter="40" />
+      </div>
+    } @else if (loadError()) {
+      <app-info-banner icon="error_outline" [text]="loadError()!" />
+    } @else if (verified()) {
+      <section class="account-verification-page__success section-card">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">verified</mat-icon>
+        <h2>{{ 'verification.verifiedTitle' | translate }}</h2>
+        <p>{{ 'verification.verifiedBody' | translate }}</p>
+      </section>
+    } @else {
+      @if (record()?.status === 'rejected' && record()?.rejectionReason) {
+        <app-info-banner class="d-block mb-3" icon="error_outline" [text]="record()!.rejectionReason!" />
+      }
+      @if (readOnly()) {
+        <app-info-banner class="d-block mb-3" icon="hourglass_top" [text]="'verification.pendingBody' | translate" />
+      }
+      @if (formError()) {
+        <app-info-banner class="d-block mb-3" icon="error_outline" [text]="formError()!" />
+      }
+
+      <div class="account-verification-page__stepper">
+        <app-wizard-stepper
+          [steps]="steps()"
+          [activeKey]="activeStep()"
+          [ariaLabel]="'verification.progress' | translate"
+          (stepSelected)="onStepSelected($event)"
+        />
+      </div>
+
+      @if (fileError()) {
+        <p class="account-verification-page__file-error">{{ fileError() }}</p>
+      }
+
+      @if (activeStep() === 'cnic') {
+        <div class="account-verification-page__guide">
+          <section class="section-card account-verification-page__guide-card">
+            <h2>{{ 'verification.cnic.guideTitle' | translate }}</h2>
+            <p>{{ 'verification.cnic.guideSubtitle' | translate }}</p>
+            <ul class="account-verification-page__checks">
+              <li>{{ 'verification.cnic.points.id' | translate }}</li>
+              <li>{{ 'verification.cnic.points.clear' | translate }}</li>
+              <li>{{ 'verification.cnic.points.two' | translate }}</li>
+              <li>{{ 'verification.cnic.points.both' | translate }}</li>
+              <li>{{ 'verification.cnic.points.size' | translate }}</li>
+            </ul>
+
+            @if (showUrduNotes()) {
+              <div class="account-verification-page__urdu" dir="rtl" lang="ur">
+                <p class="account-verification-page__urdu-title">{{ 'verification.cnic.urduTitle' | translate }}</p>
+                <ul>
+                  <li>{{ 'verification.cnic.urdu.id' | translate }}</li>
+                  <li>{{ 'verification.cnic.urdu.two' | translate }}</li>
+                  <li>{{ 'verification.cnic.urdu.both' | translate }}</li>
+                  <li>{{ 'verification.cnic.urdu.size' | translate }}</li>
+                </ul>
+              </div>
+            }
+          </section>
+
+          <section class="section-card account-verification-page__guide-card">
+            <h2>{{ 'verification.cnic.exampleTitle' | translate }}</h2>
+            <p>{{ 'verification.cnic.exampleSubtitle' | translate }}</p>
+            <img
+              class="account-verification-page__sample"
+              src="images/cnic-sample.png"
+              alt="Sample of the front and back of a national identity card"
+            />
+            <p class="account-verification-page__example-caption">{{ 'verification.cnic.exampleCaption' | translate }}</p>
+          </section>
+        </div>
+
+        <section class="section-card account-verification-page__panel">
+          <h2>{{ 'verification.cnic.title' | translate }}</h2>
+          <p>{{ 'verification.cnic.body' | translate }}</p>
+
+          <mat-form-field appearance="outline" class="account-verification-page__cnic">
+            <mat-label>{{ 'verification.cnic.number' | translate }}</mat-label>
+            <input
+              matInput
+              inputmode="numeric"
+              autocomplete="off"
+              [value]="cnicNumber()"
+              [disabled]="readOnly()"
+              [placeholder]="'verification.cnic.placeholder' | translate"
+              (input)="onCnicInput($event)"
+            />
+          </mat-form-field>
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <h3>{{ 'verification.cnic.front' | translate }}</h3>
+              @if (!readOnly()) {
+                <app-upload-dropzone
+                  icon="badge"
+                  [title]="'verification.cnic.frontDrop' | translate"
+                  [subtitle]="'verification.fileHint' | translate"
+                  accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                  (filesSelected)="onFile('front', $event)"
+                />
+              }
+              @if (frontPreview()) {
+                <img class="account-verification-page__preview" [src]="frontPreview()" alt="" />
+              }
+            </div>
+            <div class="col-12 col-md-6">
+              <h3>{{ 'verification.cnic.back' | translate }}</h3>
+              @if (!readOnly()) {
+                <app-upload-dropzone
+                  icon="badge"
+                  [title]="'verification.cnic.backDrop' | translate"
+                  [subtitle]="'verification.fileHint' | translate"
+                  accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                  (filesSelected)="onFile('back', $event)"
+                />
+              }
+              @if (backPreview()) {
+                <img class="account-verification-page__preview" [src]="backPreview()" alt="" />
+              }
+            </div>
+          </div>
+
+          @if (!readOnly()) {
+            <div class="account-verification-page__actions">
+              <app-action-button
+                [label]="'verification.next' | translate"
+                icon="arrow_forward"
+                (clicked)="goNext()"
+              />
+            </div>
+          }
+        </section>
+      } @else {
+        <section class="section-card account-verification-page__panel">
+          <h2>{{ 'verification.face.title' | translate }}</h2>
+          <p>{{ 'verification.face.body' | translate }}</p>
+
+          <div class="account-verification-page__face-guide">
+            <ol class="account-verification-page__face-points">
+              <li>{{ 'verification.face.points.face' | translate }}</li>
+              <li>{{ 'verification.face.points.id' | translate }}</li>
+              <li>{{ 'verification.face.points.slip' | translate }}</li>
+            </ol>
+            <figure class="account-verification-page__face-example">
+              <img src="images/face-sample.png" alt="Sample photo holding your face, ID card, and an EasiestWorld.com slip" />
+              <figcaption>{{ 'verification.face.exampleCaption' | translate }}</figcaption>
+            </figure>
+          </div>
+
+          @if (!readOnly()) {
+            <app-upload-dropzone
+              icon="photo_camera"
+              [title]="'verification.face.drop' | translate"
+              [subtitle]="'verification.fileHint' | translate"
+              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+              (filesSelected)="onFile('face', $event)"
+            />
+          }
+          @if (facePreview()) {
+            <img class="account-verification-page__preview account-verification-page__preview--face" [src]="facePreview()" alt="" />
+          }
+
+          <div class="account-verification-page__actions">
+            <app-action-button
+              [label]="'verification.backStep' | translate"
+              icon="arrow_back"
+              variant="ghost"
+              (clicked)="goBack()"
+            />
+            @if (!readOnly()) {
+              <app-action-button
+                [label]="submitting() ? ('verification.submitting' | translate) : ('verification.submit' | translate)"
+                icon="verified_user"
+                [disabled]="submitting()"
+                (clicked)="submit()"
+              />
+            }
+          </div>
+        </section>
+      }
+    }
+  </div>
+</app-page-shell>

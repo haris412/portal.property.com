@@ -7,13 +7,20 @@ import { HeaderComponent } from './header/header.component';
 import { NotificationContainerComponent } from '../shared/ui/notification-container/notification-container.component';
 import { AuthService } from '../core/services/auth.service';
 import { SubscriptionPlansGateService } from '../core/services/subscription-plans-gate.service';
-import { hasPrimaryAgencyAdminRole } from '../core/models/role.models';
+import { hasPrimaryAgencyAdminRole, isAdminRole } from '../core/models/role.models';
 
 const AGENTS_NAV_ITEM: SidebarNavItem = {
   label: 'sidebar.nav.agents',
   route: '/agents',
   icon: 'groups',
   exact: true,
+};
+
+const VERIFICATIONS_NAV_ITEM: SidebarNavItem = {
+  label: 'sidebar.nav.verifications',
+  route: '/verifications',
+  icon: 'fact_check',
+  exact: false,
 };
 
 const ALL_NAV_ITEMS: readonly SidebarNavItem[] = [
@@ -53,7 +60,7 @@ export class LayoutComponent implements OnInit {
     const isBuyer = roles.some((r) => r.trim().toLowerCase() === 'buyer');
     const canManageAgents = hasPrimaryAgencyAdminRole(roles);
 
-    return ALL_NAV_ITEMS.filter((item) => {
+    const items = ALL_NAV_ITEMS.filter((item) => {
       if (PRIMARY_AGENCY_ADMIN_ONLY_ROUTES.has(item.route) && !canManageAgents) {
         return false;
       }
@@ -62,6 +69,15 @@ export class LayoutComponent implements OnInit {
       }
       return true;
     });
+
+    if (!roles.some((role) => isAdminRole(role))) {
+      return items;
+    }
+
+    const dashboardIndex = items.findIndex((item) => item.route === '/dashboard');
+    const next = [...items];
+    next.splice(dashboardIndex + 1, 0, VERIFICATIONS_NAV_ITEM);
+    return next;
   });
 
   ngOnInit(): void {

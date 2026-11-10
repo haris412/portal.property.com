@@ -2,7 +2,9 @@ import { Routes } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { AuthPortalPageComponent } from './features/auth/pages/auth-portal-page/auth-portal-page.component';
 import { VerifyEmailComponent } from './features/auth/components/verify-email/verify-email.component';
-import { dashboardGuard, authGuard } from './core/guards/auth.guard';
+import { dashboardGuard, authGuard, portalAdminGuard } from './core/guards/auth.guard';
+import { AdminVerificationsPageComponent } from './admin/pages/admin-verifications-page/admin-verifications-page.component';
+import { AdminVerificationDetailPageComponent } from './admin/pages/admin-verification-detail-page/admin-verification-detail-page.component';
 
 export const routes: Routes = [
   {
@@ -94,6 +96,30 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/agents/agents.routes').then((m) => m.AGENTS_ROUTES),
         title: 'Agents',
+      },
+      {
+        path: 'verifications',
+        canActivate: [portalAdminGuard],
+        children: [
+          {
+            path: '',
+            component: AdminVerificationsPageComponent,
+            title: 'Agent verifications',
+          },
+          {
+            path: ':userId',
+            component: AdminVerificationDetailPageComponent,
+            title: 'Verification',
+          },
+        ],
+      },
+      {
+        path: 'account-verification',
+        loadChildren: () =>
+          import('./features/account-verification/account-verification.routes').then(
+            (m) => m.ACCOUNT_VERIFICATION_ROUTES
+          ),
+        title: 'Account verification',
       },
       {
         path: 'profile',

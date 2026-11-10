@@ -1,0 +1,32 @@
+<a
+  class="account-status-card"
+  [class.account-status-card--success]="tone() === 'success'"
+  [class.account-status-card--info]="tone() === 'info'"
+  [class.account-status-card--error]="tone() === 'error'"
+  [class.account-status-card--warning]="tone() === 'warning'"
+  routerLink="/account-verification"
+>
+  <span class="account-status-card__icon" aria-hidden="true">
+    <mat-icon fontSet="material-symbols-outlined">shield</mat-icon>
+  </span>
+
+  <span class="account-status-card__copy">
+    <span class="account-status-card__label">{{ 'verification.card.label' | translate }}</span>
+    <span class="account-status-card__title">{{ titleKey() | translate }}</span>
+    @if (status() === 'rejected' && rejectionReason()) {
+      <span class="account-status-card__hint">{{ rejectionReason() }}</span>
+    } @else {
+      <span class="account-status-card__hint">
+        <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">
+          {{ status() === 'verified' ? 'verified' : 'error' }}
+        </mat-icon>
+        {{ hintKey() | translate }}
+      </span>
+    }
+  </span>
+
+  <span class="account-status-card__action">
+    {{ actionKey() | translate }}
+    <mat-icon fontSet="material-symbols-outlined" inline aria-hidden="true">arrow_forward</mat-icon>
+  </span>
+</a>

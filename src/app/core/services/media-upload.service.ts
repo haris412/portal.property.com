@@ -87,6 +87,28 @@ export class MediaUploadService {
     return data.fileUrl;
   }
 
+  async uploadIdentityDocument(
+    file: File,
+    slot: 'cnic-front' | 'cnic-back' | 'face',
+  ): Promise<string> {
+    const { data } = await firstValueFrom(
+      this.http.post<{ success: boolean; data: { uploadUrl: string; key: string; maxSizeMB?: number } }>(
+        `${this.apiBase}/identity-document-url`,
+        {
+          fileName: file.name,
+          fileType: file.type || 'image/jpeg',
+          slot,
+        },
+      ),
+    );
+    const maxBytes = (data.maxSizeMB ?? 4) * 1024 * 1024;
+    if (file.size > maxBytes) {
+      throw new Error('Each file must be 4 MB or smaller.');
+    }
+    await this.putToS3(data.uploadUrl, file);
+    return data.key;
+  }
+
   async deleteImage(fileUrl: string): Promise<void> {
     await firstValueFrom(
       this.http.delete<{ success: boolean }>(`${this.apiBase}/property-image`, {

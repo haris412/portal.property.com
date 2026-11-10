@@ -48,6 +48,14 @@ export function hasPrimaryAgencyAdminRole(roles: string[] | undefined | null): b
   return (roles ?? []).some((r) => isPrimaryAgencyAdminRole(r));
 }
 
+/** Agent portal identity verification is for agents and primary agency admins. */
+export function isIdentityVerificationRole(roles: string[] | undefined | null): boolean {
+  return (roles ?? []).some((role) => {
+    const name = role.trim();
+    return name === 'Agent' || isPrimaryAgencyAdminRole(name);
+  });
+}
+
 /** SubscriptionConfig API stores this role as `Primary Agency Admin`, not `PrimaryAgencyAdmin`. */
 export function toSubscriptionConfigRoleName(role: string | undefined | null): string {
   const trimmed = role?.trim() ?? '';

@@ -1,0 +1,74 @@
+<div class="admin-verifications-page">
+  <div class="container-fluid admin-verifications-page__container">
+    <app-page-header
+      [title]="'verification.admin.title' | translate"
+      [subtitle]="'verification.admin.subtitle' | translate"
+      [actions]="headerActions"
+      (actionClicked)="onHeaderAction($event)"
+    />
+
+    @if (loadError(); as err) {
+      <app-info-banner class="d-block mb-3" icon="error_outline" [text]="err" />
+    }
+
+    <form class="admin-verifications-page__filters section-card" [formGroup]="filterForm">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="admin-verifications-page__filter-label">{{ 'users.filters.search' | translate }}</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="search" [placeholder]="'verification.admin.searchPlaceholder' | translate" />
+          </mat-form-field>
+        </div>
+        <div class="col-12 col-md-4 col-lg-3">
+          <label class="admin-verifications-page__filter-label">{{ 'base.status' | translate }}</label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="status">
+              <mat-option value="pending">{{ 'verification.status.pending' | translate }}</mat-option>
+              <mat-option value="verified">{{ 'verification.status.verified' | translate }}</mat-option>
+              <mat-option value="rejected">{{ 'verification.status.rejected' | translate }}</mat-option>
+              <mat-option value="all">{{ 'verification.admin.allStatuses' | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+    </form>
+
+    <div class="admin-verifications-page__table-wrap section-card">
+      @if (loading()) {
+        <div class="admin-verifications-page__loading">
+          <mat-progress-spinner mode="indeterminate" diameter="40" />
+          <span>{{ 'base.loading' | translate }}</span>
+        </div>
+      } @else if (!loadError() && rows().length === 0) {
+        <div class="admin-verifications-page__empty">
+          <mat-icon fontIcon="fact_check" aria-hidden="true" />
+          <p>{{ 'verification.admin.empty' | translate }}</p>
+        </div>
+      } @else {
+        <app-data-grid
+          [rowData]="rows()"
+          [columnDefs]="columnDefs"
+          [defaultColDef]="defaultColDef"
+          [pagination]="false"
+          [heightPx]="520"
+          (rowClickedEvent)="openRow($event)"
+        />
+        <footer class="admin-verifications-page__pager">
+          <span>
+            {{ 'pagination.page' | translate: { current: page(), total: totalPages() } }}
+            ·
+            {{ 'pagination.total' | translate: { count: total() } }}
+          </span>
+          <div class="admin-verifications-page__pager-btns">
+            <button mat-stroked-button type="button" [disabled]="page() <= 1 || loading()" (click)="goPrev()">
+              {{ 'base.previous' | translate }}
+            </button>
+            <button mat-stroked-button type="button" [disabled]="page() >= totalPages() || loading()" (click)="goNext()">
+              {{ 'base.next' | translate }}
+            </button>
+          </div>
+        </footer>
+      }
+    </div>
+  </div>
+</div>

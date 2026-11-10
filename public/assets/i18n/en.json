@@ -174,6 +174,7 @@
       "properties": "Properties",
       "addListing": "Add Listing",
       "agents": "Agents",
+      "verifications": "Agent verifications",
       "users": "Users",
       "appointments": "Appointments",
       "inbox": "Inbox",
@@ -186,7 +187,8 @@
     "nav": {
       "dashboard": "Dashboard",
       "agencies": "Agencies",
-      "users": "Agency Users"
+      "users": "Agency Users",
+      "verifications": "Agent verifications"
     }
   },
   "header": {
@@ -702,6 +704,117 @@
       "location":   { "label": "Location",       "placeholder": "e.g. Karachi, Pakistan",        "tooLong": "Too long" },
       "save":   "Save Changes",
       "saving": "Saving…"
+    }
+  },
+  "verification": {
+    "eyebrow": "Account verification",
+    "title": "Verification Center",
+    "subtitle": "Upload your CNIC and a photo of your face. An admin reviews the documents before your account is marked verified.",
+    "back": "Dashboard",
+    "backStep": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "submitting": "Submitting…",
+    "submitted": "Documents submitted. We will review them shortly.",
+    "progress": "Verification progress",
+    "pendingBody": "Your documents are in review. You can look at them here, but you cannot change them until a decision is made.",
+    "verifiedTitle": "Account verified",
+    "verifiedBody": "Your identity documents were approved.",
+    "fileHint": "JPG, PNG, or WEBP. Max 4 MB.",
+    "status": {
+      "not_submitted": "Not verified",
+      "pending": "In review",
+      "verified": "Verified",
+      "rejected": "Rejected"
+    },
+    "card": {
+      "label": "Account status",
+      "requiredHint": "Verification required",
+      "pendingHint": "Your documents are being reviewed",
+      "verifiedHint": "Your identity documents were approved",
+      "rejectedHint": "See the reason and submit again",
+      "requiredAction": "Verify account",
+      "pendingAction": "View submission",
+      "verifiedAction": "View details",
+      "rejectedAction": "Submit again"
+    },
+    "steps": {
+      "cnic": "CNIC",
+      "cnicHint": "Number and both sides",
+      "face": "Face photo",
+      "faceHint": "One clear photo"
+    },
+    "cnic": {
+      "title": "Step 1 — CNIC",
+      "body": "Enter the 13-digit number exactly as printed, then upload the front and the back.",
+      "guideTitle": "What you need to upload",
+      "guideSubtitle": "Please check each point before you choose your files",
+      "exampleTitle": "Example",
+      "exampleSubtitle": "Your upload should look like this",
+      "exampleCaption": "Front and back, in focus, with all four corners visible.",
+      "points": {
+        "id": "A government-issued ID — your passport, current driving license, or national ID card.",
+        "clear": "It must clearly show your photo, signature, name, and date of birth.",
+        "two": "Take two pictures — one of the front and one of the back. Use a separate box for each, and do not join them into one file.",
+        "both": "Both boxes must be filled. The form will not be sent with only one picture.",
+        "size": "Each file must be 4 MB or smaller."
+      },
+      "urduTitle": "اردو ہدایات",
+      "urdu": {
+        "id": "شناختی کارڈ، پاسپورٹ، یا ڈرائیونگ لائسنس کی واضح تصویر اپ لوڈ کریں۔",
+        "two": "اگلے اور پچھلے رخ کی الگ الگ تصاویر لیں۔ دونوں کو ایک فائل میں نہ جوڑیں۔",
+        "both": "دونوں خانے بھرنا ضروری ہیں۔ صرف ایک تصویر سے فارم نہیں بھیجا جا سکتا۔",
+        "size": "ہر فائل 4 MB یا اس سے چھوٹی ہونی چاہیے۔"
+      },
+      "number": "CNIC number",
+      "placeholder": "00000-0000000-0",
+      "front": "Front side",
+      "back": "Back side",
+      "frontDrop": "Choose the front picture",
+      "backDrop": "Choose the back picture"
+    },
+    "face": {
+      "title": "Step 2 — Face photo",
+      "body": "Your photo must show these 3 things in one picture.",
+      "drop": "Choose your photo",
+      "exampleCaption": "Take your photo exactly like this example",
+      "points": {
+        "face": "Your face",
+        "id": "Your ID card — front side",
+        "slip": "A slip with EasiestWorld.com and your username"
+      }
+    },
+    "errors": {
+      "load": "Could not load your verification.",
+      "submit": "Could not submit your documents.",
+      "cnicStep": "Enter a 13-digit CNIC and upload both sides before continuing.",
+      "fileType": "Use a JPG, PNG, or WEBP image.",
+      "fileSize": "Each file must be 4 MB or smaller.",
+      "incomplete": "CNIC number, both card images, and a face photo are required."
+    },
+    "admin": {
+      "title": "Verifications",
+      "subtitle": "Review agent CNIC and face photos.",
+      "searchPlaceholder": "Name, email, or phone",
+      "allStatuses": "All",
+      "empty": "No verification submissions match this filter.",
+      "backToList": "All verifications",
+      "notFound": "This verification could not be found.",
+      "imageMissing": "Image unavailable",
+      "verify": "Verify",
+      "reject": "Reject",
+      "verifyTitle": "Verify this agent?",
+      "verifyMessage": "Mark {{name}} as verified.",
+      "rejectTitle": "Reject verification",
+      "rejectMessage": "The agent will see this reason and can submit again.",
+      "reason": "Rejection reason",
+      "reasonRequired": "A reason is required.",
+      "verifiedToast": "Agent marked verified.",
+      "rejectedToast": "Verification rejected.",
+      "columns": {
+        "name": "Agent",
+        "submitted": "Submitted"
+      }
     }
   }
 }

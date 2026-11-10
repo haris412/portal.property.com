@@ -127,8 +127,9 @@ export class AdminAuthService {
       return;
     }
 
-    localStorage.clear();
-    sessionStorage.clear();
+    localStorage.removeItem(ADMIN_REFRESH_KEY);
+    localStorage.removeItem(ADMIN_USER_KEY);
+    localStorage.removeItem(ADMIN_CHALLENGE_TOKEN_KEY);
   }
 
   /**

@@ -8,6 +8,8 @@ import { AdminAddAgencyPageComponent } from './pages/admin-add-agency-page/admin
 import { AdminAccessDeniedPageComponent } from './pages/admin-access-denied-page/admin-access-denied-page.component';
 import { AdminAgencyUsersPageComponent } from './pages/admin-agency-users-page/admin-agency-users-page.component';
 import { AdminAddAgencyUserPageComponent } from './pages/admin-add-agency-user-page/admin-add-agency-user-page.component';
+import { AdminVerificationsPageComponent } from './pages/admin-verifications-page/admin-verifications-page.component';
+import { AdminVerificationDetailPageComponent } from './pages/admin-verification-detail-page/admin-verification-detail-page.component';
 import { adminAgenciesResolver } from './resolvers/admin-agencies.resolver';
 
 export const ADMIN_ROUTES: Routes = [
@@ -50,6 +52,16 @@ export const ADMIN_ROUTES: Routes = [
         path: 'users',
         component: AdminAgencyUsersPageComponent,
         title: 'Users',
+      },
+      {
+        path: 'verifications',
+        component: AdminVerificationsPageComponent,
+        title: 'Verifications',
+      },
+      {
+        path: 'verifications/:userId',
+        component: AdminVerificationDetailPageComponent,
+        title: 'Verification',
       },
       {
         path: 'add-user',

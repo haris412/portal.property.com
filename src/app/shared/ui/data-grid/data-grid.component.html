@@ -8,6 +8,7 @@
     [pagination]="pagination()"
     [paginationPageSize]="paginationPageSize()"
     (gridReady)="onGridReady($event)"
+    (rowClicked)="onRowClicked($event)"
     [attr.aria-rowcount]="rowData().length"
   />
 </div>
