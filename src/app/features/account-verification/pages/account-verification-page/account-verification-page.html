@@ -48,46 +48,11 @@
       }
 
       @if (activeStep() === 'cnic') {
-        <div class="account-verification-page__guide">
-          <section class="section-card account-verification-page__guide-card">
-            <h2>{{ 'verification.cnic.guideTitle' | translate }}</h2>
-            <p>{{ 'verification.cnic.guideSubtitle' | translate }}</p>
-            <ul class="account-verification-page__checks">
-              <li>{{ 'verification.cnic.points.id' | translate }}</li>
-              <li>{{ 'verification.cnic.points.clear' | translate }}</li>
-              <li>{{ 'verification.cnic.points.two' | translate }}</li>
-              <li>{{ 'verification.cnic.points.both' | translate }}</li>
-              <li>{{ 'verification.cnic.points.size' | translate }}</li>
-            </ul>
-
-            @if (showUrduNotes()) {
-              <div class="account-verification-page__urdu" dir="rtl" lang="ur">
-                <p class="account-verification-page__urdu-title">{{ 'verification.cnic.urduTitle' | translate }}</p>
-                <ul>
-                  <li>{{ 'verification.cnic.urdu.id' | translate }}</li>
-                  <li>{{ 'verification.cnic.urdu.two' | translate }}</li>
-                  <li>{{ 'verification.cnic.urdu.both' | translate }}</li>
-                  <li>{{ 'verification.cnic.urdu.size' | translate }}</li>
-                </ul>
-              </div>
-            }
-          </section>
-
-          <section class="section-card account-verification-page__guide-card">
-            <h2>{{ 'verification.cnic.exampleTitle' | translate }}</h2>
-            <p>{{ 'verification.cnic.exampleSubtitle' | translate }}</p>
-            <img
-              class="account-verification-page__sample"
-              src="images/cnic-sample.png"
-              alt="Sample of the front and back of a national identity card"
-            />
-            <p class="account-verification-page__example-caption">{{ 'verification.cnic.exampleCaption' | translate }}</p>
-          </section>
-        </div>
-
-        <section class="section-card account-verification-page__panel">
-          <h2>{{ 'verification.cnic.title' | translate }}</h2>
-          <p>{{ 'verification.cnic.body' | translate }}</p>
+        <app-verification-step-layout
+          [title]="'verification.cnic.title' | translate"
+          [description]="'verification.cnic.body' | translate"
+        >
+          <div verification-content>
 
           <mat-form-field appearance="outline" class="account-verification-page__cnic">
             <mat-label>{{ 'verification.cnic.number' | translate }}</mat-label>
@@ -110,12 +75,13 @@
                   icon="badge"
                   [title]="'verification.cnic.frontDrop' | translate"
                   [subtitle]="'verification.fileHint' | translate"
+                  [previewUrl]="frontPreview()"
+                  [previewAlt]="'verification.cnic.front' | translate"
+                  [fileName]="frontFile()?.name || ''"
+                  [previewHint]="'verification.replaceFile' | translate"
                   accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                   (filesSelected)="onFile('front', $event)"
                 />
-              }
-              @if (frontPreview()) {
-                <img class="account-verification-page__preview" [src]="frontPreview()" alt="" />
               }
             </div>
             <div class="col-12 col-md-6">
@@ -125,18 +91,53 @@
                   icon="badge"
                   [title]="'verification.cnic.backDrop' | translate"
                   [subtitle]="'verification.fileHint' | translate"
+                  [previewUrl]="backPreview()"
+                  [previewAlt]="'verification.cnic.back' | translate"
+                  [fileName]="backFile()?.name || ''"
+                  [previewHint]="'verification.replaceFile' | translate"
                   accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                   (filesSelected)="onFile('back', $event)"
                 />
               }
-              @if (backPreview()) {
-                <img class="account-verification-page__preview" [src]="backPreview()" alt="" />
-              }
             </div>
           </div>
 
+          </div>
+
+          <div verification-guidance>
+            <app-verification-guidance
+              [title]="'verification.cnic.guideTitle' | translate"
+              [description]="'verification.cnic.guideSubtitle' | translate"
+              [exampleTitle]="'verification.cnic.exampleTitle' | translate"
+              [exampleDescription]="'verification.cnic.exampleSubtitle' | translate"
+              exampleImage="images/cnic-sample.png"
+              exampleAlt="Sample of the front and back of a national identity card"
+              [exampleCaption]="'verification.cnic.exampleCaption' | translate"
+            >
+              <ul guidance-points class="account-verification-page__checks">
+                <li>{{ 'verification.cnic.points.id' | translate }}</li>
+                <li>{{ 'verification.cnic.points.clear' | translate }}</li>
+                <li>{{ 'verification.cnic.points.two' | translate }}</li>
+                <li>{{ 'verification.cnic.points.both' | translate }}</li>
+                <li>{{ 'verification.cnic.points.size' | translate }}</li>
+              </ul>
+
+              @if (showUrduNotes()) {
+                <div guidance-points class="account-verification-page__urdu" dir="rtl" lang="ur">
+                  <p class="account-verification-page__urdu-title">{{ 'verification.cnic.urduTitle' | translate }}</p>
+                  <ul>
+                    <li>{{ 'verification.cnic.urdu.id' | translate }}</li>
+                    <li>{{ 'verification.cnic.urdu.two' | translate }}</li>
+                    <li>{{ 'verification.cnic.urdu.both' | translate }}</li>
+                    <li>{{ 'verification.cnic.urdu.size' | translate }}</li>
+                  </ul>
+                </div>
+              }
+            </app-verification-guidance>
+          </div>
+
           @if (!readOnly()) {
-            <div class="account-verification-page__actions">
+            <div verification-actions class="account-verification-page__actions">
               <app-action-button
                 [label]="'verification.next' | translate"
                 icon="arrow_forward"
@@ -144,38 +145,48 @@
               />
             </div>
           }
-        </section>
+        </app-verification-step-layout>
       } @else {
-        <section class="section-card account-verification-page__panel">
-          <h2>{{ 'verification.face.title' | translate }}</h2>
-          <p>{{ 'verification.face.body' | translate }}</p>
+        <app-verification-step-layout
+          [title]="'verification.face.title' | translate"
+          [description]="'verification.face.body' | translate"
+        >
 
-          <div class="account-verification-page__face-guide">
-            <ol class="account-verification-page__face-points">
-              <li>{{ 'verification.face.points.face' | translate }}</li>
-              <li>{{ 'verification.face.points.id' | translate }}</li>
-              <li>{{ 'verification.face.points.slip' | translate }}</li>
-            </ol>
-            <figure class="account-verification-page__face-example">
-              <img src="images/face-sample.png" alt="Sample photo holding your face, ID card, and an EasiestWorld.com slip" />
-              <figcaption>{{ 'verification.face.exampleCaption' | translate }}</figcaption>
-            </figure>
+          <div verification-content>
+            @if (!readOnly()) {
+              <app-upload-dropzone
+                icon="photo_camera"
+                [title]="'verification.face.drop' | translate"
+                [subtitle]="'verification.fileHint' | translate"
+                [previewUrl]="facePreview()"
+                [previewAlt]="'verification.face.title' | translate"
+                [fileName]="faceFile()?.name || ''"
+                [previewHint]="'verification.replaceFile' | translate"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                (filesSelected)="onFile('face', $event)"
+              />
+            }
           </div>
 
-          @if (!readOnly()) {
-            <app-upload-dropzone
-              icon="photo_camera"
-              [title]="'verification.face.drop' | translate"
-              [subtitle]="'verification.fileHint' | translate"
-              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-              (filesSelected)="onFile('face', $event)"
-            />
-          }
-          @if (facePreview()) {
-            <img class="account-verification-page__preview account-verification-page__preview--face" [src]="facePreview()" alt="" />
-          }
+          <div verification-guidance>
+            <app-verification-guidance
+              [title]="'verification.face.instructionsTitle' | translate"
+              [description]="'verification.face.instructionsDescription' | translate"
+              [exampleTitle]="'verification.face.exampleTitle' | translate"
+              [exampleDescription]="'verification.face.exampleDescription' | translate"
+              exampleImage="images/face-sample.png"
+              exampleAlt="Sample photo holding your face, ID card, and an EasiestWorld.com slip"
+              [exampleCaption]="'verification.face.exampleCaption' | translate"
+            >
+              <ol guidance-points class="account-verification-page__face-points">
+                <li>{{ 'verification.face.points.face' | translate }}</li>
+                <li>{{ 'verification.face.points.id' | translate }}</li>
+                <li>{{ 'verification.face.points.slip' | translate }}</li>
+              </ol>
+            </app-verification-guidance>
+          </div>
 
-          <div class="account-verification-page__actions">
+          <div verification-actions class="account-verification-page__actions">
             <app-action-button
               [label]="'verification.backStep' | translate"
               icon="arrow_back"
@@ -191,7 +202,7 @@
               />
             }
           </div>
-        </section>
+        </app-verification-step-layout>
       }
     }
   </div>

@@ -1,0 +1,35 @@
+.verification-guidance {
+  align-items: start;
+
+  &__card {
+    height: 100%;
+    padding: 0.9rem 1rem 1rem;
+
+    h3 {
+      margin: 0;
+      color: var(--font-main);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    p {
+      margin: 0.25rem 0 0.75rem;
+      color: var(--font-secondary);
+      font-size: var(--font-size-body-sm);
+    }
+  }
+
+  &__example {
+    img {
+      display: block;
+      width: 100%;
+      max-height: 12rem;
+      object-fit: contain;
+    }
+  }
+
+  &__caption {
+    margin-bottom: 0 !important;
+    text-align: center;
+  }
+}

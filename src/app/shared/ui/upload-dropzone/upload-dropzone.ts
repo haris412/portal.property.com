@@ -15,6 +15,10 @@ export class UploadDropzoneComponent {
   readonly accept = input<string>('');
   readonly multiple = input<boolean>(false);
   readonly disabled = input<boolean>(false);
+  readonly previewUrl = input<string | null>(null);
+  readonly previewAlt = input<string>('Selected file preview');
+  readonly fileName = input<string>('');
+  readonly previewHint = input<string>('Choose a different file');
 
   readonly filesSelected = output<File[]>();
 

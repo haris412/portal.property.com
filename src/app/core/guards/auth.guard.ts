@@ -19,7 +19,7 @@ export const authGuard: CanActivateFn = async () => {
     return true;
   }
 
-  return router.createUrlTree(['/auth']);
+  return true;
 };
 
 /** Redirects Buyer users away from /dashboard to /appointments. */

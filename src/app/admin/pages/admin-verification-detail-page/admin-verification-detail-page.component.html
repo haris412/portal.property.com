@@ -1,5 +1,5 @@
 <div class="admin-verification-detail">
-  <div class="container-fluid admin-verification-detail__container">
+  <div class="container-fluid admin-verification-detail__container px-3 px-md-4 px-xl-5">
     <a class="admin-verification-detail__back" routerLink="..">
       <mat-icon fontIcon="arrow_back" aria-hidden="true" />
       {{ 'verification.admin.backToList' | translate }}
@@ -17,26 +17,33 @@
         [subtitle]="item.email"
       />
 
-      <section class="section-card admin-verification-detail__meta">
-        <div>
+      <section class="section-card admin-verification-detail__meta" aria-labelledby="verification-summary-title">
+        <div class="admin-verification-detail__section-heading">
+          <h2 id="verification-summary-title">{{ 'verification.admin.summary' | translate }}</h2>
+        </div>
+        <div class="row g-3">
+        <div class="col-12 col-sm-6 col-xl-3">
           <span>{{ 'base.phone' | translate }}</span>
           <strong>{{ item.phoneNumber || '—' }}</strong>
         </div>
-        <div>
+        <div class="col-12 col-sm-6 col-xl-3">
           <span>{{ 'base.agency' | translate }}</span>
           <strong>{{ item.agency?.name || '—' }}</strong>
         </div>
-        <div>
+        <div class="col-12 col-sm-6 col-xl-3">
           <span>{{ 'verification.cnic.number' | translate }}</span>
           <strong>{{ item.cnicNumber || '—' }}</strong>
         </div>
-        <div>
+        <div class="col-12 col-sm-6 col-xl-3">
           <span>{{ 'base.status' | translate }}</span>
-          <strong>{{ 'verification.status.' + item.status | translate }}</strong>
+          <strong class="admin-verification-detail__status" [attr.data-status]="item.status">
+            {{ 'verification.status.' + item.status | translate }}
+          </strong>
         </div>
-        <div>
+        <div class="col-12 col-sm-6 col-xl-3">
           <span>{{ 'verification.admin.columns.submitted' | translate }}</span>
           <strong>{{ item.submittedAt ? (item.submittedAt | date: 'medium') : '—' }}</strong>
+        </div>
         </div>
       </section>
 
@@ -44,41 +51,66 @@
         <app-info-banner class="d-block" icon="error_outline" [text]="item.rejectionReason" />
       }
 
-      <section class="admin-verification-detail__images">
-        <figure class="section-card">
+      <section aria-labelledby="verification-evidence-title">
+        <div class="admin-verification-detail__section-heading">
+          <h2 id="verification-evidence-title">{{ 'verification.admin.evidence' | translate }}</h2>
+          <p>{{ 'verification.admin.evidenceHint' | translate }}</p>
+        </div>
+        <div class="row g-3">
+        <div class="col-12 col-lg-4">
+        <figure class="section-card admin-verification-detail__evidence-card">
           <figcaption>{{ 'verification.cnic.front' | translate }}</figcaption>
           @if (item.images.cnicFrontUrl) {
-            <img [src]="item.images.cnicFrontUrl" alt="" />
+            <a [href]="item.images.cnicFrontUrl" target="_blank" rel="noopener" [attr.aria-label]="('verification.admin.openEvidence' | translate) + ': ' + ('verification.cnic.front' | translate)">
+              <img [src]="item.images.cnicFrontUrl" [alt]="'verification.cnic.front' | translate" />
+            </a>
           } @else {
             <p>{{ 'verification.admin.imageMissing' | translate }}</p>
           }
         </figure>
-        <figure class="section-card">
+        </div>
+        <div class="col-12 col-lg-4">
+        <figure class="section-card admin-verification-detail__evidence-card">
           <figcaption>{{ 'verification.cnic.back' | translate }}</figcaption>
           @if (item.images.cnicBackUrl) {
-            <img [src]="item.images.cnicBackUrl" alt="" />
+            <a [href]="item.images.cnicBackUrl" target="_blank" rel="noopener" [attr.aria-label]="('verification.admin.openEvidence' | translate) + ': ' + ('verification.cnic.back' | translate)">
+              <img [src]="item.images.cnicBackUrl" [alt]="'verification.cnic.back' | translate" />
+            </a>
           } @else {
             <p>{{ 'verification.admin.imageMissing' | translate }}</p>
           }
         </figure>
-        <figure class="section-card">
+        </div>
+        <div class="col-12 col-lg-4">
+        <figure class="section-card admin-verification-detail__evidence-card">
           <figcaption>{{ 'verification.face.title' | translate }}</figcaption>
           @if (item.images.facePhotoUrl) {
-            <img [src]="item.images.facePhotoUrl" alt="" />
+            <a [href]="item.images.facePhotoUrl" target="_blank" rel="noopener" [attr.aria-label]="('verification.admin.openEvidence' | translate) + ': ' + ('verification.face.title' | translate)">
+              <img [src]="item.images.facePhotoUrl" [alt]="'verification.face.title' | translate" />
+            </a>
           } @else {
             <p>{{ 'verification.admin.imageMissing' | translate }}</p>
           }
         </figure>
+        </div>
+        </div>
       </section>
 
       @if (item.status === 'pending') {
-        <div class="admin-verification-detail__actions">
-          <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="verify()">
-            {{ 'verification.admin.verify' | translate }}
-          </button>
-          <button mat-stroked-button color="warn" type="button" [disabled]="saving()" (click)="reject()">
-            {{ 'verification.admin.reject' | translate }}
-          </button>
+        <div class="admin-verification-detail__actions section-card" aria-label="Review actions">
+          <app-action-button
+            [label]="'verification.admin.verify' | translate"
+            icon="verified"
+            [disabled]="saving()"
+            (clicked)="verify()"
+          />
+          <app-action-button
+            [label]="'verification.admin.reject' | translate"
+            icon="close"
+            variant="ghost"
+            [disabled]="saving()"
+            (clicked)="reject()"
+          />
         </div>
       }
     }

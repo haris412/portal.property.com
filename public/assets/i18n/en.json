@@ -716,6 +716,7 @@
     "submit": "Submit",
     "submitting": "Submitting…",
     "submitted": "Documents submitted. We will review them shortly.",
+    "replaceFile": "Choose a different file",
     "progress": "Verification progress",
     "pendingBody": "Your documents are in review. You can look at them here, but you cannot change them until a decision is made.",
     "verifiedTitle": "Account verified",
@@ -739,10 +740,10 @@
       "rejectedAction": "Submit again"
     },
     "steps": {
-      "cnic": "CNIC",
-      "cnicHint": "Number and both sides",
-      "face": "Face photo",
-      "faceHint": "One clear photo"
+      "cnic": "Identity document",
+      "cnicHint": "Number, front, and back",
+      "face": "Face verification",
+      "faceHint": "One photo with your ID"
     },
     "cnic": {
       "title": "Step 1 — CNIC",
@@ -776,7 +777,11 @@
     "face": {
       "title": "Step 2 — Face photo",
       "body": "Your photo must show these 3 things in one picture.",
-      "drop": "Choose your photo",
+      "drop": "Upload face photo",
+      "instructionsTitle": "Photo requirements",
+      "instructionsDescription": "Make sure all three items are visible in one clear photo.",
+      "exampleTitle": "Example",
+      "exampleDescription": "Your photo should look like this.",
       "exampleCaption": "Take your photo exactly like this example",
       "points": {
         "face": "Your face",
@@ -801,6 +806,10 @@
       "backToList": "All verifications",
       "notFound": "This verification could not be found.",
       "imageMissing": "Image unavailable",
+      "summary": "Submission details",
+      "evidence": "Verification evidence",
+      "evidenceHint": "Open an image in a new tab to inspect it at full size.",
+      "openEvidence": "Open evidence",
       "verify": "Verify",
       "reject": "Reject",
       "verifyTitle": "Verify this agent?",

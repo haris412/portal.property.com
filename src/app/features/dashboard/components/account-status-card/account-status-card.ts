@@ -13,6 +13,7 @@ import type { IdentityStatus } from '../../../../core/services/agent-verificatio
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountStatusCardComponent {
+  readonly compact = input(false);
   readonly status = input<IdentityStatus>('not_submitted');
   readonly rejectionReason = input<string | null>(null);
 

@@ -21,11 +21,9 @@ import { ChartPanelComponent } from '../../components/chart-panel/chart-panel';
 import { LocationsDemandCardComponent } from '../../components/locations-demand-card/locations-demand-card';
 import { AppointmentsTableCardComponent } from '../../components/appointment-table-card/appointment-table-card';
 import { AgentOverviewCardComponent } from '../../components/agent-overview-card/agent-overview-card';
-import { AccountStatusCardComponent } from '../../components/account-status-card/account-status-card';
 
 import { AppointmentListItem } from '../../../../core/models/appointment.models';
-import { hasPrimaryAgencyAdminRole, isIdentityVerificationRole } from '../../../../core/models/role.models';
-import { AgentVerificationService, IdentityStatus } from '../../../../core/services/agent-verification.service';
+import { hasPrimaryAgencyAdminRole } from '../../../../core/models/role.models';
 import { AppointmentsService } from '../../../../core/services/appointments.service';
 import { AuthService, User } from '../../../../core/services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
@@ -53,7 +51,6 @@ import {
     LocationsDemandCardComponent,
     AppointmentsTableCardComponent,
     AgentOverviewCardComponent,
-    AccountStatusCardComponent
   ],
   templateUrl: './agent-dashboard-page.html',
   styleUrl: './agent-dashboard-page.scss',
@@ -61,7 +58,6 @@ import {
 })
 export class AgentDashboardPageComponent {
   private readonly auth = inject(AuthService);
-  private readonly verification = inject(AgentVerificationService);
   private readonly appointmentsService = inject(AppointmentsService);
   private readonly dashboardService = inject(DashboardService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -109,11 +105,6 @@ export class AgentDashboardPageComponent {
   readonly showAgentOverview = computed(() =>
     hasPrimaryAgencyAdminRole(this.currentUser()?.roles)
   );
-  readonly showIdentityCard = computed(() =>
-    isIdentityVerificationRole(this.currentUser()?.roles)
-  );
-  readonly identityStatus = signal<IdentityStatus>('not_submitted');
-  readonly identityReason = signal<string | null>(null);
   readonly agentCounts = computed(
     () => this.dashboardVm()?.agentCounts ?? AGENT_COUNTS
   );
@@ -121,7 +112,6 @@ export class AgentDashboardPageComponent {
 
   constructor() {
     this.loadAppointments();
-    this.loadIdentityStatus();
 
     merge(of(undefined), this.dashboardService.refresh$)
       .pipe(
@@ -156,22 +146,6 @@ export class AgentDashboardPageComponent {
         );
       })
     );
-  }
-
-  private loadIdentityStatus(): void {
-    this.auth.currentUser$
-      .pipe(
-        filter((user) => isIdentityVerificationRole(user?.roles)),
-        take(1),
-        switchMap(() => this.verification.getMine().pipe(catchError(() => of(null)))),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((record) => {
-        if (!record) return;
-        this.identityStatus.set(record.status);
-        this.identityReason.set(record.rejectionReason);
-        this.cdr.markForCheck();
-      });
   }
 
   private loadAppointments(): void {

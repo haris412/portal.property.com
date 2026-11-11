@@ -281,8 +281,9 @@
     font-size: var(--font-size-caption);
   }
   &__mark-item {
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 2.25rem;
     height: 2.25rem;
     border: 1px solid var(--border-soft-strong);

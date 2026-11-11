@@ -25,6 +25,14 @@
         />
       </div> -->
 
+      @if (showVerificationStatus()) {
+        <app-account-status-card
+          [compact]="true"
+          [status]="identityStatus()"
+          [rejectionReason]="identityReason()"
+        />
+      }
+
       <a
         routerLink="/notifications"
         class="header__icon-button"

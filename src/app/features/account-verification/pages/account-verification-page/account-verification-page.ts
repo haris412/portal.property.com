@@ -12,6 +12,8 @@ import { PageShellComponent } from '../../../../shared/ui/page-shell/page-shell'
 import { WizardStepperComponent, WizardStepperItem } from '../../../../shared/ui/wizard-stepper/wizard-stepper';
 import { UploadDropzoneComponent } from '../../../../shared/ui/upload-dropzone/upload-dropzone';
 import { ActionButtonComponent } from '../../../../shared/ui/action-button/action-button';
+import { VerificationStepLayoutComponent } from '../../components/verification-step-layout/verification-step-layout';
+import { VerificationGuidanceComponent } from '../../components/verification-guidance/verification-guidance';
 import { InfoBannerComponent } from '../../../../shared/ui/info-banner/info-banner';
 import { MediaUploadService } from '../../../../core/services/media-upload.service';
 import {
@@ -48,6 +50,8 @@ function formatCnicInput(raw: string): string {
     WizardStepperComponent,
     UploadDropzoneComponent,
     ActionButtonComponent,
+    VerificationStepLayoutComponent,
+    VerificationGuidanceComponent,
     InfoBannerComponent,
   ],
   templateUrl: './account-verification-page.html',

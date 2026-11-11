@@ -10,6 +10,7 @@ import { take } from 'rxjs';
 
 import { InfoBannerComponent } from '../../../shared/ui/info-banner/info-banner';
 import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header';
+import { ActionButtonComponent } from '../../../shared/ui/action-button/action-button';
 import { ConfirmationDialogService } from '../../../shared/dialogs/confirmation-dialog/confirmation-dialog.service';
 import { RejectVerificationDialogComponent } from '../../dialogs/reject-verification-dialog/reject-verification-dialog.component';
 import {
@@ -25,12 +26,12 @@ import { apiErrorSummary } from '../../../core/http/parse-http-api-error';
   imports: [
     DatePipe,
     RouterLink,
-    MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
     TranslateModule,
     PageHeaderComponent,
     InfoBannerComponent,
+    ActionButtonComponent,
   ],
   templateUrl: './admin-verification-detail-page.component.html',
   styleUrl: './admin-verification-detail-page.component.scss',

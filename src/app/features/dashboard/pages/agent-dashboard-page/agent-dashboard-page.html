@@ -10,13 +10,6 @@
     </header>
 
     <div class="agent-dashboard-page__stack">
-      @if (showIdentityCard()) {
-        <app-account-status-card
-          [status]="identityStatus()"
-          [rejectionReason]="identityReason()"
-        />
-      }
-
       <app-dashboard-hero-card
         [title]="hero().title"
         [description]="hero().description"

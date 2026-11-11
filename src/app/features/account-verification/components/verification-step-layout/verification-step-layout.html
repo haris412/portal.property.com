@@ -1,0 +1,18 @@
+<section class="verification-step-layout section-card">
+  <header class="verification-step-layout__header">
+    <h2>{{ title() }}</h2>
+    <p>{{ description() }}</p>
+  </header>
+
+  <div class="verification-step-layout__content">
+    <ng-content select="[verification-content]" />
+  </div>
+
+  <footer class="verification-step-layout__actions">
+    <ng-content select="[verification-actions]" />
+  </footer>
+
+  <div class="verification-step-layout__guidance">
+    <ng-content select="[verification-guidance]" />
+  </div>
+</section>

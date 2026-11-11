@@ -2,6 +2,7 @@
   class="upload-dropzone"
   [class.upload-dropzone--dragover]="isDragOver()"
   [class.upload-dropzone--disabled]="disabled()"
+  [class.upload-dropzone--has-preview]="!!previewUrl()"
   tabindex="0"
   role="button"
   [attr.aria-disabled]="disabled()"
@@ -21,12 +22,23 @@
     (change)="onFileInputChange($event)"
   />
 
-  <div class="upload-dropzone__icon-wrap">
-    <mat-icon class="upload-dropzone__icon" [fontIcon]="icon()" aria-hidden="true"></mat-icon>
-  </div>
+  @if (previewUrl(); as preview) {
+    <div class="upload-dropzone__preview-wrap">
+      <img class="upload-dropzone__preview" [src]="preview" [alt]="previewAlt()" />
+    </div>
+    <div class="upload-dropzone__content">
+      <h4 class="upload-dropzone__title">{{ fileName() || title() }}</h4>
+      <p class="upload-dropzone__subtitle">{{ subtitle() }}</p>
+      <span class="upload-dropzone__replace">{{ previewHint() }}</span>
+    </div>
+  } @else {
+    <div class="upload-dropzone__icon-wrap">
+      <mat-icon class="upload-dropzone__icon" [fontIcon]="icon()" aria-hidden="true"></mat-icon>
+    </div>
 
-  <div class="upload-dropzone__content">
-    <h4 class="upload-dropzone__title">{{ title() }}</h4>
-    <p class="upload-dropzone__subtitle">{{ subtitle() }}</p>
-  </div>
+    <div class="upload-dropzone__content">
+      <h4 class="upload-dropzone__title">{{ title() }}</h4>
+      <p class="upload-dropzone__subtitle">{{ subtitle() }}</p>
+    </div>
+  }
 </div>
